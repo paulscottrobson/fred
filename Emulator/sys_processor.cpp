@@ -3,7 +3,7 @@
 //
 //		Name:		processor.c
 //		Purpose:	Processor Emulation.
-//		Created:	19th October 2015
+//		Created:	21st June 2016
 //		Author:		Paul Robson (paul@robsons.org.uk)
 //
 // *******************************************************************************************************************************
