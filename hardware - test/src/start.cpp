@@ -26,20 +26,15 @@ void setup()
 	Serial.begin(9600);
 	TV.begin(PAL);
 	TV.select_font(font6x8);
-	TV.println("Hello world!");
-  	CPUReset();
-  	TV.tone(440);
+	TV.println("Hardware Test");
+  	TV.tone(440,1000);
 }
 
 unsigned long nextFrameTime = 0;
 
 void loop()
 {
-    unsigned long frameRate = CPUExecuteInstruction();
-    if (frameRate != 0) {
-		while (millis() < nextFrameTime) {}
-		nextFrameTime = nextFrameTime + 1000 / frameRate;
-	}
+
 	char key = keypad.getKey();
 	if (key) TV.println(key);
 }
