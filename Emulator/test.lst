@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 6/18/2016 22:39:28
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 6/22/2016 22:10:13
 
 
        1/       0 :                     
@@ -19,7 +19,7 @@
       16/       5 : 6C                  	inp 	4
       17/       6 : 64                  	out 	4
       18/       7 : 30 01               	br 		ShowIt
- AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 6/18/2016 22:39:28
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 6/22/2016 22:10:13
 
 
   symbol table (* = unused):
@@ -27,7 +27,7 @@
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
 *BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
-*CONSTPI :        3.141592653589793 - | *DATE :                   6/18/2016 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   6/22/2016 - |
 *FALSE :                          0 - | *FULLPMMU :                       1 - |
 *HAS64 :                          1 - | *HASDSP :                         0 - |
 *HASFPU :                         0 - | *HASPMMU :                        0 - |
@@ -41,13 +41,13 @@
 *R2 :                             2 - |  R3 :                             3 - |
 *R4 :                             4 - | *R5 :                             5 - |
 *RELAXED :                        0 - |  SHOWIT :                         1 C |
-*TIME :                    22:39:28 - | *TRUE :                           1 - |
+*TIME :                    22:10:13 - | *TRUE :                           1 - |
 *VERSION :                     142F - |
 
      35 symbols
      33 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 6/18/2016 22:39:28
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 6/22/2016 22:10:13
 
 
   codepages:
@@ -56,7 +56,7 @@
 STANDARD (0 changed characters)
 
 
-0.00 seconds assembly time
+0.02 seconds assembly time
 
      18 lines source file
       1 pass

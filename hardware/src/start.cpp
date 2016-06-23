@@ -24,11 +24,9 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 void setup()
 {
 	Serial.begin(9600);
-	TV.begin(PAL);
-	TV.select_font(font6x8);
-	TV.println("Hello world!");
+	TV.begin(PAL,8,8);
   	CPUReset();
-  	TV.tone(440);
+  	TV.tone(880,50);
 }
 
 unsigned long nextFrameTime = 0;
@@ -41,5 +39,5 @@ void loop()
 		nextFrameTime = nextFrameTime + 1000 / frameRate;
 	}
 	char key = keypad.getKey();
-	if (key) TV.println(key);
+	//if (key) TV.println(key);
 }

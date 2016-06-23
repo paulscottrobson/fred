@@ -43,6 +43,8 @@ void (*line_handler)();			//remove me
 void (*hbi_hook)() = &empty;
 void (*vbi_hook)() = &empty;
 
+void setup();
+
 // sound properties
 volatile long remainingToneVsyncs;
 
@@ -65,6 +67,7 @@ void render_setup(uint8_t mode, uint8_t x, uint8_t y, uint8_t *scrnptr) {
 	//as of 9/16/10 rendermode 3 will not work for resolutions lower than
 	//192(display.hres lower than 24)
 	unsigned char rmethod = (_TIME_ACTIVE*_CYCLES_PER_US)/(display.hres*8);
+/*
 	switch(rmethod) {
 		case 6:
 			render_line = &render_line6c;
@@ -84,7 +87,7 @@ void render_setup(uint8_t mode, uint8_t x, uint8_t y, uint8_t *scrnptr) {
 			else
 				render_line = &render_line3c;
 	}
-	
+*/
 
 	DDR_VID |= _BV(VID_PIN);
 	DDR_SYNC |= _BV(SYNC_PIN);
@@ -112,6 +115,17 @@ void render_setup(uint8_t mode, uint8_t x, uint8_t y, uint8_t *scrnptr) {
 		ICR1 = _NTSC_CYCLES_SCANLINE;
 		OCR1A = _CYCLES_HORZ_SYNC;
 	}
+
+	/*******************/
+	render_line = &render_line3c;
+	display.vscale_const = 0;
+	display.vres = 128;
+	display.start_render += 48;
+	setup();
+	/*******************/
+
+
+
 	display.scanLine = display.lines_frame+1;
 	line_handler = &vsync_line;
 	TIMSK1 = _BV(TOIE1);
@@ -183,6 +197,7 @@ void vsync_line() {
 }
 
 
+
 static void inline wait_until(uint8_t time) {
 	__asm__ __volatile__ (
 			"subi	%[time], 10\n"
@@ -204,6 +219,7 @@ static void inline wait_until(uint8_t time) {
 	);
 }
 
+/*
 void render_line6c() {
 	#ifndef REMOVE6C
 	__asm__ __volatile__ (
@@ -359,112 +375,63 @@ void render_line4c() {
 	);
 	#endif
 }
-
+*/
 // only 16mhz right now!!!
+
+unsigned char display_line[256];
+
 void render_line3c() {
 	#ifndef REMOVE3C
 	__asm__ __volatile__ (
-	".macro byteshift\n\t"
-		"LD		__tmp_reg__,X+\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//0
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//1
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//2
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//3
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//4
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//5
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//6
-		"nop\n\t"
-		"lsl	__tmp_reg__\n\t"
-		"out	%[port],__tmp_reg__\n\t"	//7
-	".endm\n\t"
-	
-		"ADD	r26,r28\n\t"
-		"ADC	r27,r29\n\t"
-		
-		"cpi	%[hres],30\n\t"		//615
-		"breq	skip0\n\t"
-		"cpi	%[hres],29\n\t"
-		"breq	jumpto1\n\t"
-		"cpi	%[hres],28\n\t"
-		"breq	jumpto2\n\t"
-		"cpi	%[hres],27\n\t"
-		"breq	jumpto3\n\t"
-		"cpi	%[hres],26\n\t"
-		"breq	jumpto4\n\t"
-		"cpi	%[hres],25\n\t"
-		"breq	jumpto5\n\t"
-		"cpi	%[hres],24\n\t"
-		"breq	jumpto6\n\t"
-	"jumpto1:\n\t"
-		"rjmp	skip1\n\t"
-	"jumpto2:\n\t"
-		"rjmp	skip2\n\t"
-	"jumpto3:\n\t"
-		"rjmp	skip3\n\t"
-	"jumpto4:\n\t"
-		"rjmp	skip4\n\t"
-	"jumpto5:\n\t"
-		"rjmp	skip5\n\t"
-	"jumpto6:\n\t"
-		"rjmp	skip6\n\t"
-	"skip0:\n\t"
-		"byteshift\n\t"	//1		\\643
-	"skip1:\n\t"
-		"byteshift\n\t"	//2
-	"skip2:\n\t"
-		"byteshift\n\t"	//3
-	"skip3:\n\t"
-		"byteshift\n\t"	//4
-	"skip4:\n\t"
-		"byteshift\n\t"	//5
-	"skip5:\n\t"
-		"byteshift\n\t"	//6
-	"skip6:\n\t"
-		"byteshift\n\t"	//7
-		"byteshift\n\t"	//8
-		"byteshift\n\t"	//9
-		"byteshift\n\t"	//10
-		"byteshift\n\t"	//11
-		"byteshift\n\t"	//12
-		"byteshift\n\t"	//13
-		"byteshift\n\t"	//14
-		"byteshift\n\t"	//15
-		"byteshift\n\t"	//16
-		"byteshift\n\t"	//17
-		"byteshift\n\t"	//18
-		"byteshift\n\t"	//19
-		"byteshift\n\t"	//20
-		"byteshift\n\t"	//21
-		"byteshift\n\t"	//22
-		"byteshift\n\t"	//23
-		"byteshift\n\t"	//24
-		"byteshift\n\t"	//25
-		"byteshift\n\t"	//26
-		"byteshift\n\t"	//27
-		"byteshift\n\t"	//28
-		"byteshift\n\t"	//29
-		"byteshift\n\t"	//30
-		
-		"delay2\n\t"
-		"cbi	%[port],7\n\t"
+		"push   r16\n\t"										// Save on stack
+		"push   r17\n\t"
+		"push   r18\n\t"
+		"mov    r16,r28\n\t"									// Check if lines end in 10 or 11
+		"andi   r16,2\n\t"
+		"brne   skipLine\n\t"									// If so its the blank line in the middle
+		"andi 	r28,0xFC\n\t"									// This is 4 x the render line number
+		"add 	r28,r28\n\t"									// This is 8 x the render line number
+		"add 	r26,r28\n\t"									// Add to X
+		"adc 	r27,r29\n\t"
+
+		"ldi 	r18,8\n\t"										// Do 8 bytes
+	"outOuter:\n\t"	
+		"ld 	r17,X+\n\t"										// Read next byte and display it
+		"out	%[port],r17\n\t"	
+		"ldi 	r16,7\n\t"										// Set counter and pad out
+		"delay1\n\t"
+
+	"outInner:\n\t"
+		"delay1\n\t"											// Pad out more, then turn off
+		"cbi    %[port],7\n\t"
+		"delay3\n\t"											// Blank dot time
+
+		"add    r17,r17\n\t"									// Shift dot data left
+		"out	%[port],r17\n\t"								// Output next dot
+		"dec	r16\n\t"										// And loop back if not done 8 times in total
+		"brne   outInner\n\t"
+
+		//"delay1\n\t"
+		"dec	r18\n\t"										// Done all the bytes
+		"cbi    %[port],7\n\t"									// End the dot whatever
+		"brne   outOuter\n\t"									// If not complete do the next byte.
+
+	"skipLine:"
+		"cbi	%[port],7\n\t"									// Make sure video data is off.
+		"pop    r18\n\t"										// Restore the registers
+		"pop    r17\n\t"
+		"pop    r16\n\t"
 		:
 		: [port] "i" (_SFR_IO_ADDR(PORT_VID)),
-		"x" (display.screen),
+		"x" (display_line),
 		"y" (renderLine),
 		[hres] "d" (display.hres)
 		: "r16" // try to remove this clobber later...
 	);
 	#endif
+}
+
+void setup() 
+{
+	for (int i = 0;i < 256;i++) display_line[i] = i;
 }

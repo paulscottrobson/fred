@@ -24,17 +24,19 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 void setup()
 {
 	Serial.begin(9600);
+	Serial.println("Serial test");
 	TV.begin(PAL);
 	TV.select_font(font6x8);
 	TV.println("Hardware Test");
-  	TV.tone(440,1000);
+  	pinMode(27,INPUT_PULLUP);
+  	TV.tone(220,200);
 }
 
 unsigned long nextFrameTime = 0;
 
 void loop()
 {
-
+	if (digitalRead(27) == 0) TV.tone(440,200);
 	char key = keypad.getKey();
 	if (key) TV.println(key);
 }
