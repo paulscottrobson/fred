@@ -27,8 +27,8 @@
 
 #define DEBUG_ARGUMENTS(ac,av) if (ac == 2) CPULoadBinary(argv[1]);					// Handle CLI arguments
 
-#define DEBUG_CPURENDER(x) 	DBGXRender(x)											// Render the debugging display
-#define DEBUG_VDURENDER(x)	DBGXRender(x)											// Render the game display etc.
+#define DEBUG_CPURENDER(x) 	DBGXRender(x,0)											// Render the debugging display
+#define DEBUG_VDURENDER(x)	DBGXRender(x,1)											// Render the game display etc.
 
 #define DEBUG_RESET() 		CPUReset()												// Reset the CPU / Hardware.
 #define DEBUG_HOMEPC()		((CPUGetStatus()->pc) & 0xFFFF) 						// Get PC Home Address (e.g. current PCTR value)
@@ -42,7 +42,7 @@
 
 #define DEBUG_KEYMAP(k,r)	HWIProcessKey(k,r)
 
-void DBGXRender(int *address);														// Render the debugger screen.
+void DBGXRender(int *address,int runMode);											// Render the debugger screen.
 void DBGXRenderDisplay(void);
 void DBGXLoad(char *file);
 

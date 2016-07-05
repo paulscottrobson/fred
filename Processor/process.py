@@ -5,6 +5,7 @@ import re
 
 def process(txt,opc):
 	txt = txt.replace("@X","{0:x}".format(opc & 15))
+	txt = txt.replace("@R","{0}".format(opc & 15))
 	txt = txt.replace("@F","{0:x}".format((opc & 3)+1))
 	return txt
 

@@ -32,7 +32,7 @@ static const char *_mnemonics[256] = {
 
 static const char *labels[] = { "D","DF","P","X","T","IE","RP","RX","CY","BP", NULL };
 
-void DBGXRender(int *address) {
+void DBGXRender(int *address,int runMode) {
 	int n = 0;
 	char buffer[32];
 	CPUSTATUS *s = CPUGetStatus();
@@ -82,18 +82,30 @@ void DBGXRender(int *address) {
 		GFXString(GRID(5,row),buffer,GRIDSIZE,isPC ? DBGC_HIGHLIGHT:DBGC_DATA,-1);	// Print the mnemonic
 	}
 
+	int width = HWIScreenWidth();													// Get screen display resolution.
+	int height = HWIScreenHeight();
+	int ramAddress = HWIGetDisplayAddress();
 	SDL_Rect rc;rc.x = _GFXX(21);rc.y = _GFXY(1)/2;									// Whole rectangle.
 	rc.w = 11 * GRIDSIZE * 6;rc.h = 5 *GRIDSIZE * 8; 										
+	if (runMode != 0) {
+		rc.w = WIN_WIDTH * 8 / 10;rc.h = WIN_HEIGHT * 4/10;
+		rc.x = WIN_WIDTH/2-rc.w/2;rc.y = WIN_HEIGHT - rc.h - 64;
+	}
 	rc.w = rc.w/64*64;rc.h = rc.h/32*32;											// Make it /64 /32
 	SDL_Rect rcPixel;rcPixel.h = rc.h/32;rcPixel.w = rc.w / 64;						// Pixel rectangle.
 	SDL_Rect rcDraw;rcDraw.w = rcPixel.w/2;rcDraw.h = rcPixel.h/2;
 	GFXRectangle(&rc,0x0);															// Fill it black
-	for (int i = 0;i < 64;i++)
-		for (int j = 0;j < 32;j++)
-			if ((i + j) % 2)
-			{
-				rcDraw.x =  rc.x + i * rcPixel.w;
-				rcDraw.y = rc.y + j * rcPixel.h;
-				GFXRectangle(&rcDraw,0xFFFFFF);
+	for (int j = 0;j < height;j++) {
+		for (int i = 0;i < width;i += 8) {
+			BYTE8 vRam = CPUReadMemory(ramAddress++);
+			for (int b = 0;b < 8;b++) {
+				if (vRam & (0x80 >> b))
+				{
+					rcDraw.x =  rc.x + (i+b) * rcPixel.w;
+					rcDraw.y = rc.y + j * rcPixel.h;
+					GFXRectangle(&rcDraw,0xFFFFFF);
+				}
 			}
+		}
+	}
 }	

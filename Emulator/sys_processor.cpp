@@ -53,6 +53,9 @@ static BYTE8 ramMemory[MEMORYSIZE];
 // *******************************************************************************************************************************
 
 #include "_1801_include.h"
+
+#define OUTPORT2(d)  HWIWriteControlPort(d)
+
 #include "_1801_ports.h"
 
 // *******************************************************************************************************************************
@@ -75,11 +78,13 @@ BYTE8 CPUExecuteInstruction(void) {
 	switch(opcode) {																// Execute it.
 		#include "_1801_opcodes.h"
 	}
+
 	cycles = cycles + 2;															// 2 cycles per instruction
 	if (cycles < CYCLES_PER_FRAME) return 0;										// Not completed a frame.
-	// TODO: Display using R0
-	// TODO: Fire new interrupt.
-	HWIEndFrame();																	// End of Frame code
+	if (IE != 0) {																	// Fire interrupt if it is enabled.
+		INTERRUPT();
+	}
+	R[0] = HWIEndFrame(R[0]);														// End of Frame code, setting R0 correctly.
 	cycles = cycles - CYCLES_PER_FRAME;												// Adjust this frame rate.
 	return FRAME_RATE;																// Return frame rate.
 }

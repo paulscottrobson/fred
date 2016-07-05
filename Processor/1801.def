@@ -4,6 +4,7 @@
 //												CPU Definition. TA6889/6890 Datasheet Page 10
 //
 //	@X &15 	as hexadecimal digit.
+//	@X &15  as decimal.
 //	@F &3 	as flag 1-4
 //
 //	READ,WRITE,INPORT and OUTPORT macros need to be defined.
@@ -22,12 +23,13 @@
 //															Register Operations.
 //
 // ***********************************************************************************************************************************
-10-1F 		"INC R@X"			R[0x@X]++																// Increment Rn
-20-2F 		"DEC R@X"			R[0x@X]--																// Decrement Reference
-80-8F 		"GLO R@X"			D = R[0x@X] & 0xFF 														// Get Low Rn
-90-9F 		"GHI R@X"			D = (R[0x@X] >> 8) & 0xFF 												// Get High Rn
-A0-AF 		"PLO R@X"			R[0x@X] = (R[0x@X] & 0xFF00) | D 										// Put Low Rn
-B0-BF 		"PHI R@X"			R[0x@X] = (R[0x@X] & 0x00FF) | (((WORD16)D) << 8) 						// Put High Rn
+
+10-1F 		"INC R@X"			R[@R]++																	// Increment Rn
+20-2F 		"DEC R@X"			R[@R]--																	// Decrement Reference
+80-8F 		"GLO R@X"			D = R[@R] & 0xFF 														// Get Low Rn
+90-9F 		"GHI R@X"			D = (R[@R] >> 8) & 0xFF 												// Get High Rn
+A0-AF 		"PLO R@X"			R[@R] = (R[@R] & 0xFF00) | D 											// Put Low Rn
+B0-BF 		"PHI R@X"			R[@R] = (R[@R] & 0x00FF) | (((WORD16)D) << 8) 							// Put High Rn
 
 // ***********************************************************************************************************************************
 //
@@ -35,8 +37,8 @@ B0-BF 		"PHI R@X"			R[0x@X] = (R[0x@X] & 0x00FF) | (((WORD16)D) << 8) 						// P
 //
 // ***********************************************************************************************************************************
 
-40-4F  		"LDA R@X"			D = READ(R[0x@X]);R[0x@X]++	 											// Load Memory(Rn) to D and Increment Rn
-50-5F 		"STR R@X"			WRITE(R[0x@X],D) 														// Store D to Memory(Rn)
+40-4F  		"LDA R@X"			D = READ(R[@R]);R[@R]++	 											// Load Memory(Rn) to D and Increment Rn
+50-5F 		"STR R@X"			WRITE(R[@R],D) 														// Store D to Memory(Rn)
 
 // ***********************************************************************************************************************************
 //
@@ -88,8 +90,8 @@ FF 			"SMI .1"			SUB(D,FETCH())															// Subtract immediate from D not b
 // ***********************************************************************************************************************************
 
 00 			"IDL"				;																		// do nothing with IDL 
-D0-DF 		"SEP R@X"			P = 0x@X 																// set P register
-E0-EF 		"SEX R@X"			X = 0x@X 																// set X register
+D0-DF 		"SEP R@X"			P = @R 																// set P register
+E0-EF 		"SEX R@X"			X = @R 																// set X register
 70 			"RET"				RETURN();IE = 1															// return and set IE
 71 			"DIS"				RETURN();IE = 0															// return and clear IE
 78 			"SAV"				WRITE(R[X],T)															// save T to Memory(Rx)

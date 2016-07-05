@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 6/22/2016 22:10:13
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/5/2016 22:49:51
 
 
        1/       0 :                     
@@ -10,44 +10,274 @@
        7/       0 : =3H                 r3 = 3
        8/       0 : =4H                 r4 = 4
        9/       0 : =5H                 r5 = 5
-      10/       0 :                     
-      11/       0 : 71                  	dis
-      12/       1 :                     ShowIt:
-      13/       1 : F8 80               	ldi 	080h
-      14/       3 : A3                  	plo 	r3
-      15/       4 : E3                  	sex 	r3
-      16/       5 : 6C                  	inp 	4
-      17/       6 : 64                  	out 	4
-      18/       7 : 30 01               	br 		ShowIt
- AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 6/22/2016 22:10:13
+      10/       0 : =6H                 r6 = 6
+      11/       0 : =DH                 rd = 13
+      12/       0 : =EH                 re = 14
+      13/       0 : =FH                 rf = 15
+      14/       0 :                     
+      15/       0 : =2FFH               stack_start = 02FFh
+      16/       0 : =0H                 video_ram = 0000h
+      17/       0 :                     
+      18/       0 : 71                  	dis 	
+      19/       1 : 00                  	db 		0
+      20/       2 : 30 0A               	br 		boot
+      21/       4 :                     ;
+      22/       4 :                     ;	Call and system vectors here.
+      23/       4 :                     ;
+      24/       4 :                     S_Return: 															; these vectors will be auto generated
+      25/       4 : 00 60               	dw		FUNC_Return
+      26/       6 :                     S_GetKey:
+      27/       6 : 00 6F               	dw 		FUNC_GetKey
+      28/       8 :                     S_Test:
+      29/       8 : 00 B0               	dw 		FUNC_Test
+      30/       A :                     ;
+      31/       A :                     ;	Start up.
+      32/       A :                     ;
+      33/       A :                     boot:
+      34/       A : F8 02               	ldi 	stack_start / 256 										; set up stack
+      35/       C : B2                  	phi 	r2
+      36/       D : F8 FF               	ldi 	stack_start & 255
+      37/       F : A2                  	plo 	r2
+      38/      10 : E2                  	sex 	r2 														; R2 is now an index register
+      39/      11 : 90                  	ghi 	r0 														; R0.1 = 0
+      40/      12 : B3                  	phi 	r3
+      41/      13 : BE                  	phi 	re
+      42/      14 : F8 27               	ldi 	call_handler & 255 										; RE points to the call routine.
+      43/      16 : AE                  	plo 	re
+      44/      17 : F8 1B               	ldi 	boot_switch_r3 & 255 									; Make us run in R3.
+      45/      19 : A3                  	plo 	r3
+      46/      1A : D3                  	sep 	r3 														; run in R3
+      47/      1B :                     boot_switch_r3:
+      48/      1B : DE                  	sep 	re 														; load R1 with interrupt routine.
+      49/      1C : 88                  	db 		080h+1*8+(interrupt / 256)
+      50/      1D : 73                  	db 		(interrupt & 255)
+      51/      1E : 93                  	ghi 	r3 														; zero R0, stops initial DMA In detect on 1st interrupt
+      52/      1F : A0                  	plo 	r0
+      53/      20 : F8 23               	ldi 	023h 													; turn interrupts on.
+      54/      22 : 22                  	dec 	r2
+      55/      23 : 52                  	str 	r2
+      56/      24 : 70                  	ret
+      57/      25 : 30 91               	br 		main 
+      58/      27 :                     
+      59/      27 :                     ; ***********************************************************************************************************
+      60/      27 :                     ;
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/5/2016 22:49:51
+
+
+      61/      27 :                     ;	CALL routine. Following byte contains a command function 00-7E which is an index into
+      62/      27 :                     ; 	memory at [x]. So SEP RE ; DB 4  reads the call address from locations 4 and 5.
+      63/      27 :                     ;	
+      64/      27 :                     ;	For 80-FF it is a 2 byte instruction which loads bits 0-10 into a register specified by
+      65/      27 :                     ;	bit 11-14.
+      66/      27 :                     ;
+      67/      27 :                     ;	e.g. 
+      68/      27 :                     ;
+      69/      27 :                     ; 	SEP RE ; 0 a6 a5 a4 a3 a2 a1 a0 							Indirect subroutine call at [a]
+      70/      27 :                     ;	SEP RE ; 1 r3 r2 r1 r0 d10 d9 d8 ; d7 d6 d5 d4 d3 d2 d1 d0 	Load 16 bit register
+      71/      27 :                     ;
+      72/      27 :                     ;	Only works when running in R3.
+      73/      27 :                     ; ***********************************************************************************************************
+      74/      27 :                     
+      75/      27 :                     call_handler:
+      76/      27 : AD                  	plo 	rd 					; save D
+      77/      28 : 43                  	lda 	r3 					; get function #
+      78/      29 : FA 80               	ani 	80h 				; check bit 7
+      79/      2B : 3A 41               	bnz 	call_load_register 	; load register call.
+      80/      2D : 23                  	dec 	r3 					; reload it.
+      81/      2E : 43                  	lda 	r3
+      82/      2F : AF                  	plo 	rf 					; save in RF.0
+      83/      30 :                     
+      84/      30 : 83                  	glo 	r3 					; push return.0
+      85/      31 : 22                  	dec 	r2
+      86/      32 : 52                  	str 	r2
+      87/      33 : 93                  	ghi 	r3 					; push return.1
+      88/      34 : 22                  	dec 	r2
+      89/      35 : 52                  	str 	r2
+      90/      36 :                     
+      91/      36 : F8 00               	ldi 	0 					; RF points to jump table in page $00
+      92/      38 : BF                  	phi 	rf
+      93/      39 : 4F                  	lda 	rf 					; read jump address into R3
+      94/      3A : B3                  	phi 	r3
+      95/      3B : 4F                  	lda 	rf
+      96/      3C : A3                  	plo 	r3
+      97/      3D : 8D                  	glo 	rd 					; restore D
+      98/      3E : D3                  	sep 	r3 					; and go there
+      99/      3F : 30 27               	br 		call_handler 		; make re-entrant
+     100/      41 :                     
+     101/      41 :                     call_load_register:
+     102/      41 : 23                  	dec 	r3 					; point back at original value.
+     103/      42 : 9E                  	ghi 	re 					; get the current page into RF.1
+     104/      43 : BF                  	phi 	rf
+     105/      44 : F8 59               	ldi 	call_putH 			; point RF to the PLO instruction.
+     106/      46 : AF                  	plo 	rf
+     107/      47 : 43                  	lda 	r3 					; get the Register number
+     108/      48 : F6                  	shr 						; get bits 11-14 into bits 0-3
+     109/      49 : F6                  	shr
+     110/      4A : F6                  	shr
+     111/      4B : FA 0F               	ani 	0Fh
+     112/      4D : F9 B0               	ori 	0B0h 				; make into PHI Rn
+     113/      4F : 5F                  	str 	rf 					; save at RF
+     114/      50 : 1F                  	inc 	rf 					; point to the PLO
+     115/      51 : 1F                  	inc 	rf 
+     116/      52 : FB 10               	xri 	010h 				; make it PLO Rn
+     117/      54 : 5F                  	str 	rf 					; update the code.
+     118/      55 : 23                  	dec 	r3 					; reget the first byte
+     119/      56 : 43                  	lda 	r3
+     120/      57 : FA 07               	ani 	07h 				; lower 3 bits only.
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/5/2016 22:49:51
+
+
+     121/      59 :                     call_putH:
+     122/      59 : B0                  	phi 	r0 					; do the actual load.
+     123/      5A : 43                  	lda 	r3
+     124/      5B : A0                  	plo 	r0
+     125/      5C : 8D                  	glo 	rd 					; restore D
+     126/      5D : D3                  	sep 	r3 					; return
+     127/      5E : 30 27               	br 		call_handler
+     128/      60 :                     
+     129/      60 :                     ; ***********************************************************************************************************
+     130/      60 :                     ;
+     131/      60 :                     ;											System call which does return
+     132/      60 :                     ;
+     133/      60 :                     ; ***********************************************************************************************************
+     134/      60 :                     
+     135/      60 :                     FUNC_Return:
+     136/      60 : AD                  	plo 	rd 					; save return value in RD.0
+     137/      61 : 93                  	ghi 	r3  				; switch back to running same code in RF so we can change R3
+     138/      62 : BF                  	phi 	rf
+     139/      63 : F8 67               	ldi 	return_main & 255
+     140/      65 : AF                  	plo 	rf
+     141/      66 : DF                  	sep 	rf
+     142/      67 :                     return_main:
+     143/      67 : 12                  	inc 	r2 					; get and throw the call-to-return (this is run in R3)
+     144/      68 : 12                  	inc 	r2
+     145/      69 : 42                  	lda 	r2 					; fetch return.1
+     146/      6A : B3                  	phi 	r3
+     147/      6B : 42                  	lda 	r2					; fetch return.0
+     148/      6C : A3                  	plo 	r3
+     149/      6D : 8D                  	glo 	rd 					; restore return value
+     150/      6E : D3                  	sep 	r3 					; and go there in R3
+     151/      6F :                     
+     152/      6F :                     FUNC_GetKey:
+     153/      6F : F8 00               	ldi 	00
+     154/      71 : DE                  	sep 	re
+     155/      72 : 04                  	db 		S_Return
+     156/      73 :                     
+     157/      73 :                     ; ***********************************************************************************************************
+     158/      73 :                     ;
+     159/      73 :                     ;					Standard interrupt routine. Called on VSync so not time critical.
+     160/      73 :                     ;
+     161/      73 :                     ; ***********************************************************************************************************
+     162/      73 :                     
+     163/      73 :                     interrupt:
+     164/      73 : 22                  	dec 	r2 														; save XP
+     165/      74 : 78                  	sav
+     166/      75 : 22                  	dec 	r2 														; save D
+     167/      76 : 52                  	str 	r2
+     168/      77 : 80                  	glo 	r0 														; if odd DMA In has been received
+     169/      78 : FA 01               	ani 	1 														; (this depends on R0 being set as even)
+     170/      7A : 32 87               	bz 		int_nokey
+     171/      7C : 20                  	dec 	r0 														; get pressed key
+     172/      7D : 40                  	lda 	r0
+     173/      7E : 22                  	dec  	r2
+     174/      7F : 52                  	str 	r2 														; save on stack
+     175/      80 : 91                  	ghi 	r1 														; point R0 to the operand of LDI in FUNC_GetKey
+     176/      81 : B0                  	phi 	r0 
+     177/      82 : F8 70               	ldi 	(FUNC_GetKey+1) & 255
+     178/      84 : A0                  	plo 	r0
+     179/      85 : 42                  	lda 	r2 														; get key off stack and write.
+     180/      86 : 50                  	str 	r0 
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/5/2016 22:49:51
+
+
+     181/      87 :                     int_nokey:
+     182/      87 : F8 00               	ldi 	video_ram / 256 										; set up R0 for rendering.																
+     183/      89 : B0                  	phi 	r0	
+     184/      8A : F8 00               	ldi 	video_ram & 255 
+     185/      8C : A0                  	plo 	r0
+     186/      8D :                     
+     187/      8D : 42                  	lda 	r2 														; restore D X P and Return
+     188/      8E : 70                  	ret
+     189/      8F : 30 73               	br 		interrupt
+     190/      91 :                     
+     191/      91 :                     main:
+     192/      91 : DE                  	sep 	re
+     193/      92 : 08                  	db 		S_Test
+     194/      93 :                     
+     195/      93 : F8 FF               	ldi 	0FFh
+     196/      95 : A5                  	plo 	r5
+     197/      96 :                     
+     198/      96 :                     wait:
+     199/      96 : 93                  	ghi 	r3
+     200/      97 : B4                  	phi 	r4
+     201/      98 : F8 E2               	ldi 	226
+     202/      9A : A4                  	plo 	r4
+     203/      9B : 44                  	lda 	r4
+     204/      9C : 24                  	dec 	r4
+     205/      9D : FC 01               	adi 	1
+     206/      9F : 54                  	str 	r4
+     207/      A0 : 14                  	inc 	r4
+     208/      A1 : 14                  	inc 	r4
+     209/      A2 :                     
+     210/      A2 : DE                  	sep 	re
+     211/      A3 : 06                  	db 		S_GetKey
+     212/      A4 : 54                  	str 	r4
+     213/      A5 :                     
+     214/      A5 : 91                  	ghi 	r1
+     215/      A6 : B6                  	phi 	r6
+     216/      A7 : F8 2A               	ldi 	42
+     217/      A9 : A6                  	plo 	r6
+     218/      AA :                     __Delay:
+     219/      AA : 26                  	dec 	r6 					; 6 x 42 = 252 instructions = 4032 cycles. = 8064 cycles per tick, 1000000 / 8064 = 124Hz.
+     220/      AB : 86                  	glo 	r6
+     221/      AC : 3A AA               	bnz 	__Delay
+     222/      AE :                     
+     223/      AE : 30 96               	br 		wait
+     224/      B0 :                     
+     225/      B0 :                     FUNC_test:
+     226/      B0 : DE                  	sep 	re
+     227/      B1 : 04                  	db 		S_Return
+     228/      B2 :                     	
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 5 - 7/5/2016 22:49:51
 
 
   symbol table (* = unused):
   ------------------------
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
-*BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
-*CONSTPI :        3.141592653589793 - | *DATE :                   6/22/2016 - |
-*FALSE :                          0 - | *FULLPMMU :                       1 - |
+ BOOT :                           A C |  BOOT_SWITCH_R3 :                1B C |
+*BRANCHEXT :                      0 - |  CALL_HANDLER :                  27 C |
+ CALL_LOAD_REGISTER :            41 C |  CALL_PUTH :                     59 C |
+*CASESENSITIVE :                  0 - | *CONSTPI :        3.141592653589793 - |
+*DATE :                    7/5/2016 - | *FALSE :                          0 - |
+*FULLPMMU :                       1 - |  FUNC_GETKEY :                   6F C |
+ FUNC_RETURN :                   60 C |  FUNC_TEST :                     B0 C |
 *HAS64 :                          1 - | *HASDSP :                         0 - |
 *HASFPU :                         0 - | *HASPMMU :                        0 - |
 *INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
 *INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
-*INSUPMODE :                      0 - | *LISTON :                         1 - |
-*MACEXP :                         1 - | *MOMCPU :                      1802 - |
-*MOMCPUNAME :                  1802 - | *NESTMAX :                      100 - |
-*PACKING :                        0 - | *PADDING :                        1 - |
-*R0 :                             0 - | *R1 :                             1 - |
-*R2 :                             2 - |  R3 :                             3 - |
-*R4 :                             4 - | *R5 :                             5 - |
-*RELAXED :                        0 - |  SHOWIT :                         1 C |
-*TIME :                    22:10:13 - | *TRUE :                           1 - |
-*VERSION :                     142F - |
+*INSUPMODE :                      0 - |  INTERRUPT :                     73 C |
+ INT_NOKEY :                     87 C | *LISTON :                         1 - |
+*MACEXP :                         1 - |  MAIN :                          91 C |
+*MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - |  R0 :                             0 - |
+ R1 :                             1 - |  R2 :                             2 - |
+ R3 :                             3 - |  R4 :                             4 - |
+ R5 :                             5 - |  R6 :                             6 - |
+ RD :                             D - |  RE :                             E - |
+*RELAXED :                        0 - |  RETURN_MAIN :                   67 C |
+ RF :                             F - |  STACK_START :                  2FF - |
+ S_GETKEY :                       6 C |  S_RETURN :                       4 C |
+ S_TEST :                         8 C | *TIME :                    22:49:51 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+ VIDEO_RAM :                      0 - |  WAIT :                          96 C |
+ __DELAY :                       AA C |
 
-     35 symbols
-     33 unused symbols
+     57 symbols
+     28 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 6/22/2016 22:10:13
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 6 - 7/5/2016 22:49:51
 
 
   codepages:
@@ -56,9 +286,9 @@
 STANDARD (0 changed characters)
 
 
-0.02 seconds assembly time
+0.01 seconds assembly time
 
-     18 lines source file
-      1 pass
+    228 lines source file
+      2 passes
       0 errors
       0 warnings
