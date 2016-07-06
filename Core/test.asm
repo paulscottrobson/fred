@@ -8,27 +8,27 @@
 
 scWidth = 64 																; screen dimensions.
 scHeight = 32
-memorySize = 4096 															; memory size built for.
-
-font = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" 								; what characters are being used.
+memorySize = 1024 															; memory size built for.
+font = "0123456789" 														; what characters are being used.
 
 	include core.asm
 
-	ldi 	0 																; page 0 = vram so we can see what's happening.
-	phi 	rd
-	plo 	rd
+main:
+	lrs 	rd,0															; use $0000 as video RAM so we can see
 
 loop:
-	sep 	re
-	db 		C_Test
+	vcall 	C_Test 															; call FUNC test.
+
 	ghi 	rd 																; copy keyboard in to display further down.
 	phi 	r4
 	glo 	rd
-	adi 	0C0h
+	adi 	0FCh
 	plo 	r4
+
 	ghi 	rc
 	str 	r4
-	inc 	r4
+
+	inc 	r4 																; write counter two further on.
 	inc 	r4
 	glo 	r8
 	str 	r4

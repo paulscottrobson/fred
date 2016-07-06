@@ -2,6 +2,7 @@
 ; ********************************************************************************************************************
 ;
 ;													Core code 
+;													=========
 ;	
 ;	This is the code that is mandatory : boot up code, short call handler, short register loader, interrupt routine.
 ;	anything else is optional.
@@ -70,7 +71,6 @@ vReturn macro 																; return from routine is VCALL 0
 
 	dis 																	; disable interrupts
 	db 		00h
-
 	ldi 	(memorySize-videoRAMSize) / 256 								; set up R2 (stack) and RD (video ram addr)
 	phi 	r2 																; which are the same value.
 	phi 	rd 																; stack down, video memory up.
@@ -80,21 +80,28 @@ vReturn macro 																; return from routine is VCALL 0
 
 	ghi 	r0 																; set up RF (12 bit register loader function)
 	phi 	rf 																; and R1 (interrupt handler)
-	phi 	r1 																; both of which are in page zero.
+	phi 	re 																; and RE (call function)
+	phi 	r1 																; all of which are in page zero.
 	ldi 	regLoader & 255
 	plo 	rf
 	ldi 	interrupt & 255
 	plo 	r1
+	ldi 	callHandler & 255
+	plo 	re
 
 	ldi 	0FFh 															; clear keyboard read flag RC.1 to no key.
 	phi 	rc
 
-	ldi 	bootp3 / 256 													; R3 = main program (may not be on this page)
+	out 	controlPort 													; write to control port 	
+	db 		videoControlBits 												; the video setup.
+
+	ldi 	main / 256 														; R3 = main program (may not be on this page)
 	phi 	r3
-	ldi 	bootp3 & 255
+	ldi 	main & 255
 	plo 	r3
 	ret  																	; now run in R3, set X=2 and enable interrupts.
 	db 		023h
+
 
 ; ********************************************************************************************************************
 ;
@@ -102,7 +109,7 @@ vReturn macro 																; return from routine is VCALL 0
 ;
 ; ********************************************************************************************************************
 
-	include core.mod 														; this table is generated.
+	include vector.mod 														; this table is generated.
 
 ; ********************************************************************************************************************
 ;
@@ -112,6 +119,7 @@ vReturn macro 																; return from routine is VCALL 0
 ;	Code which needs to be executed quickly should consider the LDI/PHI/LDI/PLO sequence - this is 4-5 times
 ; 	slower but uses 3 bytes not 6. 80:20 rule.
 ;
+;	 										THIS CODE IS SELF MODIFYING
 ; ********************************************************************************************************************
 
 regLoader:
@@ -211,14 +219,9 @@ __callHandler_Return:
 
 ; ********************************************************************************************************************
 ;
-;													Complete start up
+;												Included fonts, if any
 ;
 ; ********************************************************************************************************************
+	
+	include font.mod 														; any fonts requested loaded here.
 
-bootP3:
-	ldi 	videoControlBits 												; bit 0 = 64 cols, bit 1 = 32 rows
-	dec 	r2 																; push on stack.
-	str 	r2	
-	out 	controlPort 													; write to control port 	
-
-	lrs 	re,callHandler 													; set up RE to point to the call handler

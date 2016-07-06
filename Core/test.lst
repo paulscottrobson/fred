@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/6/2016 15:27:15
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/6/2016 17:03:57
 
 
        1/       0 :                     ; ********************************************************************************************************************
@@ -12,86 +12,85 @@
        9/       0 : =$40                scWidth = 64 																; screen dimensions.
       10/       0 : =$20                scHeight = 32
       11/       0 : =$1000              memorySize = 4096 															; memory size built for.
-      12/       0 :                     
-      13/       0 : =0123456789A..      font = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" 								; what characters are being used.
-      14/       0 :                     
-      15/       0 :                     	include core.asm
+      12/       0 : =0123456789         font = "0123456789" 														; what characters are being used.
+      13/       0 :                     
+      14/       0 :                     	include core.asm
 (1)    1/       0 :                     ; ********************************************************************************************************************
 (1)    2/       0 :                     ; ********************************************************************************************************************
 (1)    3/       0 :                     ;
 (1)    4/       0 :                     ;													Core code 
-(1)    5/       0 :                     ;	
-(1)    6/       0 :                     ;	This is the code that is mandatory : boot up code, short call handler, short register loader, interrupt routine.
-(1)    7/       0 :                     ;	anything else is optional.
-(1)    8/       0 :                     ;
-(1)    9/       0 :                     ; ********************************************************************************************************************
+(1)    5/       0 :                     ;													=========
+(1)    6/       0 :                     ;	
+(1)    7/       0 :                     ;	This is the code that is mandatory : boot up code, short call handler, short register loader, interrupt routine.
+(1)    8/       0 :                     ;	anything else is optional.
+(1)    9/       0 :                     ;
 (1)   10/       0 :                     ; ********************************************************************************************************************
-(1)   11/       0 :                     
-(1)   12/       0 :                     	cpu 	1802
-(1)   13/       0 :                     
-(1)   14/       0 : =0H                 r0 = 0 																		; DMA for video / keyboard
-(1)   15/       0 : =1H                 r1 = 1 																		; Interrupt routine
-(1)   16/       0 : =2H                 r2 = 2 																		; Stack
-(1)   17/       0 : =3H                 r3 = 3 																		; Normal Running Register
-(1)   18/       0 :                     
-(1)   19/       0 : =4H                 r4 = 4 																		; user registers (r4 - ra)
-(1)   20/       0 : =5H                 r5 = 5
-(1)   21/       0 : =6H                 r6 = 6
-(1)   22/       0 : =7H                 r7 = 7
-(1)   23/       0 : =8H                 r8 = 8
-(1)   24/       0 : =9H                 r9 = 9
-(1)   25/       0 : =AH                 ra = 10
-(1)   26/       0 :                     
-(1)   27/       0 : =BH                 rb = 11 																	; RB.0 RB.1 RC.0 changed by vcall and lrs.
-(1)   28/       0 : =CH                 rc = 12 																	; RC.1 current key press $FF none
-(1)   29/       0 : =DH                 rd = 13 																	; address of video RAM
-(1)   30/       0 : =EH                 re = 14 																	; call handler
-(1)   31/       0 : =FH                 rf = 15 																	; 3 byte 16 bit register loader.
-(1)   32/       0 :                     
-(1)   33/       0 :                     ; ********************************************************************************************************************
-(1)   34/       0 :                     ;
-(1)   35/       0 :                     ;													Relevant constants
-(1)   36/       0 :                     ;
-(1)   37/       0 :                     ; ********************************************************************************************************************
-(1)   38/       0 :                     
-(1)   39/       0 : =2H                 controlPort = 2 															; control port (bit 7 sound, 0/1 row/col)
-(1)   40/       0 : =100H               videoRAMSize = scWidth * scHeight / 8 										; amount of RAM allocated to memory.
-(1)   41/       0 : =3H                 videoControlBits = (scWidth/64)+(scHeight/32)*2 							; bits written to video control port.
-(1)   42/       0 :                     
-(1)   43/       0 :                     ; ********************************************************************************************************************
-(1)   44/       0 :                     ;
-(1)   45/       0 :                     ;														Various Macros
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 2 - 7/6/2016 15:27:15
+(1)   11/       0 :                     ; ********************************************************************************************************************
+(1)   12/       0 :                     
+(1)   13/       0 :                     	cpu 	1802
+(1)   14/       0 :                     
+(1)   15/       0 : =0H                 r0 = 0 																		; DMA for video / keyboard
+(1)   16/       0 : =1H                 r1 = 1 																		; Interrupt routine
+(1)   17/       0 : =2H                 r2 = 2 																		; Stack
+(1)   18/       0 : =3H                 r3 = 3 																		; Normal Running Register
+(1)   19/       0 :                     
+(1)   20/       0 : =4H                 r4 = 4 																		; user registers (r4 - ra)
+(1)   21/       0 : =5H                 r5 = 5
+(1)   22/       0 : =6H                 r6 = 6
+(1)   23/       0 : =7H                 r7 = 7
+(1)   24/       0 : =8H                 r8 = 8
+(1)   25/       0 : =9H                 r9 = 9
+(1)   26/       0 : =AH                 ra = 10
+(1)   27/       0 :                     
+(1)   28/       0 : =BH                 rb = 11 																	; RB.0 RB.1 RC.0 changed by vcall and lrs.
+(1)   29/       0 : =CH                 rc = 12 																	; RC.1 current key press $FF none
+(1)   30/       0 : =DH                 rd = 13 																	; address of video RAM
+(1)   31/       0 : =EH                 re = 14 																	; call handler
+(1)   32/       0 : =FH                 rf = 15 																	; 3 byte 16 bit register loader.
+(1)   33/       0 :                     
+(1)   34/       0 :                     ; ********************************************************************************************************************
+(1)   35/       0 :                     ;
+(1)   36/       0 :                     ;													Relevant constants
+(1)   37/       0 :                     ;
+(1)   38/       0 :                     ; ********************************************************************************************************************
+(1)   39/       0 :                     
+(1)   40/       0 : =2H                 controlPort = 2 															; control port (bit 7 sound, 0/1 row/col)
+(1)   41/       0 : =100H               videoRAMSize = scWidth * scHeight / 8 										; amount of RAM allocated to memory.
+(1)   42/       0 : =3H                 videoControlBits = (scWidth/64)+(scHeight/32)*2 							; bits written to video control port.
+(1)   43/       0 :                     
+(1)   44/       0 :                     ; ********************************************************************************************************************
+(1)   45/       0 :                     ;
+(1)   46/       0 :                     ;														Various Macros
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 2 - 7/6/2016 17:03:57
 
 
-(1)   46/       0 :                     ;
-(1)   47/       0 :                     ; ********************************************************************************************************************
-(1)   48/       0 :                     
-(1)   49/       0 :                     lrs macro 	register,value 													; load register slow 12 bit.
-(1)   50/       0 :                     	sep 	rf
-(1)   51/       0 :                     	db 		((register)*16)+(((value) / 256) & 15)
-(1)   52/       0 :                     	db 		(value) & 255
-(1)   53/       0 :                     	endm
-(1)   54/       0 :                     
-(1)   55/       0 :                     vCall macro function 														; call given routine by number
-(1)   56/       0 :                     	sep 	re
-(1)   57/       0 :                     	db 		function
-(1)   58/       0 :                     	endm
-(1)   59/       0 :                     
-(1)   60/       0 :                     vReturn macro 																; return from routine is VCALL 0
-(1)   61/       0 :                     	vCall	0 																
-(1)   62/       0 :                     	endm
-(1)   63/       0 :                     
-(1)   64/       0 :                     ; ********************************************************************************************************************
-(1)   65/       0 :                     ;
-(1)   66/       0 :                     ; 	Start up first part. Runs in P = 0 X = 0. Sets up Stack (R2) Interrupt (R1) RegLoader (RF) then loads P3
-(1)   67/       0 :                     ;	and goes to X = 2 P = 3 with interrupts enabled.
-(1)   68/       0 :                     ;
-(1)   69/       0 :                     ; ********************************************************************************************************************
-(1)   70/       0 :                     
-(1)   71/       0 : 71                  	dis 																	; disable interrupts
-(1)   72/       1 : 00                  	db 		00h
-(1)   73/       2 :                     
+(1)   47/       0 :                     ;
+(1)   48/       0 :                     ; ********************************************************************************************************************
+(1)   49/       0 :                     
+(1)   50/       0 :                     lrs macro 	register,value 													; load register slow 12 bit.
+(1)   51/       0 :                     	sep 	rf
+(1)   52/       0 :                     	db 		((register)*16)+(((value) / 256) & 15)
+(1)   53/       0 :                     	db 		(value) & 255
+(1)   54/       0 :                     	endm
+(1)   55/       0 :                     
+(1)   56/       0 :                     vCall macro function 														; call given routine by number
+(1)   57/       0 :                     	sep 	re
+(1)   58/       0 :                     	db 		function
+(1)   59/       0 :                     	endm
+(1)   60/       0 :                     
+(1)   61/       0 :                     vReturn macro 																; return from routine is VCALL 0
+(1)   62/       0 :                     	vCall	0 																
+(1)   63/       0 :                     	endm
+(1)   64/       0 :                     
+(1)   65/       0 :                     ; ********************************************************************************************************************
+(1)   66/       0 :                     ;
+(1)   67/       0 :                     ; 	Start up first part. Runs in P = 0 X = 0. Sets up Stack (R2) Interrupt (R1) RegLoader (RF) then loads P3
+(1)   68/       0 :                     ;	and goes to X = 2 P = 3 with interrupts enabled.
+(1)   69/       0 :                     ;
+(1)   70/       0 :                     ; ********************************************************************************************************************
+(1)   71/       0 :                     
+(1)   72/       0 : 71                  	dis 																	; disable interrupts
+(1)   73/       1 : 00                  	db 		00h
 (1)   74/       2 : F8 0F               	ldi 	(memorySize-videoRAMSize) / 256 								; set up R2 (stack) and RD (video ram addr)
 (1)   75/       4 : B2                  	phi 	r2 																; which are the same value.
 (1)   76/       5 : BD                  	phi 	rd 																; stack down, video memory up.
@@ -101,212 +100,234 @@
 (1)   80/       A :                     
 (1)   81/       A : 90                  	ghi 	r0 																; set up RF (12 bit register loader function)
 (1)   82/       B : BF                  	phi 	rf 																; and R1 (interrupt handler)
-(1)   83/       C : B1                  	phi 	r1 																; both of which are in page zero.
-(1)   84/       D : F8 20               	ldi 	regLoader & 255
-(1)   85/       F : AF                  	plo 	rf
-(1)   86/      10 : F8 3E               	ldi 	interrupt & 255
-(1)   87/      12 : A1                  	plo 	r1
-(1)   88/      13 :                     
-(1)   89/      13 : F8 FF               	ldi 	0FFh 															; clear keyboard read flag RC.1 to no key.
-(1)   90/      15 : BC                  	phi 	rc
-(1)   91/      16 :                     
-(1)   92/      16 : F8 00               	ldi 	bootp3 / 256 													; R3 = main program (may not be on this page)
-(1)   93/      18 : B3                  	phi 	r3
-(1)   94/      19 : F8 6F               	ldi 	bootp3 & 255
-(1)   95/      1B : A3                  	plo 	r3
-(1)   96/      1C : 70                  	ret  																	; now run in R3, set X=2 and enable interrupts.
-(1)   97/      1D : 23                  	db 		023h
-(1)   98/      1E :                     
-(1)   99/      1E :                     ; ********************************************************************************************************************
-(1)  100/      1E :                     ;
-(1)  101/      1E :                     ;											Table of word addresses to routines
-(1)  102/      1E :                     ;
-(1)  103/      1E :                     ; ********************************************************************************************************************
-(1)  104/      1E :                     
-(1)  105/      1E :                     	include core.mod 														; this table is generated.
- AS V1.42 Beta [Bld 102] - source file test.asm(core.mod) - page 3 - 7/6/2016 15:27:15
+(1)   83/       C : BE                  	phi 	re 																; and RE (call function)
+(1)   84/       D : B1                  	phi 	r1 																; all of which are in page zero.
+(1)   85/       E : F8 26               	ldi 	regLoader & 255
+(1)   86/      10 : AF                  	plo 	rf
+(1)   87/      11 : F8 44               	ldi 	interrupt & 255
+(1)   88/      13 : A1                  	plo 	r1
+(1)   89/      14 : F8 5A               	ldi 	callHandler & 255
+(1)   90/      16 : AE                  	plo 	re
+(1)   91/      17 :                     
+(1)   92/      17 : F8 FF               	ldi 	0FFh 															; clear keyboard read flag RC.1 to no key.
+(1)   93/      19 : BC                  	phi 	rc
+(1)   94/      1A :                     
+(1)   95/      1A : 62                  	out 	controlPort 													; write to control port 	
+(1)   96/      1B : 03                  	db 		videoControlBits 												; the video setup.
+(1)   97/      1C :                     
+(1)   98/      1C : F8 00               	ldi 	main / 256 														; R3 = main program (may not be on this page)
+(1)   99/      1E : B3                  	phi 	r3
+(1)  100/      1F : F8 A5               	ldi 	main & 255
+(1)  101/      21 : A3                  	plo 	r3
+(1)  102/      22 : 70                  	ret  																	; now run in R3, set X=2 and enable interrupts.
+(1)  103/      23 : 23                  	db 		023h
+(1)  104/      24 :                     
+(1)  105/      24 :                     
+(1)  106/      24 :                     ; ********************************************************************************************************************
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 3 - 7/6/2016 17:03:57
 
 
-(2)    1/      1E :                     C_test:
-(2)    2/      1E : 00 8B                   dw FUNC_test
-(2)    3/      20 :                     
-(1)  106/      20 :                     
-(1)  107/      20 :                     ; ********************************************************************************************************************
-(1)  108/      20 :                     ;
-(1)  109/      20 :                     ;	Slow compact Rn loader. Uses RF. Following 2 bytes have the register number in the upper 4 bits
-(1)  110/      20 :                     ; 	and a 12 bit value to load in the lower 4 bites. Preserves D but not DF. Reentrant.
-(1)  111/      20 :                     ;
-(1)  112/      20 :                     ;	Code which needs to be executed quickly should consider the LDI/PHI/LDI/PLO sequence - this is 4-5 times
-(1)  113/      20 :                     ; 	slower but uses 3 bytes not 6. 80:20 rule.
-(1)  114/      20 :                     ;
-(1)  115/      20 :                     ; ********************************************************************************************************************
-(1)  116/      20 :                     
-(1)  117/      20 :                     regLoader:
-(1)  118/      20 : AC                  	plo 	rc 																; preserve D
-(1)  119/      21 : 9F                  	ghi 	rf 																; point RB to self modifying code
-(1)  120/      22 : BB                  	phi 	rb
-(1)  121/      23 : F8 37               	ldi 	regLoader_putHigh 
-(1)  122/      25 : AB                  	plo 	rb
-(1)  123/      26 : 43                  	lda 	r3 																; get reg number / upper 4 bits
-(1)  124/      27 : 23                  	dec 	r3 																; unpick increment
-(1)  125/      28 : F6                  	shr 																	; isolate bits 4..7, register number.
-(1)  126/      29 : F6                  	shr
-(1)  127/      2A : F6                  	shr
-(1)  128/      2B : F6                  	shr
-(1)  129/      2C : F9 B0               	ori 	0B0h 															; make it PHI <register number>
-(1)  130/      2E : 5B                  	str 	rb 																; save at "PHI" point
-(1)  131/      2F : 1B                  	inc 	rb 																; advance RF to "PLO" point
-(1)  132/      30 : 1B                  	inc 	rb
-(1)  133/      31 : FB 10               	xri 	010h 															; make it PLO <register number>
-(1)  134/      33 : 5B                  	str 	rb 																; save at "PLO" point
-(1)  135/      34 : 43                  	lda 	r3 																; reload first byte
-(1)  136/      35 : FA 0F               	ani 	0Fh 															; only want lower 4 bits
-(1)  137/      37 :                     regLoader_putHigh:
-(1)  138/      37 : B0                  	phi 	0 																; these two phi and plo are modified.
-(1)  139/      38 : 43                  	lda 	r3
-(1)  140/      39 : A0                  	plo 	0
-(1)  141/      3A : 8C                  	glo 	rc 																; restore D
-(1)  142/      3B : D3                  	sep 	r3 																; return and re-enter
-(1)  143/      3C : 30 20               	br 		regLoader  														
-(1)  144/      3E :                     
-(1)  145/      3E :                     ; ********************************************************************************************************************
-(1)  146/      3E :                     ;
-(1)  147/      3E :                     ;	Interrupt handler. Sets up R0 with the value held in RD (Video Memory pointer). If R0 is $01 or $81 on
-(1)  148/      3E :                     ; 	entry then it assumes a DMA In has been done and copies the byte before into RC.1
-(1)  149/      3E :                     ;
-(1)  150/      3E :                     ; ********************************************************************************************************************
-(1)  151/      3E :                     
-(1)  152/      3E :                     interrupt:
-(1)  153/      3E : 22                  	dec 	r2 																; save XP on stack.
-(1)  154/      3F : 78                  	sav
-(1)  155/      40 : 22                  	dec 	r2 																; save D on stack
-(1)  156/      41 : 52                  	str 	r2
-(1)  157/      42 : 80                  	glo 	r0 																; look at R0 bits 0..6
-(1)  158/      43 : FA 7F               	ani 	7Fh
-(1)  159/      45 : FB 01               	xri 	01h
-(1)  160/      47 : 3A 4C               	bnz 	interrupt_nokey 												; if $01 then DMA was done this frame
-(1)  161/      49 : 20                  	dec 	r0 																; get the data that was input (one byte only)
-(1)  162/      4A : 40                  	lda 	r0
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 4 - 7/6/2016 15:27:15
+(1)  107/      24 :                     ;
+(1)  108/      24 :                     ;											Table of word addresses to routines
+(1)  109/      24 :                     ;
+(1)  110/      24 :                     ; ********************************************************************************************************************
+(1)  111/      24 :                     
+(1)  112/      24 :                     	include vector.mod 														; this table is generated.
+(2)    1/      24 :                     ;
+(2)    2/      24 :                     ; generated vector table
+(2)    3/      24 :                     ;
+(2)    4/      24 :                     C_test:
+(2)    5/      24 : 00 B8                   dw FUNC_test
+(2)    6/      26 :                     
+(1)  113/      26 :                     
+(1)  114/      26 :                     ; ********************************************************************************************************************
+(1)  115/      26 :                     ;
+(1)  116/      26 :                     ;	Slow compact Rn loader. Uses RF. Following 2 bytes have the register number in the upper 4 bits
+(1)  117/      26 :                     ; 	and a 12 bit value to load in the lower 4 bites. Preserves D but not DF. Reentrant.
+(1)  118/      26 :                     ;
+(1)  119/      26 :                     ;	Code which needs to be executed quickly should consider the LDI/PHI/LDI/PLO sequence - this is 4-5 times
+(1)  120/      26 :                     ; 	slower but uses 3 bytes not 6. 80:20 rule.
+(1)  121/      26 :                     ;
+(1)  122/      26 :                     ; ********************************************************************************************************************
+(1)  123/      26 :                     
+(1)  124/      26 :                     regLoader:
+(1)  125/      26 : AC                  	plo 	rc 																; preserve D
+(1)  126/      27 : 9F                  	ghi 	rf 																; point RB to self modifying code
+(1)  127/      28 : BB                  	phi 	rb
+(1)  128/      29 : F8 3D               	ldi 	regLoader_putHigh 
+(1)  129/      2B : AB                  	plo 	rb
+(1)  130/      2C : 43                  	lda 	r3 																; get reg number / upper 4 bits
+(1)  131/      2D : 23                  	dec 	r3 																; unpick increment
+(1)  132/      2E : F6                  	shr 																	; isolate bits 4..7, register number.
+(1)  133/      2F : F6                  	shr
+(1)  134/      30 : F6                  	shr
+(1)  135/      31 : F6                  	shr
+(1)  136/      32 : F9 B0               	ori 	0B0h 															; make it PHI <register number>
+(1)  137/      34 : 5B                  	str 	rb 																; save at "PHI" point
+(1)  138/      35 : 1B                  	inc 	rb 																; advance RF to "PLO" point
+(1)  139/      36 : 1B                  	inc 	rb
+(1)  140/      37 : FB 10               	xri 	010h 															; make it PLO <register number>
+(1)  141/      39 : 5B                  	str 	rb 																; save at "PLO" point
+(1)  142/      3A : 43                  	lda 	r3 																; reload first byte
+(1)  143/      3B : FA 0F               	ani 	0Fh 															; only want lower 4 bits
+(1)  144/      3D :                     regLoader_putHigh:
+(1)  145/      3D : B0                  	phi 	0 																; these two phi and plo are modified.
+(1)  146/      3E : 43                  	lda 	r3
+(1)  147/      3F : A0                  	plo 	0
+(1)  148/      40 : 8C                  	glo 	rc 																; restore D
+(1)  149/      41 : D3                  	sep 	r3 																; return and re-enter
+(1)  150/      42 : 30 26               	br 		regLoader  														
+(1)  151/      44 :                     
+(1)  152/      44 :                     ; ********************************************************************************************************************
+(1)  153/      44 :                     ;
+(1)  154/      44 :                     ;	Interrupt handler. Sets up R0 with the value held in RD (Video Memory pointer). If R0 is $01 or $81 on
+(1)  155/      44 :                     ; 	entry then it assumes a DMA In has been done and copies the byte before into RC.1
+(1)  156/      44 :                     ;
+(1)  157/      44 :                     ; ********************************************************************************************************************
+(1)  158/      44 :                     
+(1)  159/      44 :                     interrupt:
+(1)  160/      44 : 22                  	dec 	r2 																; save XP on stack.
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 4 - 7/6/2016 17:03:57
 
 
-(1)  163/      4B : BC                  	phi 	rc 																; and save in RC.1
-(1)  164/      4C :                     interrupt_nokey:
-(1)  165/      4C : 9D                  	ghi 	rd 																; copy RD (video RAM address) to R0
-(1)  166/      4D : B0                  	phi 	r0
-(1)  167/      4E : 8D                  	glo 	rd
-(1)  168/      4F : A0                  	plo 	r0
-(1)  169/      50 : 42                  	lda 	r2 																; restore D
-(1)  170/      51 : 70                  	ret 																	; restore XP
-(1)  171/      52 : 30 3E               	br 		interrupt
-(1)  172/      54 :                     
-(1)  173/      54 :                     ; ********************************************************************************************************************
-(1)  174/      54 :                     ;
-(1)  175/      54 :                     ; 		Call routine where the byte after the call is the address in page 0 of the new routine. If the byte is
-(1)  176/      54 :                     ;		zero, then this is a return from a caller. Preserves D and DF on call or return.
-(1)  177/      54 :                     ;
-(1)  178/      54 :                     ; ********************************************************************************************************************
-(1)  179/      54 :                     
-(1)  180/      54 :                     callHandler:
-(1)  181/      54 : AC                  	plo 	rc 																; save D register
-(1)  182/      55 : 43                  	lda 	r3 																; read the function number
-(1)  183/      56 : 32 69               	bz 		__callHandler_Return 											; if zero, then do a return.
-(1)  184/      58 : AB                  	plo 	rb 																; save in RD.0
-(1)  185/      59 : 9E                  	ghi 	re 																; make RD.1 point to zero page
-(1)  186/      5A : BB                  	phi 	rb
-(1)  187/      5B :                     
-(1)  188/      5B : 93                  	ghi 	r3 																; push R3.1 on the stack
-(1)  189/      5C : 22                  	dec 	r2
-(1)  190/      5D : 52                  	str 	r2
-(1)  191/      5E : 83                  	glo 	r3 																; push R3.0 on the stack.
-(1)  192/      5F : 22                  	dec 	r2
-(1)  193/      60 : 52                  	str 	r2
+(1)  161/      45 : 78                  	sav
+(1)  162/      46 : 22                  	dec 	r2 																; save D on stack
+(1)  163/      47 : 52                  	str 	r2
+(1)  164/      48 : 80                  	glo 	r0 																; look at R0 bits 0..6
+(1)  165/      49 : FA 7F               	ani 	7Fh
+(1)  166/      4B : FB 01               	xri 	01h
+(1)  167/      4D : 3A 52               	bnz 	interrupt_nokey 												; if $01 then DMA was done this frame
+(1)  168/      4F : 20                  	dec 	r0 																; get the data that was input (one byte only)
+(1)  169/      50 : 40                  	lda 	r0
+(1)  170/      51 : BC                  	phi 	rc 																; and save in RC.1
+(1)  171/      52 :                     interrupt_nokey:
+(1)  172/      52 : 9D                  	ghi 	rd 																; copy RD (video RAM address) to R0
+(1)  173/      53 : B0                  	phi 	r0
+(1)  174/      54 : 8D                  	glo 	rd
+(1)  175/      55 : A0                  	plo 	r0
+(1)  176/      56 : 42                  	lda 	r2 																; restore D
+(1)  177/      57 : 70                  	ret 																	; restore XP
+(1)  178/      58 : 30 44               	br 		interrupt
+(1)  179/      5A :                     
+(1)  180/      5A :                     ; ********************************************************************************************************************
+(1)  181/      5A :                     ;
+(1)  182/      5A :                     ; 		Call routine where the byte after the call is the address in page 0 of the new routine. If the byte is
+(1)  183/      5A :                     ;		zero, then this is a return from a caller. Preserves D and DF on call or return.
+(1)  184/      5A :                     ;
+(1)  185/      5A :                     ; ********************************************************************************************************************
+(1)  186/      5A :                     
+(1)  187/      5A :                     callHandler:
+(1)  188/      5A : AC                  	plo 	rc 																; save D register
+(1)  189/      5B : 43                  	lda 	r3 																; read the function number
+(1)  190/      5C : 32 6F               	bz 		__callHandler_Return 											; if zero, then do a return.
+(1)  191/      5E : AB                  	plo 	rb 																; save in RD.0
+(1)  192/      5F : 9E                  	ghi 	re 																; make RD.1 point to zero page
+(1)  193/      60 : BB                  	phi 	rb
 (1)  194/      61 :                     
-(1)  195/      61 : 4B                  	lda 	rb 																; read routine address into R3
-(1)  196/      62 : B3                  	phi 	r3
-(1)  197/      63 : 4B                  	lda 	rb 	
-(1)  198/      64 : A3                  	plo 	r3
-(1)  199/      65 :                     
-(1)  200/      65 :                     __callHandler_Exit:
-(1)  201/      65 : 8C                  	glo 	rc 																; restore D register
-(1)  202/      66 : D3                  	sep 	r3 																; switch back to R3
-(1)  203/      67 : 30 54               	br 		callHandler
-(1)  204/      69 :                     
-(1)  205/      69 :                     __callHandler_Return:
-(1)  206/      69 : 42                  	lda 	r2 																; pop return address, then restore D and switch
-(1)  207/      6A : A3                  	plo 	r3
-(1)  208/      6B : 42                  	lda 	r2
-(1)  209/      6C : B3                  	phi 	r3
-(1)  210/      6D : 30 65               	br 		__callHandler_Exit
+(1)  195/      61 : 93                  	ghi 	r3 																; push R3.1 on the stack
+(1)  196/      62 : 22                  	dec 	r2
+(1)  197/      63 : 52                  	str 	r2
+(1)  198/      64 : 83                  	glo 	r3 																; push R3.0 on the stack.
+(1)  199/      65 : 22                  	dec 	r2
+(1)  200/      66 : 52                  	str 	r2
+(1)  201/      67 :                     
+(1)  202/      67 : 4B                  	lda 	rb 																; read routine address into R3
+(1)  203/      68 : B3                  	phi 	r3
+(1)  204/      69 : 4B                  	lda 	rb 	
+(1)  205/      6A : A3                  	plo 	r3
+(1)  206/      6B :                     
+(1)  207/      6B :                     __callHandler_Exit:
+(1)  208/      6B : 8C                  	glo 	rc 																; restore D register
+(1)  209/      6C : D3                  	sep 	r3 																; switch back to R3
+(1)  210/      6D : 30 5A               	br 		callHandler
 (1)  211/      6F :                     
-(1)  212/      6F :                     ; ********************************************************************************************************************
-(1)  213/      6F :                     ;
-(1)  214/      6F :                     ;													Complete start up
-(1)  215/      6F :                     ;
-(1)  216/      6F :                     ; ********************************************************************************************************************
-(1)  217/      6F :                     
-(1)  218/      6F :                     bootP3:
-(1)  219/      6F : F8 03               	ldi 	videoControlBits 												; bit 0 = 64 cols, bit 1 = 32 rows
-(1)  220/      71 : 22                  	dec 	r2 																; push on stack.
-(1)  221/      72 : 52                  	str 	r2	
-(1)  222/      73 : 62                  	out 	controlPort 													; write to control port 	
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 5 - 7/6/2016 15:27:15
+(1)  212/      6F :                     __callHandler_Return:
+(1)  213/      6F : 42                  	lda 	r2 																; pop return address, then restore D and switch
+(1)  214/      70 : A3                  	plo 	r3
+(1)  215/      71 : 42                  	lda 	r2
+(1)  216/      72 : B3                  	phi 	r3
+(1)  217/      73 : 30 6B               	br 		__callHandler_Exit
+(1)  218/      75 :                     
+(1)  219/      75 :                     ; ********************************************************************************************************************
+(1)  220/      75 :                     ;
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 5 - 7/6/2016 17:03:57
 
 
-(1)  223/      74 :                     
-(1)  224/      74 : (MACRO)             	lrs 	re,callHandler 													; set up RE to point to the call handler
-(1)  224/      74 : DF                          sep     rf
-(1)  224/      75 : E0                          db              ((RE)*16)+(((CALLHANDLER) / 256) & 15)
-(1)  224/      76 : 54                          db              (CALLHANDLER) & 255
-(1)  225/      77 :                     
-      16/      77 :                     
-      17/      77 : F8 00               	ldi 	0 																; page 0 = vram so we can see what's happening.
-      18/      79 : BD                  	phi 	rd
-      19/      7A : AD                  	plo 	rd
-      20/      7B :                     
-      21/      7B :                     loop:
-      22/      7B : DE                  	sep 	re
-      23/      7C : 1E                  	db 		C_Test
-      24/      7D : 9D                  	ghi 	rd 																; copy keyboard in to display further down.
-      25/      7E : B4                  	phi 	r4
-      26/      7F : 8D                  	glo 	rd
-      27/      80 : FC C0               	adi 	0C0h
-      28/      82 : A4                  	plo 	r4
-      29/      83 : 9C                  	ghi 	rc
-      30/      84 : 54                  	str 	r4
-      31/      85 : 14                  	inc 	r4
-      32/      86 : 14                  	inc 	r4
-      33/      87 : 88                  	glo 	r8
-      34/      88 : 54                  	str 	r4
-      35/      89 : 30 7B               	br 		loop
-      36/      8B :                     
-      37/      8B :                     FUNC_test:
-      38/      8B : 18                  	inc 	r8
-      39/      8C : DE                  	sep 	re
-      40/      8D : 00                  	db 		00
-      41/      8E :                     
-      42/      8E :                     
- AS V1.42 Beta [Bld 102] - source file test.asm - page 6 - 7/6/2016 15:27:15
+(1)  221/      75 :                     ;												Included fonts, if any
+(1)  222/      75 :                     ;
+(1)  223/      75 :                     ; ********************************************************************************************************************
+(1)  224/      75 :                     	
+(1)  225/      75 :                     	include font.mod
+(2)    1/      75 :                     ;
+(2)    2/      75 :                     ; generated fonts
+(2)    3/      75 :                     ;
+(2)    4/      75 :                     __fontData:
+(2)    5/      75 : 7C 82 82 82 7D          db 07ch,082h,082h,082h,07dh         ; '0' code 125
+(2)    6/      7A : 84 FE 81                db 084h,0feh,081h                   ; '1' code 129
+(2)    7/      7D : E4 92 92 92 8D          db 0e4h,092h,092h,092h,08dh         ; '2' code 141
+(2)    8/      82 : 44 92 92 92 6D          db 044h,092h,092h,092h,06dh         ; '3' code 109
+(2)    9/      87 : 30 28 24 FE 21          db 030h,028h,024h,0feh,021h         ; '4' code 33
+(2)   10/      8C : 5E 92 92 B2 53          db 05eh,092h,092h,0b2h,053h         ; '5' code 83
+(2)   11/      91 : 7C 92 92 92 65          db 07ch,092h,092h,092h,065h         ; '6' code 101
+(2)   12/      96 : 82 42 22 12 0F          db 082h,042h,022h,012h,00fh         ; '7' code 15
+(2)   13/      9B : 6C 92 92 92 6D          db 06ch,092h,092h,092h,06dh         ; '8' code 109
+(2)   14/      A0 : 4C 92 92 92 7D          db 04ch,092h,092h,092h,07dh         ; '9' code 125
+(2)   15/      A5 :                     
+(1)  226/      A5 :                     
+(1)  227/      A5 :                     
+      15/      A5 :                     
+      16/      A5 :                     main:
+      17/      A5 : (MACRO)             	lrs 	rd,0															; use $0000 as video RAM so we can see
+      17/      A5 : DF                          sep     rf
+      17/      A6 : D0                          db              ((RD)*16)+(((0) / 256) & 15)
+      17/      A7 : 00                          db              (0) & 255
+      18/      A8 :                     
+      19/      A8 :                     loop:
+      20/      A8 : (MACRO)             	vcall 	C_Test 															; call FUNC test.
+      20/      A8 : DE                          sep     re
+      20/      A9 : 24                          db              C_TEST
+      21/      AA :                     
+      22/      AA : 9D                  	ghi 	rd 																; copy keyboard in to display further down.
+      23/      AB : B4                  	phi 	r4
+      24/      AC : 8D                  	glo 	rd
+      25/      AD : FC FC               	adi 	0FCh
+      26/      AF : A4                  	plo 	r4
+      27/      B0 :                     
+      28/      B0 : 9C                  	ghi 	rc
+      29/      B1 : 54                  	str 	r4
+      30/      B2 :                     
+      31/      B2 : 14                  	inc 	r4 																; write counter two further on.
+      32/      B3 : 14                  	inc 	r4
+      33/      B4 : 88                  	glo 	r8
+      34/      B5 : 54                  	str 	r4
+      35/      B6 : 30 A8               	br 		loop
+      36/      B8 :                     
+      37/      B8 :                     FUNC_test:
+      38/      B8 : 18                  	inc 	r8
+      39/      B9 : DE                  	sep 	re
+      40/      BA : 00                  	db 		00
+      41/      BB :                     
+      42/      BB :                     
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 6 - 7/6/2016 17:03:57
 
 
   symbol table (* = unused):
   ------------------------
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
- BOOTP3 :                        6F C | *BRANCHEXT :                      0 - |
- CALLHANDLER :                   54 C | *CASESENSITIVE :                  0 - |
-*CONSTPI :        3.141592653589793 - |  CONTROLPORT :                    2 - |
- C_TEST :                        1E C | *DATE :                    7/6/2016 - |
-*FALSE :                          0 - |
-*FONT :                                0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ - |
-*FULLPMMU :                       1 - |  FUNC_TEST :                     8B C |
-*HAS64 :                          1 - | *HASDSP :                         0 - |
-*HASFPU :                         0 - | *HASPMMU :                        0 - |
-*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
-*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
-*INSUPMODE :                      0 - |  INTERRUPT :                     3E C |
- INTERRUPT_NOKEY :               4C C | *LISTON :                         1 - |
- LOOP :                          7B C | *MACEXP :                         1 - |
+*BRANCHEXT :                      0 - |  CALLHANDLER :                   5A C |
+*CASESENSITIVE :                  0 - | *CONSTPI :        3.141592653589793 - |
+ CONTROLPORT :                    2 - |  C_TEST :                        24 C |
+*DATE :                    7/6/2016 - | *FALSE :                          0 - |
+*FONT :                  0123456789 - | *FULLPMMU :                       1 - |
+ FUNC_TEST :                     B8 C | *HAS64 :                          1 - |
+*HASDSP :                         0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - | *INEXTMODE :                      0 - |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+ INTERRUPT :                     44 C |  INTERRUPT_NOKEY :               52 C |
+*LISTON :                         1 - |  LOOP :                          A8 C |
+*MACEXP :                         1 - |  MAIN :                          A5 C |
  MEMORYSIZE :                  1000 - | *MOMCPU :                      1802 - |
 *MOMCPUNAME :                  1802 - | *NESTMAX :                      100 - |
 *PACKING :                        0 - | *PADDING :                        1 - |
@@ -317,18 +338,19 @@
  R8 :                             8 - | *R9 :                             9 - |
 *RA :                             A - |  RB :                             B - |
  RC :                             C - |  RD :                             D - |
- RE :                             E - |  REGLOADER :                     20 C |
- REGLOADER_PUTHIGH :             37 C | *RELAXED :                        0 - |
+ RE :                             E - |  REGLOADER :                     26 C |
+ REGLOADER_PUTHIGH :             3D C | *RELAXED :                        0 - |
  RF :                             F - |  SCHEIGHT :                      20 - |
- SCWIDTH :                       40 - | *TIME :                    15:27:15 - |
+ SCWIDTH :                       40 - | *TIME :                    17:03:57 - |
 *TRUE :                           1 - | *VERSION :                     142F - |
  VIDEOCONTROLBITS :               3 - |  VIDEORAMSIZE :                 100 - |
- __CALLHANDLER_EXIT :            65 C |  __CALLHANDLER_RETURN :          69 C |
+ __CALLHANDLER_EXIT :            6B C |  __CALLHANDLER_RETURN :          6F C |
+*__FONTDATA :                    75 C |
 
-     62 symbols
-     34 unused symbols
+     63 symbols
+     35 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 7 - 7/6/2016 15:27:15
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 7 - 7/6/2016 17:03:57
 
 
   defined macros:
@@ -339,7 +361,7 @@ VRETURN                               |
 
       3 macros
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 8 - 7/6/2016 15:27:15
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 8 - 7/6/2016 17:03:57
 
 
   codepages:
@@ -348,10 +370,10 @@ VRETURN                               |
 STANDARD (0 changed characters)
 
 
-0.00 seconds assembly time
+0.01 seconds assembly time
 
-    270 lines source file
-    273 lines incl. macro expansions
+    290 lines source file
+    295 lines incl. macro expansions
       2 passes
       0 errors
       0 warnings
