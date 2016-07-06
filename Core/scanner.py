@@ -68,7 +68,7 @@ for ch in font:
 
 	data = [] 																	# byte data for given character
 	for byte in range(0,len(fontData[n][0])):									# for each byte
-		result = 0 																# bit 0 set on last. bit 1 top bit this col etc.													
+		result = 0 																# bit 0 set on last. bit 1 top bit this col etc.
 		for y in range(0,7):
 			if fontData[n][y][byte] == 'X':
 				result = result + (2 << y)

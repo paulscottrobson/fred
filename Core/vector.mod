@@ -1,5 +1,7 @@
 ;
 ; generated vector table
 ;
-C_test:
-    dw FUNC_test
+C_PrintString:
+    dw FUNC_PrintString
+C_PrintChar:
+    dw FUNC_PrintChar

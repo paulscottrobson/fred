@@ -7,6 +7,7 @@
 ;	This is the code that is mandatory : boot up code, short call handler, short register loader, interrupt routine.
 ;	anything else is optional.
 ;
+;	Even those it says CPU 1802, it is actually for a 1801.
 ; ********************************************************************************************************************
 ; ********************************************************************************************************************
 
@@ -219,9 +220,95 @@ __callHandler_Return:
 
 ; ********************************************************************************************************************
 ;
+;						Print String at R9, terminated by $FF. On exit R9 points to byte after it.
+;
+; ********************************************************************************************************************
+
+FUNC_PrintString:
+	if 		lib_text
+	lda 	r9 																; get character
+	xri 	0FFh 															; check if end of string $FF
+	bz 		__FPrint_VReturn 												; if so, go to the vreturn in print char 
+	xri 	0FFh 															; fix character back
+	vcall 	C_PrintChar 													; print it
+	br 		FUNC_PrintString 												; and try again.
+	endif
+
+; ********************************************************************************************************************
+;
+;					Print character. RA is the current position (LSB is memory offset, MSB is bit)
+;
+;	uses temporary registers RC.0 and RB, also RE is used in the call but reset afterwards. RA is updated to the
+; 	next space.
+; ********************************************************************************************************************
+
+FUNC_PrintChar:
+	if 		lib_text
+	sex 	rb 																; use RB as index register
+	plo 	rc 																; save in RC.
+	lrs 	re,__fontData 													; point R9 to fontdata.
+__FFindCharacter:
+	glo 	rc 																; character counter zero ?
+	bz 		__FPrintLoop2 													; go print.
+__FFindNext:
+	lda 	re 																; keep advancing until and end marker (bit 0)
+	shr 																	; found
+	bnf 	__FFindNext
+	dec 	rc 																; dec character counter e.g. found one more.
+	br 		__FFindCharacter
+;
+;	Print next column of pixels from RE.
+;
+__FPrintLoop2:
+	glo 	ra 																; copy current position into RB from RA.0
+	plo 	rb 																; (position) and RD.1 (video high)
+	ghi 	rd
+	phi 	rb
+
+	lda 	re 																; get the next byte of video data
+	shr 		 															; shift right, throwing the end marker.
+__FPrintLoop1:
+	shr 																	; shift right and put in RC.0
+	plo 	rc
+	bnf 	__FPrintNoPixel 												; if 0 was shifted in.
+	ghi 	ra 																; get bitmask from RA.1
+	or 																		; OR into display.
+	str 	rb
+__FPrintNoPixel:
+	glo 	rb 																; move address to next line down
+	adi 	scWidth/8
+	plo 	rb
+	glo 	rc 																; get mask back into D.
+	bnz 	__FPrintLoop1 													; back if more to print for this column.
+
+__FPrintNext:
+	ghi 	ra 																; shift RA.1 (the bitmask) right.
+	shr 
+	phi 	ra 
+	bnf 	__FNotAdvance 													; if DF set then bit 7 of next.
+	inc 	ra 																; increment RA.0 - next byte right
+	ldi 	080h 															; reset mask in RA.1 to $80 (first bit)
+	phi 	ra
+__FNotAdvance:
+	dec 	re 																; re-read last one column data
+	lda 	re
+	shr
+	bnf 	__FPrintLoop2 													; if not first of next one, go back.
+	inc 	rc 																; first time round RC.0 will be zero.
+	glo 	rc 																; second time round it will be 1,
+	xri 	1 																; so we do the 'next space' one more time.
+	bz 		__FPrintNext
+	lrs 	re,callHandler 													; reinstate RE vector.
+__FPrint_VReturn:
+	vReturn
+	endif
+
+; ********************************************************************************************************************
+;
 ;												Included fonts, if any
 ;
 ; ********************************************************************************************************************
 	
+	if 		lib_text
 	include font.mod 														; any fonts requested loaded here.
-
+	endif
