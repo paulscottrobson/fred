@@ -24,7 +24,7 @@ r6 = 6
 r7 = 7
 r8 = 8
 r9 = 9
-ra = 10
+ra = 10 																	; used as pixel position for text writing.
 
 rb = 11 																	; RB.0 RB.1 RC.0 changed by vcall and lrs.
 rc = 12 																	; RC.1 current key press $FF none
@@ -236,7 +236,7 @@ FUNC_PrintString:
 
 ; ********************************************************************************************************************
 ;
-;					Print character. RA is the current position (LSB is memory offset, MSB is bit)
+;					Print character. RA is the current position (LSB is memory offset, MSB is bitmask)
 ;
 ;	uses temporary registers RC.0 and RB, also RE is used in the call but reset afterwards. RA is updated to the
 ; 	next space.
@@ -305,6 +305,129 @@ __FPrint_VReturn:
 
 ; ********************************************************************************************************************
 ;
+;													Get a key press 
+;
+; ********************************************************************************************************************
+
+FUNC_GetKey:
+	ghi 	rc 																; wait for RC to be not $FF
+	xri 	0FFh
+	bz 		FUNC_GetKey 													
+																			; then fall through.
+
+; ********************************************************************************************************************
+;
+;							Get any key press since last call, $FF = no key pressed
+;
+; ********************************************************************************************************************
+
+FUNC_CheckKey:
+	ghi 	rc 																; get key state
+	plo 	rb 																; save in temp
+	ldi 	0FFh 															; set key state back to $FF
+	phi 	rc
+	glo 	rb 																; restore key pressed.
+	vReturn
+
+; ********************************************************************************************************************
+;
+;													Clear Screen
+;
+; ********************************************************************************************************************
+
+FUNC_ClearScreen:
+	ghi 	rd 																; copy video address to RB
+	phi 	rb
+	glo 	rd
+	plo 	rb
+__ClearLoop:
+	ghi 	r1
+	str 	rb
+	inc 	rb
+	glo 	rb
+	bnz 	__ClearLoop
+	vReturn
+
+FUNC_Sound:
+	vReturn
+
+; ********************************************************************************************************************
+;
+;					Set cursor to position in 2 bytes following call. (vCall C_SetCursor ; db x,y)
+;
+; ********************************************************************************************************************
+
+FUNC_SetCursor:
+	if 		lib_text
+	lda 	r2 																; unstack return address to RB
+	plo 	rb
+	lda 	r2
+	phi 	rb
+	lda 	rb 																; read low then high into RA
+	plo 	ra
+	lda 	rb 															
+	phi 	ra
+	ghi 	rb 																; push address back on stack.
+	dec 	r2
+	str 	r2
+	glo 	rb
+	dec 	r2
+	str 	r2
+	endif
+
+; ********************************************************************************************************************
+;
+;				Convert cursor position in RA (X = Low,Y = High) to screen position in RA (Byte = Low, Mask = High)
+;
+; ********************************************************************************************************************
+
+FUNC_SetCursorXY:
+	if 		lib_text
+	sex 	r2 																; use R2 as stack.
+	ghi 	ra 																; get Y position
+	ani 	(scHeight-1) 													; validate it so 0-15 or 0-31
+	dec 	r2
+	str 	r2	
+	add  																	; D = Y * 2
+	str 	r2
+	add 
+	str 	r2 																; D = Y * 4
+	if 		scWidth = 64  
+	add 																	; D = Y * 8 *only* if 64 pixels per line.
+	str 	r2
+	endif
+	glo 	ra 																; get X position
+	ani 	(scWidth-1) 													; force into range 0-31 or 0-63
+	shr 																	; divide by 8
+	shr
+	shr
+	add 																	; add to Y*4 or Y*8
+	str 	r2
+	glo 	rd  															; get low byte of video address
+	add 																	; add to result.
+	str 	r2 																; save the byte position at TOS.
+
+	ldi 	080h 															; set mask to $80
+__FUNC_GetMask:
+	phi 	ra
+	glo 	ra 																; reached mod 8 = 0
+	ani 	7
+	bz 		__FUNC_GotMask 													; if so mask is correct
+	dec 	ra 																; decrement X
+	ghi 	ra 																; shift mask right
+	shr
+	br 		__FUNC_GetMask
+
+__FUNC_GotMask:
+	lda 	r2 																; pop byte position
+	plo 	ra 																; to RA.0
+	vReturn 																; return from subroutine
+	endif
+
+
+
+; ********************************************************************************************************************
+;
 ;												Included fonts, if any
 ;
 ; ********************************************************************************************************************
@@ -312,3 +435,5 @@ __FPrint_VReturn:
 	if 		lib_text
 	include font.mod 														; any fonts requested loaded here.
 	endif
+
+; TODO: Sound Code

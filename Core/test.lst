@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/6/2016 23:19:34
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/7/2016 15:32:09
 
 
        1/       0 :                     ; ********************************************************************************************************************
@@ -45,7 +45,7 @@
 (1)   24/       0 : =7H                 r7 = 7
 (1)   25/       0 : =8H                 r8 = 8
 (1)   26/       0 : =9H                 r9 = 9
-(1)   27/       0 : =AH                 ra = 10
+(1)   27/       0 : =AH                 ra = 10 																	; used as pixel position for text writing.
 (1)   28/       0 :                     
 (1)   29/       0 : =BH                 rb = 11 																	; RB.0 RB.1 RC.0 changed by vcall and lrs.
 (1)   30/       0 : =CH                 rc = 12 																	; RC.1 current key press $FF none
@@ -61,7 +61,7 @@
 (1)   40/       0 :                     
 (1)   41/       0 : =2H                 controlPort = 2 															; control port (bit 7 sound, 0/1 row/col)
 (1)   42/       0 : =100H               videoRAMSize = scWidth * scHeight / 8 										; amount of RAM allocated to memory.
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 2 - 7/6/2016 23:19:34
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 2 - 7/7/2016 15:32:09
 
 
 (1)   43/       0 : =3H                 videoControlBits = (scWidth/64)+(scHeight/32)*2 							; bits written to video control port.
@@ -107,11 +107,11 @@
 (1)   83/       B : BF                  	phi 	rf 																; and R1 (interrupt handler)
 (1)   84/       C : BE                  	phi 	re 																; and RE (call function)
 (1)   85/       D : B1                  	phi 	r1 																; all of which are in page zero.
-(1)   86/       E : F8 28               	ldi 	regLoader & 255
+(1)   86/       E : F8 34               	ldi 	regLoader & 255
 (1)   87/      10 : AF                  	plo 	rf
-(1)   88/      11 : F8 46               	ldi 	interrupt & 255
+(1)   88/      11 : F8 52               	ldi 	interrupt & 255
 (1)   89/      13 : A1                  	plo 	r1
-(1)   90/      14 : F8 5C               	ldi 	callHandler & 255
+(1)   90/      14 : F8 68               	ldi 	callHandler & 255
 (1)   91/      16 : AE                  	plo 	re
 (1)   92/      17 :                     
 (1)   93/      17 : F8 FF               	ldi 	0FFh 															; clear keyboard read flag RC.1 to no key.
@@ -120,11 +120,11 @@
 (1)   96/      1A : 62                  	out 	controlPort 													; write to control port 	
 (1)   97/      1B : 03                  	db 		videoControlBits 												; the video setup.
 (1)   98/      1C :                     
-(1)   99/      1C : F8 00               	ldi 	main / 256 														; R3 = main program (may not be on this page)
+(1)   99/      1C : F8 01               	ldi 	main / 256 														; R3 = main program (may not be on this page)
 (1)  100/      1E : B3                  	phi 	r3
-(1)  101/      1F : F8 EE               	ldi 	main & 255
+(1)  101/      1F : F8 4B               	ldi 	main & 255
 (1)  102/      21 : A3                  	plo 	r3
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 3 - 7/6/2016 23:19:34
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 3 - 7/7/2016 15:32:09
 
 
 (1)  103/      22 : 70                  	ret  																	; now run in R3, set X=2 and enable interrupts.
@@ -142,317 +142,500 @@
 (2)    2/      24 :                     ; generated vector table
 (2)    3/      24 :                     ;
 (2)    4/      24 :                     C_PrintString:
-(2)    5/      24 : 00 77                   dw FUNC_PrintString
-(2)    6/      26 :                     C_PrintChar:
-(2)    7/      26 : 00 82                   dw FUNC_PrintChar
-(2)    8/      28 :                     
-(1)  114/      28 :                     
-(1)  115/      28 :                     ; ********************************************************************************************************************
-(1)  116/      28 :                     ;
-(1)  117/      28 :                     ;	Slow compact Rn loader. Uses RF. Following 2 bytes have the register number in the upper 4 bits
-(1)  118/      28 :                     ; 	and a 12 bit value to load in the lower 4 bites. Preserves D but not DF. Reentrant.
-(1)  119/      28 :                     ;
-(1)  120/      28 :                     ;	Code which needs to be executed quickly should consider the LDI/PHI/LDI/PLO sequence - this is 4-5 times
-(1)  121/      28 :                     ; 	slower but uses 3 bytes not 6. 80:20 rule.
-(1)  122/      28 :                     ;
-(1)  123/      28 :                     ;	 										THIS CODE IS SELF MODIFYING
-(1)  124/      28 :                     ; ********************************************************************************************************************
-(1)  125/      28 :                     
-(1)  126/      28 :                     regLoader:
-(1)  127/      28 : AC                  	plo 	rc 																; preserve D
-(1)  128/      29 : 9F                  	ghi 	rf 																; point RB to self modifying code
-(1)  129/      2A : BB                  	phi 	rb
-(1)  130/      2B : F8 3F               	ldi 	regLoader_putHigh 
-(1)  131/      2D : AB                  	plo 	rb
-(1)  132/      2E : 43                  	lda 	r3 																; get reg number / upper 4 bits
-(1)  133/      2F : 23                  	dec 	r3 																; unpick increment
-(1)  134/      30 : F6                  	shr 																	; isolate bits 4..7, register number.
-(1)  135/      31 : F6                  	shr
-(1)  136/      32 : F6                  	shr
-(1)  137/      33 : F6                  	shr
-(1)  138/      34 : F9 B0               	ori 	0B0h 															; make it PHI <register number>
-(1)  139/      36 : 5B                  	str 	rb 																; save at "PHI" point
-(1)  140/      37 : 1B                  	inc 	rb 																; advance RF to "PLO" point
-(1)  141/      38 : 1B                  	inc 	rb
-(1)  142/      39 : FB 10               	xri 	010h 															; make it PLO <register number>
-(1)  143/      3B : 5B                  	str 	rb 																; save at "PLO" point
-(1)  144/      3C : 43                  	lda 	r3 																; reload first byte
-(1)  145/      3D : FA 0F               	ani 	0Fh 															; only want lower 4 bits
-(1)  146/      3F :                     regLoader_putHigh:
-(1)  147/      3F : B0                  	phi 	0 																; these two phi and plo are modified.
-(1)  148/      40 : 43                  	lda 	r3
-(1)  149/      41 : A0                  	plo 	0
-(1)  150/      42 : 8C                  	glo 	rc 																; restore D
-(1)  151/      43 : D3                  	sep 	r3 																; return and re-enter
-(1)  152/      44 : 30 28               	br 		regLoader  														
-(1)  153/      46 :                     
-(1)  154/      46 :                     ; ********************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 4 - 7/6/2016 23:19:34
+(2)    5/      24 : 00 83                   dw FUNC_PrintString
+(2)    6/      26 :                     C_GetKey:
+(2)    7/      26 : 00 CA                   dw FUNC_GetKey
+(2)    8/      28 :                     C_ClearScreen:
+(2)    9/      28 : 00 D7                   dw FUNC_ClearScreen
+(2)   10/      2A :                     C_CheckKey:
+(2)   11/      2A : 00 CF                   dw FUNC_CheckKey
+(2)   12/      2C :                     C_PrintChar:
+(2)   13/      2C : 00 8E                   dw FUNC_PrintChar
+(2)   14/      2E :                     C_SetCursorXY:
+(2)   15/      2E : 00 F3                   dw FUNC_SetCursorXY
+(2)   16/      30 :                     C_Sound:
+(2)   17/      30 : 00 E3                   dw FUNC_Sound
+(2)   18/      32 :                     C_SetCursor:
+(2)   19/      32 : 00 E5                   dw FUNC_SetCursor
+(2)   20/      34 :                     
+(1)  114/      34 :                     
+(1)  115/      34 :                     ; ********************************************************************************************************************
+(1)  116/      34 :                     ;
+(1)  117/      34 :                     ;	Slow compact Rn loader. Uses RF. Following 2 bytes have the register number in the upper 4 bits
+(1)  118/      34 :                     ; 	and a 12 bit value to load in the lower 4 bites. Preserves D but not DF. Reentrant.
+(1)  119/      34 :                     ;
+(1)  120/      34 :                     ;	Code which needs to be executed quickly should consider the LDI/PHI/LDI/PLO sequence - this is 4-5 times
+(1)  121/      34 :                     ; 	slower but uses 3 bytes not 6. 80:20 rule.
+(1)  122/      34 :                     ;
+(1)  123/      34 :                     ;	 										THIS CODE IS SELF MODIFYING
+(1)  124/      34 :                     ; ********************************************************************************************************************
+(1)  125/      34 :                     
+(1)  126/      34 :                     regLoader:
+(1)  127/      34 : AC                  	plo 	rc 																; preserve D
+(1)  128/      35 : 9F                  	ghi 	rf 																; point RB to self modifying code
+(1)  129/      36 : BB                  	phi 	rb
+(1)  130/      37 : F8 4B               	ldi 	regLoader_putHigh 
+(1)  131/      39 : AB                  	plo 	rb
+(1)  132/      3A : 43                  	lda 	r3 																; get reg number / upper 4 bits
+(1)  133/      3B : 23                  	dec 	r3 																; unpick increment
+(1)  134/      3C : F6                  	shr 																	; isolate bits 4..7, register number.
+(1)  135/      3D : F6                  	shr
+(1)  136/      3E : F6                  	shr
+(1)  137/      3F : F6                  	shr
+(1)  138/      40 : F9 B0               	ori 	0B0h 															; make it PHI <register number>
+(1)  139/      42 : 5B                  	str 	rb 																; save at "PHI" point
+(1)  140/      43 : 1B                  	inc 	rb 																; advance RF to "PLO" point
+(1)  141/      44 : 1B                  	inc 	rb
+(1)  142/      45 : FB 10               	xri 	010h 															; make it PLO <register number>
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 4 - 7/7/2016 15:32:09
 
 
-(1)  155/      46 :                     ;
-(1)  156/      46 :                     ;	Interrupt handler. Sets up R0 with the value held in RD (Video Memory pointer). If R0 is $01 or $81 on
-(1)  157/      46 :                     ; 	entry then it assumes a DMA In has been done and copies the byte before into RC.1
-(1)  158/      46 :                     ;
-(1)  159/      46 :                     ; ********************************************************************************************************************
-(1)  160/      46 :                     
-(1)  161/      46 :                     interrupt:
-(1)  162/      46 : 22                  	dec 	r2 																; save XP on stack.
-(1)  163/      47 : 78                  	sav
-(1)  164/      48 : 22                  	dec 	r2 																; save D on stack
-(1)  165/      49 : 52                  	str 	r2
-(1)  166/      4A : 80                  	glo 	r0 																; look at R0 bits 0..6
-(1)  167/      4B : FA 7F               	ani 	7Fh
-(1)  168/      4D : FB 01               	xri 	01h
-(1)  169/      4F : 3A 54               	bnz 	interrupt_nokey 												; if $01 then DMA was done this frame
-(1)  170/      51 : 20                  	dec 	r0 																; get the data that was input (one byte only)
-(1)  171/      52 : 40                  	lda 	r0
-(1)  172/      53 : BC                  	phi 	rc 																; and save in RC.1
-(1)  173/      54 :                     interrupt_nokey:
-(1)  174/      54 : 9D                  	ghi 	rd 																; copy RD (video RAM address) to R0
-(1)  175/      55 : B0                  	phi 	r0
-(1)  176/      56 : 8D                  	glo 	rd
-(1)  177/      57 : A0                  	plo 	r0
-(1)  178/      58 : 42                  	lda 	r2 																; restore D
-(1)  179/      59 : 70                  	ret 																	; restore XP
-(1)  180/      5A : 30 46               	br 		interrupt
-(1)  181/      5C :                     
-(1)  182/      5C :                     ; ********************************************************************************************************************
-(1)  183/      5C :                     ;
-(1)  184/      5C :                     ; 		Call routine where the byte after the call is the address in page 0 of the new routine. If the byte is
-(1)  185/      5C :                     ;		zero, then this is a return from a caller. Preserves D and DF on call or return.
-(1)  186/      5C :                     ;
-(1)  187/      5C :                     ; ********************************************************************************************************************
-(1)  188/      5C :                     
-(1)  189/      5C :                     callHandler:
-(1)  190/      5C : AC                  	plo 	rc 																; save D register
-(1)  191/      5D : 43                  	lda 	r3 																; read the function number
-(1)  192/      5E : 32 71               	bz 		__callHandler_Return 											; if zero, then do a return.
-(1)  193/      60 : AB                  	plo 	rb 																; save in RD.0
-(1)  194/      61 : 9E                  	ghi 	re 																; make RD.1 point to zero page
-(1)  195/      62 : BB                  	phi 	rb
-(1)  196/      63 :                     
-(1)  197/      63 : 93                  	ghi 	r3 																; push R3.1 on the stack
-(1)  198/      64 : 22                  	dec 	r2
-(1)  199/      65 : 52                  	str 	r2
-(1)  200/      66 : 83                  	glo 	r3 																; push R3.0 on the stack.
-(1)  201/      67 : 22                  	dec 	r2
-(1)  202/      68 : 52                  	str 	r2
-(1)  203/      69 :                     
-(1)  204/      69 : 4B                  	lda 	rb 																; read routine address into R3
-(1)  205/      6A : B3                  	phi 	r3
-(1)  206/      6B : 4B                  	lda 	rb 	
-(1)  207/      6C : A3                  	plo 	r3
-(1)  208/      6D :                     
-(1)  209/      6D :                     __callHandler_Exit:
-(1)  210/      6D : 8C                  	glo 	rc 																; restore D register
-(1)  211/      6E : D3                  	sep 	r3 																; switch back to R3
-(1)  212/      6F : 30 5C               	br 		callHandler
-(1)  213/      71 :                     
-(1)  214/      71 :                     __callHandler_Return:
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 5 - 7/6/2016 23:19:34
+(1)  143/      47 : 5B                  	str 	rb 																; save at "PLO" point
+(1)  144/      48 : 43                  	lda 	r3 																; reload first byte
+(1)  145/      49 : FA 0F               	ani 	0Fh 															; only want lower 4 bits
+(1)  146/      4B :                     regLoader_putHigh:
+(1)  147/      4B : B0                  	phi 	0 																; these two phi and plo are modified.
+(1)  148/      4C : 43                  	lda 	r3
+(1)  149/      4D : A0                  	plo 	0
+(1)  150/      4E : 8C                  	glo 	rc 																; restore D
+(1)  151/      4F : D3                  	sep 	r3 																; return and re-enter
+(1)  152/      50 : 30 34               	br 		regLoader  														
+(1)  153/      52 :                     
+(1)  154/      52 :                     ; ********************************************************************************************************************
+(1)  155/      52 :                     ;
+(1)  156/      52 :                     ;	Interrupt handler. Sets up R0 with the value held in RD (Video Memory pointer). If R0 is $01 or $81 on
+(1)  157/      52 :                     ; 	entry then it assumes a DMA In has been done and copies the byte before into RC.1
+(1)  158/      52 :                     ;
+(1)  159/      52 :                     ; ********************************************************************************************************************
+(1)  160/      52 :                     
+(1)  161/      52 :                     interrupt:
+(1)  162/      52 : 22                  	dec 	r2 																; save XP on stack.
+(1)  163/      53 : 78                  	sav
+(1)  164/      54 : 22                  	dec 	r2 																; save D on stack
+(1)  165/      55 : 52                  	str 	r2
+(1)  166/      56 : 80                  	glo 	r0 																; look at R0 bits 0..6
+(1)  167/      57 : FA 7F               	ani 	7Fh
+(1)  168/      59 : FB 01               	xri 	01h
+(1)  169/      5B : 3A 60               	bnz 	interrupt_nokey 												; if $01 then DMA was done this frame
+(1)  170/      5D : 20                  	dec 	r0 																; get the data that was input (one byte only)
+(1)  171/      5E : 40                  	lda 	r0
+(1)  172/      5F : BC                  	phi 	rc 																; and save in RC.1
+(1)  173/      60 :                     interrupt_nokey:
+(1)  174/      60 : 9D                  	ghi 	rd 																; copy RD (video RAM address) to R0
+(1)  175/      61 : B0                  	phi 	r0
+(1)  176/      62 : 8D                  	glo 	rd
+(1)  177/      63 : A0                  	plo 	r0
+(1)  178/      64 : 42                  	lda 	r2 																; restore D
+(1)  179/      65 : 70                  	ret 																	; restore XP
+(1)  180/      66 : 30 52               	br 		interrupt
+(1)  181/      68 :                     
+(1)  182/      68 :                     ; ********************************************************************************************************************
+(1)  183/      68 :                     ;
+(1)  184/      68 :                     ; 		Call routine where the byte after the call is the address in page 0 of the new routine. If the byte is
+(1)  185/      68 :                     ;		zero, then this is a return from a caller. Preserves D and DF on call or return.
+(1)  186/      68 :                     ;
+(1)  187/      68 :                     ; ********************************************************************************************************************
+(1)  188/      68 :                     
+(1)  189/      68 :                     callHandler:
+(1)  190/      68 : AC                  	plo 	rc 																; save D register
+(1)  191/      69 : 43                  	lda 	r3 																; read the function number
+(1)  192/      6A : 32 7D               	bz 		__callHandler_Return 											; if zero, then do a return.
+(1)  193/      6C : AB                  	plo 	rb 																; save in RD.0
+(1)  194/      6D : 9E                  	ghi 	re 																; make RD.1 point to zero page
+(1)  195/      6E : BB                  	phi 	rb
+(1)  196/      6F :                     
+(1)  197/      6F : 93                  	ghi 	r3 																; push R3.1 on the stack
+(1)  198/      70 : 22                  	dec 	r2
+(1)  199/      71 : 52                  	str 	r2
+(1)  200/      72 : 83                  	glo 	r3 																; push R3.0 on the stack.
+(1)  201/      73 : 22                  	dec 	r2
+(1)  202/      74 : 52                  	str 	r2
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 5 - 7/7/2016 15:32:09
 
 
-(1)  215/      71 : 42                  	lda 	r2 																; pop return address, then restore D and switch
-(1)  216/      72 : A3                  	plo 	r3
-(1)  217/      73 : 42                  	lda 	r2
-(1)  218/      74 : B3                  	phi 	r3
-(1)  219/      75 : 30 6D               	br 		__callHandler_Exit
-(1)  220/      77 :                     
-(1)  221/      77 :                     ; ********************************************************************************************************************
-(1)  222/      77 :                     ;
-(1)  223/      77 :                     ;						Print String at R9, terminated by $FF. On exit R9 points to byte after it.
-(1)  224/      77 :                     ;
-(1)  225/      77 :                     ; ********************************************************************************************************************
-(1)  226/      77 :                     
-(1)  227/      77 :                     FUNC_PrintString:
-(1)  228/      77 : =>TRUE              	if 		lib_text
-(1)  229/      77 : 49                  	lda 	r9 																; get character
-(1)  230/      78 : FB FF               	xri 	0FFh 															; check if end of string $FF
-(1)  231/      7A : 32 BC               	bz 		__FPrint_VReturn 												; if so, go to the vreturn in print char 
-(1)  232/      7C : FB FF               	xri 	0FFh 															; fix character back
-(1)  233/      7E : (MACRO)             	vcall 	C_PrintChar 													; print it
-(1)  233/      7E : DE                          sep     re
-(1)  233/      7F : 26                          db              C_PRINTCHAR
-(1)  234/      80 : 30 77               	br 		FUNC_PrintString 												; and try again.
-(1)  235/      82 : [228]               	endif
-(1)  236/      82 :                     
-(1)  237/      82 :                     ; ********************************************************************************************************************
-(1)  238/      82 :                     ;
-(1)  239/      82 :                     ;					Print character. RA is the current position (LSB is memory offset, MSB is bit)
-(1)  240/      82 :                     ;
-(1)  241/      82 :                     ;	uses temporary registers RC.0 and RB, also RE is used in the call but reset afterwards. RA is updated to the
-(1)  242/      82 :                     ; 	next space.
-(1)  243/      82 :                     ; ********************************************************************************************************************
-(1)  244/      82 :                     
-(1)  245/      82 :                     FUNC_PrintChar:
-(1)  246/      82 : =>TRUE              	if 		lib_text
-(1)  247/      82 : EB                  	sex 	rb 																; use RB as index register
-(1)  248/      83 : AC                  	plo 	rc 																; save in RC.
-(1)  249/      84 : (MACRO)             	lrs 	re,__fontData 													; point R9 to fontdata.
-(1)  249/      84 : DF                          sep     rf
-(1)  249/      85 : E0                          db              ((RE)*16)+(((__FONTDATA) / 256) & 15)
-(1)  249/      86 : BE                          db              (__FONTDATA) & 255
-(1)  250/      87 :                     __FFindCharacter:
-(1)  251/      87 : 8C                  	glo 	rc 																; character counter zero ?
-(1)  252/      88 : 32 91               	bz 		__FPrintLoop2 													; go print.
-(1)  253/      8A :                     __FFindNext:
-(1)  254/      8A : 4E                  	lda 	re 																; keep advancing until and end marker (bit 0)
-(1)  255/      8B : F6                  	shr 																	; found
-(1)  256/      8C : 3B 8A               	bnf 	__FFindNext
-(1)  257/      8E : 2C                  	dec 	rc 																; dec character counter e.g. found one more.
-(1)  258/      8F : 30 87               	br 		__FFindCharacter
-(1)  259/      91 :                     ;
-(1)  260/      91 :                     ;	Print next column of pixels from RE.
-(1)  261/      91 :                     ;
-(1)  262/      91 :                     __FPrintLoop2:
-(1)  263/      91 : 8A                  	glo 	ra 																; copy current position into RB from RA.0
-(1)  264/      92 : AB                  	plo 	rb 																; (position) and RD.1 (video high)
-(1)  265/      93 : 9D                  	ghi 	rd
-(1)  266/      94 : BB                  	phi 	rb
-(1)  267/      95 :                     
-(1)  268/      95 : 4E                  	lda 	re 																; get the next byte of video data
-(1)  269/      96 : F6                  	shr 		 															; shift right, throwing the end marker.
- AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 6 - 7/6/2016 23:19:34
+(1)  203/      75 :                     
+(1)  204/      75 : 4B                  	lda 	rb 																; read routine address into R3
+(1)  205/      76 : B3                  	phi 	r3
+(1)  206/      77 : 4B                  	lda 	rb 	
+(1)  207/      78 : A3                  	plo 	r3
+(1)  208/      79 :                     
+(1)  209/      79 :                     __callHandler_Exit:
+(1)  210/      79 : 8C                  	glo 	rc 																; restore D register
+(1)  211/      7A : D3                  	sep 	r3 																; switch back to R3
+(1)  212/      7B : 30 68               	br 		callHandler
+(1)  213/      7D :                     
+(1)  214/      7D :                     __callHandler_Return:
+(1)  215/      7D : 42                  	lda 	r2 																; pop return address, then restore D and switch
+(1)  216/      7E : A3                  	plo 	r3
+(1)  217/      7F : 42                  	lda 	r2
+(1)  218/      80 : B3                  	phi 	r3
+(1)  219/      81 : 30 79               	br 		__callHandler_Exit
+(1)  220/      83 :                     
+(1)  221/      83 :                     ; ********************************************************************************************************************
+(1)  222/      83 :                     ;
+(1)  223/      83 :                     ;						Print String at R9, terminated by $FF. On exit R9 points to byte after it.
+(1)  224/      83 :                     ;
+(1)  225/      83 :                     ; ********************************************************************************************************************
+(1)  226/      83 :                     
+(1)  227/      83 :                     FUNC_PrintString:
+(1)  228/      83 : =>TRUE              	if 		lib_text
+(1)  229/      83 : 49                  	lda 	r9 																; get character
+(1)  230/      84 : FB FF               	xri 	0FFh 															; check if end of string $FF
+(1)  231/      86 : 32 C8               	bz 		__FPrint_VReturn 												; if so, go to the vreturn in print char 
+(1)  232/      88 : FB FF               	xri 	0FFh 															; fix character back
+(1)  233/      8A : (MACRO)             	vcall 	C_PrintChar 													; print it
+(1)  233/      8A : DE                          sep     re
+(1)  233/      8B : 2C                          db              C_PRINTCHAR
+(1)  234/      8C : 30 83               	br 		FUNC_PrintString 												; and try again.
+(1)  235/      8E : [228]               	endif
+(1)  236/      8E :                     
+(1)  237/      8E :                     ; ********************************************************************************************************************
+(1)  238/      8E :                     ;
+(1)  239/      8E :                     ;					Print character. RA is the current position (LSB is memory offset, MSB is bitmask)
+(1)  240/      8E :                     ;
+(1)  241/      8E :                     ;	uses temporary registers RC.0 and RB, also RE is used in the call but reset afterwards. RA is updated to the
+(1)  242/      8E :                     ; 	next space.
+(1)  243/      8E :                     ; ********************************************************************************************************************
+(1)  244/      8E :                     
+(1)  245/      8E :                     FUNC_PrintChar:
+(1)  246/      8E : =>TRUE              	if 		lib_text
+(1)  247/      8E : EB                  	sex 	rb 																; use RB as index register
+(1)  248/      8F : AC                  	plo 	rc 																; save in RC.
+(1)  249/      90 : (MACRO)             	lrs 	re,__fontData 													; point R9 to fontdata.
+(1)  249/      90 : DF                          sep     rf
+(1)  249/      91 : E1                          db              ((RE)*16)+(((__FONTDATA) / 256) & 15)
+(1)  249/      92 : 1B                          db              (__FONTDATA) & 255
+(1)  250/      93 :                     __FFindCharacter:
+(1)  251/      93 : 8C                  	glo 	rc 																; character counter zero ?
+(1)  252/      94 : 32 9D               	bz 		__FPrintLoop2 													; go print.
+(1)  253/      96 :                     __FFindNext:
+(1)  254/      96 : 4E                  	lda 	re 																; keep advancing until and end marker (bit 0)
+(1)  255/      97 : F6                  	shr 																	; found
+(1)  256/      98 : 3B 96               	bnf 	__FFindNext
+(1)  257/      9A : 2C                  	dec 	rc 																; dec character counter e.g. found one more.
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 6 - 7/7/2016 15:32:09
 
 
-(1)  270/      97 :                     __FPrintLoop1:
-(1)  271/      97 : F6                  	shr 																	; shift right and put in RC.0
-(1)  272/      98 : AC                  	plo 	rc
-(1)  273/      99 : 3B 9E               	bnf 	__FPrintNoPixel 												; if 0 was shifted in.
-(1)  274/      9B : 9A                  	ghi 	ra 																; get bitmask from RA.1
-(1)  275/      9C : F1                  	or 																		; OR into display.
-(1)  276/      9D : 5B                  	str 	rb
-(1)  277/      9E :                     __FPrintNoPixel:
-(1)  278/      9E : 8B                  	glo 	rb 																; move address to next line down
-(1)  279/      9F : FC 08               	adi 	scWidth/8
-(1)  280/      A1 : AB                  	plo 	rb
-(1)  281/      A2 : 8C                  	glo 	rc 																; get mask back into D.
-(1)  282/      A3 : 3A 97               	bnz 	__FPrintLoop1 													; back if more to print for this column.
-(1)  283/      A5 :                     
-(1)  284/      A5 :                     __FPrintNext:
-(1)  285/      A5 : 9A                  	ghi 	ra 																; shift RA.1 (the bitmask) right.
-(1)  286/      A6 : F6                  	shr 
-(1)  287/      A7 : BA                  	phi 	ra 
-(1)  288/      A8 : 3B AE               	bnf 	__FNotAdvance 													; if DF set then bit 7 of next.
-(1)  289/      AA : 1A                  	inc 	ra 																; increment RA.0 - next byte right
-(1)  290/      AB : F8 80               	ldi 	080h 															; reset mask in RA.1 to $80 (first bit)
-(1)  291/      AD : BA                  	phi 	ra
-(1)  292/      AE :                     __FNotAdvance:
-(1)  293/      AE : 2E                  	dec 	re 																; re-read last one column data
-(1)  294/      AF : 4E                  	lda 	re
-(1)  295/      B0 : F6                  	shr
-(1)  296/      B1 : 3B 91               	bnf 	__FPrintLoop2 													; if not first of next one, go back.
-(1)  297/      B3 : 1C                  	inc 	rc 																; first time round RC.0 will be zero.
-(1)  298/      B4 : 8C                  	glo 	rc 																; second time round it will be 1,
-(1)  299/      B5 : FB 01               	xri 	1 																; so we do the 'next space' one more time.
-(1)  300/      B7 : 32 A5               	bz 		__FPrintNext
-(1)  301/      B9 : (MACRO)             	lrs 	re,callHandler 													; reinstate RE vector.
-(1)  301/      B9 : DF                          sep     rf
-(1)  301/      BA : E0                          db              ((RE)*16)+(((CALLHANDLER) / 256) & 15)
-(1)  301/      BB : 5C                          db              (CALLHANDLER) & 255
-(1)  302/      BC :                     __FPrint_VReturn:
-(1)  303/      BC : (MACRO)             	vReturn
-(1)  303/      BC :  (MACRO-2)                  vCall   0                                                                                                                               
-(1)  303/      BC : DE                          sep     re
-(1)  303/      BD : 00                          db              0
-(1)  304/      BE : [246]               	endif
-(1)  305/      BE :                     
-(1)  306/      BE :                     ; ********************************************************************************************************************
-(1)  307/      BE :                     ;
-(1)  308/      BE :                     ;												Included fonts, if any
-(1)  309/      BE :                     ;
-(1)  310/      BE :                     ; ********************************************************************************************************************
-(1)  311/      BE :                     	
-(1)  312/      BE : =>TRUE              	if 		lib_text
-(1)  313/      BE :                     	include font.mod 														; any fonts requested loaded here.
-(2)    1/      BE :                     ;
-(2)    2/      BE :                     ; generated fonts
-(2)    3/      BE :                     ;
-(2)    4/      BE :                     __fontData:
-(2)    5/      BE : 7C 82 82 82 7D          db 07ch,082h,082h,082h,07dh         ; '0' code 125
-(2)    6/      C3 : 84 FE 81                db 084h,0feh,081h                   ; '1' code 129
-(2)    7/      C6 : E4 92 92 92 8D          db 0e4h,092h,092h,092h,08dh         ; '2' code 141
-(2)    8/      CB : 44 92 92 92 6D          db 044h,092h,092h,092h,06dh         ; '3' code 109
-(2)    9/      D0 : 30 28 24 FE 21          db 030h,028h,024h,0feh,021h         ; '4' code 33
-(2)   10/      D5 : 5E 92 92 92 73          db 05eh,092h,092h,092h,073h         ; '5' code 115
- AS V1.42 Beta [Bld 102] - source file test.asm(font.mod) - page 7 - 7/6/2016 23:19:34
+(1)  258/      9B : 30 93               	br 		__FFindCharacter
+(1)  259/      9D :                     ;
+(1)  260/      9D :                     ;	Print next column of pixels from RE.
+(1)  261/      9D :                     ;
+(1)  262/      9D :                     __FPrintLoop2:
+(1)  263/      9D : 8A                  	glo 	ra 																; copy current position into RB from RA.0
+(1)  264/      9E : AB                  	plo 	rb 																; (position) and RD.1 (video high)
+(1)  265/      9F : 9D                  	ghi 	rd
+(1)  266/      A0 : BB                  	phi 	rb
+(1)  267/      A1 :                     
+(1)  268/      A1 : 4E                  	lda 	re 																; get the next byte of video data
+(1)  269/      A2 : F6                  	shr 		 															; shift right, throwing the end marker.
+(1)  270/      A3 :                     __FPrintLoop1:
+(1)  271/      A3 : F6                  	shr 																	; shift right and put in RC.0
+(1)  272/      A4 : AC                  	plo 	rc
+(1)  273/      A5 : 3B AA               	bnf 	__FPrintNoPixel 												; if 0 was shifted in.
+(1)  274/      A7 : 9A                  	ghi 	ra 																; get bitmask from RA.1
+(1)  275/      A8 : F1                  	or 																		; OR into display.
+(1)  276/      A9 : 5B                  	str 	rb
+(1)  277/      AA :                     __FPrintNoPixel:
+(1)  278/      AA : 8B                  	glo 	rb 																; move address to next line down
+(1)  279/      AB : FC 08               	adi 	scWidth/8
+(1)  280/      AD : AB                  	plo 	rb
+(1)  281/      AE : 8C                  	glo 	rc 																; get mask back into D.
+(1)  282/      AF : 3A A3               	bnz 	__FPrintLoop1 													; back if more to print for this column.
+(1)  283/      B1 :                     
+(1)  284/      B1 :                     __FPrintNext:
+(1)  285/      B1 : 9A                  	ghi 	ra 																; shift RA.1 (the bitmask) right.
+(1)  286/      B2 : F6                  	shr 
+(1)  287/      B3 : BA                  	phi 	ra 
+(1)  288/      B4 : 3B BA               	bnf 	__FNotAdvance 													; if DF set then bit 7 of next.
+(1)  289/      B6 : 1A                  	inc 	ra 																; increment RA.0 - next byte right
+(1)  290/      B7 : F8 80               	ldi 	080h 															; reset mask in RA.1 to $80 (first bit)
+(1)  291/      B9 : BA                  	phi 	ra
+(1)  292/      BA :                     __FNotAdvance:
+(1)  293/      BA : 2E                  	dec 	re 																; re-read last one column data
+(1)  294/      BB : 4E                  	lda 	re
+(1)  295/      BC : F6                  	shr
+(1)  296/      BD : 3B 9D               	bnf 	__FPrintLoop2 													; if not first of next one, go back.
+(1)  297/      BF : 1C                  	inc 	rc 																; first time round RC.0 will be zero.
+(1)  298/      C0 : 8C                  	glo 	rc 																; second time round it will be 1,
+(1)  299/      C1 : FB 01               	xri 	1 																; so we do the 'next space' one more time.
+(1)  300/      C3 : 32 B1               	bz 		__FPrintNext
+(1)  301/      C5 : (MACRO)             	lrs 	re,callHandler 													; reinstate RE vector.
+(1)  301/      C5 : DF                          sep     rf
+(1)  301/      C6 : E0                          db              ((RE)*16)+(((CALLHANDLER) / 256) & 15)
+(1)  301/      C7 : 68                          db              (CALLHANDLER) & 255
+(1)  302/      C8 :                     __FPrint_VReturn:
+(1)  303/      C8 : (MACRO)             	vReturn
+(1)  303/      C8 :  (MACRO-2)                  vCall   0                                                                                                                               
+(1)  303/      C8 : DE                          sep     re
+(1)  303/      C9 : 00                          db              0
+(1)  304/      CA : [246]               	endif
+(1)  305/      CA :                     
+(1)  306/      CA :                     ; ********************************************************************************************************************
+(1)  307/      CA :                     ;
+(1)  308/      CA :                     ;													Get a key press 
+(1)  309/      CA :                     ;
+(1)  310/      CA :                     ; ********************************************************************************************************************
+(1)  311/      CA :                     
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 7 - 7/7/2016 15:32:09
 
 
-(2)   11/      DA : 7C 92 92 92 65          db 07ch,092h,092h,092h,065h         ; '6' code 101
-(2)   12/      DF : 82 42 22 12 0F          db 082h,042h,022h,012h,00fh         ; '7' code 15
-(2)   13/      E4 : 6C 92 92 92 6D          db 06ch,092h,092h,092h,06dh         ; '8' code 109
-(2)   14/      E9 : 4C 92 92 92 7D          db 04ch,092h,092h,092h,07dh         ; '9' code 125
-(2)   15/      EE :                     
-(1)  314/      EE : [312]               	endif
-(1)  315/      EE :                     
-      19/      EE :                     
-      20/      EE :                     main:
-      21/      EE : F8 20               	ldi 	020h
-      22/      F0 : BA                  	phi 	ra
-      23/      F1 : F8 88               	ldi 	088h
-      24/      F3 : AA                  	plo 	ra
-      25/      F4 : (MACRO)             	lrs 	r9,text
-      25/      F4 : DF                          sep     rf
-      25/      F5 : 90                          db              ((R9)*16)+(((TEXT) / 256) & 15)
-      25/      F6 : FB                          db              (TEXT) & 255
-      26/      F7 : (MACRO)             	vcall	C_PrintString
-      26/      F7 : DE                          sep     re
-      26/      F8 : 24                          db              C_PRINTSTRING
-      27/      F9 :                     loop:
-      28/      F9 : 30 F9               	br 		loop
-      29/      FB :                     
-      30/      FB :                     text:
-      31/      FB : 00 01 09 05 03 FF   	db 		0,1,9,5,3,0FFh
- AS V1.42 Beta [Bld 102] - source file test.asm - page 8 - 7/6/2016 23:19:34
+(1)  312/      CA :                     FUNC_GetKey:
+(1)  313/      CA : 9C                  	ghi 	rc 																; wait for RC to be not $FF
+(1)  314/      CB : FB FF               	xri 	0FFh
+(1)  315/      CD : 32 CA               	bz 		FUNC_GetKey 													
+(1)  316/      CF :                     																			; then fall through.
+(1)  317/      CF :                     
+(1)  318/      CF :                     ; ********************************************************************************************************************
+(1)  319/      CF :                     ;
+(1)  320/      CF :                     ;							Get any key press since last call, $FF = no key pressed
+(1)  321/      CF :                     ;
+(1)  322/      CF :                     ; ********************************************************************************************************************
+(1)  323/      CF :                     
+(1)  324/      CF :                     FUNC_CheckKey:
+(1)  325/      CF : 9C                  	ghi 	rc 																; get key state
+(1)  326/      D0 : AB                  	plo 	rb 																; save in temp
+(1)  327/      D1 : F8 FF               	ldi 	0FFh 															; set key state back to $FF
+(1)  328/      D3 : BC                  	phi 	rc
+(1)  329/      D4 : 8B                  	glo 	rb 																; restore key pressed.
+(1)  330/      D5 : (MACRO)             	vReturn
+(1)  330/      D5 :  (MACRO-2)                  vCall   0                                                                                                                               
+(1)  330/      D5 : DE                          sep     re
+(1)  330/      D6 : 00                          db              0
+(1)  331/      D7 :                     
+(1)  332/      D7 :                     ; ********************************************************************************************************************
+(1)  333/      D7 :                     ;
+(1)  334/      D7 :                     ;													Clear Screen
+(1)  335/      D7 :                     ;
+(1)  336/      D7 :                     ; ********************************************************************************************************************
+(1)  337/      D7 :                     
+(1)  338/      D7 :                     FUNC_ClearScreen:
+(1)  339/      D7 : 9D                  	ghi 	rd 																; copy video address to RB
+(1)  340/      D8 : BB                  	phi 	rb
+(1)  341/      D9 : 8D                  	glo 	rd
+(1)  342/      DA : AB                  	plo 	rb
+(1)  343/      DB :                     __ClearLoop:
+(1)  344/      DB : 91                  	ghi 	r1
+(1)  345/      DC : 5B                  	str 	rb
+(1)  346/      DD : 1B                  	inc 	rb
+(1)  347/      DE : 8B                  	glo 	rb
+(1)  348/      DF : 3A DB               	bnz 	__ClearLoop
+(1)  349/      E1 : (MACRO)             	vReturn
+(1)  349/      E1 :  (MACRO-2)                  vCall   0                                                                                                                               
+(1)  349/      E1 : DE                          sep     re
+(1)  349/      E2 : 00                          db              0
+(1)  350/      E3 :                     
+(1)  351/      E3 :                     FUNC_Sound:
+(1)  352/      E3 : (MACRO)             	vReturn
+(1)  352/      E3 :  (MACRO-2)                  vCall   0                                                                                                                               
+(1)  352/      E3 : DE                          sep     re
+(1)  352/      E4 : 00                          db              0
+(1)  353/      E5 :                     
+(1)  354/      E5 :                     ; ********************************************************************************************************************
+(1)  355/      E5 :                     ;
+(1)  356/      E5 :                     ;					Set cursor to position in 2 bytes following call. (vCall C_SetCursor ; db x,y)
+(1)  357/      E5 :                     ;
+(1)  358/      E5 :                     ; ********************************************************************************************************************
+(1)  359/      E5 :                     
+(1)  360/      E5 :                     FUNC_SetCursor:
+(1)  361/      E5 : =>TRUE              	if 		lib_text
+(1)  362/      E5 : 42                  	lda 	r2 																; unstack return address to RB
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 8 - 7/7/2016 15:32:09
+
+
+(1)  363/      E6 : AB                  	plo 	rb
+(1)  364/      E7 : 42                  	lda 	r2
+(1)  365/      E8 : BB                  	phi 	rb
+(1)  366/      E9 : 4B                  	lda 	rb 																; read low then high into RA
+(1)  367/      EA : AA                  	plo 	ra
+(1)  368/      EB : 4B                  	lda 	rb 															
+(1)  369/      EC : BA                  	phi 	ra
+(1)  370/      ED : 9B                  	ghi 	rb 																; push address back on stack.
+(1)  371/      EE : 22                  	dec 	r2
+(1)  372/      EF : 52                  	str 	r2
+(1)  373/      F0 : 8B                  	glo 	rb
+(1)  374/      F1 : 22                  	dec 	r2
+(1)  375/      F2 : 52                  	str 	r2
+(1)  376/      F3 : [361]               	endif
+(1)  377/      F3 :                     
+(1)  378/      F3 :                     ; ********************************************************************************************************************
+(1)  379/      F3 :                     ;
+(1)  380/      F3 :                     ;				Convert cursor position in RA (X = Low,Y = High) to screen position in RA (Byte = Low, Mask = High)
+(1)  381/      F3 :                     ;
+(1)  382/      F3 :                     ; ********************************************************************************************************************
+(1)  383/      F3 :                     
+(1)  384/      F3 :                     FUNC_SetCursorXY:
+(1)  385/      F3 : =>TRUE              	if 		lib_text
+(1)  386/      F3 : E2                  	sex 	r2 																; use R2 as stack.
+(1)  387/      F4 : 9A                  	ghi 	ra 																; get Y position
+(1)  388/      F5 : FA 1F               	ani 	(scHeight-1) 													; validate it so 0-15 or 0-31
+(1)  389/      F7 : 22                  	dec 	r2
+(1)  390/      F8 : 52                  	str 	r2	
+(1)  391/      F9 : F4                  	add  																	; D = Y * 2
+(1)  392/      FA : 52                  	str 	r2
+(1)  393/      FB : F4                  	add 
+(1)  394/      FC : 52                  	str 	r2 																; D = Y * 4
+(1)  395/      FD : =>TRUE              	if 		scWidth = 64  
+(1)  396/      FD : F4                  	add 																	; D = Y * 8 *only* if 64 pixels per line.
+(1)  397/      FE : 52                  	str 	r2
+(1)  398/      FF : [395]               	endif
+(1)  399/      FF : 8A                  	glo 	ra 																; get X position
+(1)  400/     100 : FA 3F               	ani 	(scWidth-1) 													; force into range 0-31 or 0-63
+(1)  401/     102 : F6                  	shr 																	; divide by 8
+(1)  402/     103 : F6                  	shr
+(1)  403/     104 : F6                  	shr
+(1)  404/     105 : F4                  	add 																	; add to Y*4 or Y*8
+(1)  405/     106 : 52                  	str 	r2
+(1)  406/     107 : 8D                  	glo 	rd  															; get low byte of video address
+(1)  407/     108 : F4                  	add 																	; add to result.
+(1)  408/     109 : 52                  	str 	r2 																; save the byte position at TOS.
+(1)  409/     10A :                     
+(1)  410/     10A : F8 80               	ldi 	080h 															; set mask to $80
+(1)  411/     10C :                     __FUNC_GetMask:
+(1)  412/     10C : BA                  	phi 	ra
+(1)  413/     10D : 8A                  	glo 	ra 																; reached mod 8 = 0
+(1)  414/     10E : FA 07               	ani 	7
+(1)  415/     110 : 32 17               	bz 		__FUNC_GotMask 													; if so mask is correct
+(1)  416/     112 : 2A                  	dec 	ra 																; decrement X
+(1)  417/     113 : 9A                  	ghi 	ra 																; shift mask right
+(1)  418/     114 : F6                  	shr
+(1)  419/     115 : 30 0C               	br 		__FUNC_GetMask
+(1)  420/     117 :                     
+(1)  421/     117 :                     __FUNC_GotMask:
+(1)  422/     117 : 42                  	lda 	r2 																; pop byte position
+ AS V1.42 Beta [Bld 102] - source file test.asm(core.asm) - page 9 - 7/7/2016 15:32:09
+
+
+(1)  423/     118 : AA                  	plo 	ra 																; to RA.0
+(1)  424/     119 : (MACRO)             	vReturn 																; return from subroutine
+(1)  424/     119 :  (MACRO-2)                  vCall   0                                                                                                                               
+(1)  424/     119 : DE                          sep     re
+(1)  424/     11A : 00                          db              0
+(1)  425/     11B : [385]               	endif
+(1)  426/     11B :                     
+(1)  427/     11B :                     
+(1)  428/     11B :                     
+(1)  429/     11B :                     ; ********************************************************************************************************************
+(1)  430/     11B :                     ;
+(1)  431/     11B :                     ;												Included fonts, if any
+(1)  432/     11B :                     ;
+(1)  433/     11B :                     ; ********************************************************************************************************************
+(1)  434/     11B :                     	
+(1)  435/     11B : =>TRUE              	if 		lib_text
+(1)  436/     11B :                     	include font.mod 														; any fonts requested loaded here.
+(2)    1/     11B :                     ;
+(2)    2/     11B :                     ; generated fonts
+(2)    3/     11B :                     ;
+(2)    4/     11B :                     __fontData:
+(2)    5/     11B : 7C 82 82 82 7D          db 07ch,082h,082h,082h,07dh         ; '0' code 125
+(2)    6/     120 : 84 FE 81                db 084h,0feh,081h                   ; '1' code 129
+(2)    7/     123 : E4 92 92 92 8D          db 0e4h,092h,092h,092h,08dh         ; '2' code 141
+(2)    8/     128 : 44 92 92 92 6D          db 044h,092h,092h,092h,06dh         ; '3' code 109
+(2)    9/     12D : 30 28 24 FE 21          db 030h,028h,024h,0feh,021h         ; '4' code 33
+(2)   10/     132 : 5E 92 92 92 73          db 05eh,092h,092h,092h,073h         ; '5' code 115
+(2)   11/     137 : 7C 92 92 92 65          db 07ch,092h,092h,092h,065h         ; '6' code 101
+(2)   12/     13C : 82 42 22 12 0F          db 082h,042h,022h,012h,00fh         ; '7' code 15
+(2)   13/     141 : 6C 92 92 92 6D          db 06ch,092h,092h,092h,06dh         ; '8' code 109
+(2)   14/     146 : 4C 92 92 92 7D          db 04ch,092h,092h,092h,07dh         ; '9' code 125
+(2)   15/     14B :                     
+(1)  437/     14B : [435]               	endif
+(1)  438/     14B :                     
+(1)  439/     14B :                     ; TODO: Sound Code
+(1)  440/     14B :                     
+      19/     14B :                     
+      20/     14B :                     main:
+      21/     14B : (MACRO)             	vcall  	C_ClearScreen
+      21/     14B : DE                          sep     re
+      21/     14C : 28                          db              C_CLEARSCREEN
+      22/     14D : (MACRO)             	vcall 	C_SetCursor
+      22/     14D : DE                          sep     re
+      22/     14E : 32                          db              C_SETCURSOR
+      23/     14F : 0D 11               	db 		13,17
+      24/     151 : (MACRO)             	lrs 	r9,text
+      24/     151 : DF                          sep     rf
+      24/     152 : 91                          db              ((R9)*16)+(((TEXT) / 256) & 15)
+      24/     153 : 68                          db              (TEXT) & 255
+      25/     154 : (MACRO)             	vcall	C_PrintString
+      25/     154 : DE                          sep     re
+      25/     155 : 24                          db              C_PRINTSTRING
+      26/     156 : (MACRO)             	lrs 	r4,text+4
+      26/     156 : DF                          sep     rf
+      26/     157 : 41                          db              ((R4)*16)+(((TEXT+4) / 256) & 15)
+      26/     158 : 6C                          db              (TEXT+4) & 255
+      27/     159 :                     
+      28/     159 :                     bump:
+      29/     159 : 44                  	lda 	r4
+      30/     15A : 24                  	dec 	r4
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 10 - 7/7/2016 15:32:09
+
+
+      31/     15B : FC 01               	adi 	1
+      32/     15D : 54                  	str 	r4
+      33/     15E : FB 0A               	xri 	10
+      34/     160 : 3A 4B               	bnz 	main
+      35/     162 : 54                  	str 	r4
+      36/     163 : 24                  	dec 	r4
+      37/     164 : 30 59               	br 		bump
+      38/     166 :                     
+      39/     166 : 30 4B               	br 		main
+      40/     168 :                     
+      41/     168 :                     text:
+      42/     168 : 00 00 00 00 00 FF   	db 		0,0,0,0,0,0FFh
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 11 - 7/7/2016 15:32:09
 
 
   symbol table (* = unused):
   ------------------------
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
-*BRANCHEXT :                      0 - |  CALLHANDLER :                   5C C |
-*CASESENSITIVE :                  0 - | *CONSTPI :        3.141592653589793 - |
- CONTROLPORT :                    2 - |  C_PRINTCHAR :                   26 C |
- C_PRINTSTRING :                 24 C | *DATE :                    7/6/2016 - |
-*FALSE :                          0 - | *FONT :                  0123456789 - |
-*FULLPMMU :                       1 - |  FUNC_PRINTCHAR :                82 C |
- FUNC_PRINTSTRING :              77 C | *HAS64 :                          1 - |
-*HASDSP :                         0 - | *HASFPU :                         0 - |
-*HASPMMU :                        0 - | *INEXTMODE :                      0 - |
-*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
-*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
- INTERRUPT :                     46 C |  INTERRUPT_NOKEY :               54 C |
- LIB_TEXT :                       1 - | *LISTON :                         1 - |
- LOOP :                          F9 C | *MACEXP :                         1 - |
- MAIN :                          EE C |  MEMORYSIZE :                   400 - |
+*BRANCHEXT :                      0 - |  BUMP :                         159 C |
+ CALLHANDLER :                   68 C | *CASESENSITIVE :                  0 - |
+*CONSTPI :        3.141592653589793 - |  CONTROLPORT :                    2 - |
+*C_CHECKKEY :                    2A C |  C_CLEARSCREEN :                 28 C |
+*C_GETKEY :                      26 C |  C_PRINTCHAR :                   2C C |
+ C_PRINTSTRING :                 24 C |  C_SETCURSOR :                   32 C |
+*C_SETCURSORXY :                 2E C | *C_SOUND :                       30 C |
+*DATE :                    7/7/2016 - | *FALSE :                          0 - |
+*FONT :                  0123456789 - | *FULLPMMU :                       1 - |
+ FUNC_CHECKKEY :                 CF C |  FUNC_CLEARSCREEN :              D7 C |
+ FUNC_GETKEY :                   CA C |  FUNC_PRINTCHAR :                8E C |
+ FUNC_PRINTSTRING :              83 C |  FUNC_SETCURSOR :                E5 C |
+ FUNC_SETCURSORXY :              F3 C |  FUNC_SOUND :                    E3 C |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - |  INTERRUPT :                     52 C |
+ INTERRUPT_NOKEY :               60 C |  LIB_TEXT :                       1 - |
+*LISTON :                         1 - | *MACEXP :                         1 - |
+ MAIN :                         14B C |  MEMORYSIZE :                   400 - |
 *MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
 *NESTMAX :                      100 - | *PACKING :                        0 - |
 *PADDING :                        1 - |  R0 :                             0 - |
  R1 :                             1 - |  R2 :                             2 - |
- R3 :                             3 - | *R4 :                             4 - |
+ R3 :                             3 - |  R4 :                             4 - |
 *R5 :                             5 - | *R6 :                             6 - |
 *R7 :                             7 - | *R8 :                             8 - |
  R9 :                             9 - |  RA :                             A - |
  RB :                             B - |  RC :                             C - |
  RD :                             D - |  RE :                             E - |
- REGLOADER :                     28 C |  REGLOADER_PUTHIGH :             3F C |
+ REGLOADER :                     34 C |  REGLOADER_PUTHIGH :             4B C |
 *RELAXED :                        0 - |  RF :                             F - |
  SCHEIGHT :                      20 - |  SCWIDTH :                       40 - |
- TEXT :                          FB C | *TIME :                    23:19:34 - |
+ TEXT :                         168 C | *TIME :                    15:32:09 - |
 *TRUE :                           1 - | *VERSION :                     142F - |
  VIDEOCONTROLBITS :               3 - |  VIDEORAMSIZE :                 100 - |
- __CALLHANDLER_EXIT :            6D C |  __CALLHANDLER_RETURN :          71 C |
- __FFINDCHARACTER :              87 C |  __FFINDNEXT :                   8A C |
- __FNOTADVANCE :                 AE C |  __FONTDATA :                    BE C |
- __FPRINTLOOP1 :                 97 C |  __FPRINTLOOP2 :                 91 C |
- __FPRINTNEXT :                  A5 C |  __FPRINTNOPIXEL :               9E C |
- __FPRINT_VRETURN :              BC C |
+ __CALLHANDLER_EXIT :            79 C |  __CALLHANDLER_RETURN :          7D C |
+ __CLEARLOOP :                   DB C |  __FFINDCHARACTER :              93 C |
+ __FFINDNEXT :                   96 C |  __FNOTADVANCE :                 BA C |
+ __FONTDATA :                   11B C |  __FPRINTLOOP1 :                 A3 C |
+ __FPRINTLOOP2 :                 9D C |  __FPRINTNEXT :                  B1 C |
+ __FPRINTNOPIXEL :               AA C |  __FPRINT_VRETURN :              C8 C |
+ __FUNC_GETMASK :               10C C |  __FUNC_GOTMASK :               117 C |
 
-     75 symbols
-     34 unused symbols
+     90 symbols
+     37 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 9 - 7/6/2016 23:19:34
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 12 - 7/7/2016 15:32:09
 
 
   defined macros:
@@ -463,7 +646,7 @@ VRETURN                               |
 
       3 macros
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 10 - 7/6/2016 23:19:34
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 13 - 7/7/2016 15:32:09
 
 
   codepages:
@@ -472,10 +655,10 @@ VRETURN                               |
 STANDARD (0 changed characters)
 
 
-0.01 seconds assembly time
+0.02 seconds assembly time
 
-    369 lines source file
-    385 lines incl. macro expansions
+    517 lines source file
+    552 lines incl. macro expansions
       2 passes
       0 errors
       0 warnings

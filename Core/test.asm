@@ -18,14 +18,25 @@ lib_text = 1 																; use the text library and install font data
 	include core.asm 														; install FredOS :)
 
 main:
-	ldi 	020h
-	phi 	ra
-	ldi 	088h
-	plo 	ra
+	vcall  	C_ClearScreen
+	vcall 	C_SetCursor
+	db 		13,17
 	lrs 	r9,text
 	vcall	C_PrintString
-loop:
-	br 		loop
+	lrs 	r4,text+4
+
+bump:
+	lda 	r4
+	dec 	r4
+	adi 	1
+	str 	r4
+	xri 	10
+	bnz 	main
+	str 	r4
+	dec 	r4
+	br 		bump
+
+	br 		main
 
 text:
-	db 		0,1,9,5,3,0FFh
+	db 		0,0,0,0,0,0FFh
