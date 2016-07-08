@@ -240,7 +240,7 @@ FUNC_PrintString:
 ;					Print character. RA is the current position (LSB is memory offset, MSB is bitmask)
 ;
 ;	uses temporary registers RC.0 and RB, also RE is used in the call but reset afterwards. RA is updated to the
-; 	next space.
+; 	next space. XOR Drawing.
 ; ********************************************************************************************************************
 
 FUNC_PrintChar:
@@ -273,7 +273,7 @@ __FPrintLoop1:
 	plo 	rc
 	bnf 	__FPrintNoPixel 												; if 0 was shifted in.
 	ghi 	ra 																; get bitmask from RA.1
-	or 																		; OR into display.
+	xor 																	; XOR into display.
 	str 	rb
 __FPrintNoPixel:
 	glo 	rb 																; move address to next line down
@@ -356,7 +356,7 @@ __ClearLoop:
 ; ********************************************************************************************************************
 
 FUNC_SetCursor:
-	if 		lib_text
+	if 		lib_text+lib_graphics
 	lda 	r2 																; unstack return address to RB
 	plo 	rb
 	lda 	r2
@@ -472,6 +472,52 @@ sound macro pitch,milliseconds
 
 ; ********************************************************************************************************************
 ;
+;								Draw horizontal and vertical lines length D
+;
+; ********************************************************************************************************************
+
+FUNC_HLine:
+	if 		lib_graphics 													; for horizontal set bit 7
+	ori 	80h 															; of the length
+	endif
+FUNC_VLine:
+	if 		lib_graphics
+	plo 	rc 																; save counter in RC.0
+__Line_Loop:
+	sex 	rb
+	glo 	ra 																; copy address over
+	plo 	rb
+	ghi 	rd
+	phi 	rb
+	ghi 	ra 																; xor pixel in.
+	xor
+	str 	rb
+	glo 	rc 																; look at rc
+	ani 	80h 															; check bit 7
+	bnz 	__Line_Hincrement												; if non zero go horizontally.
+	glo 	ra 																; next line down.
+	adi 	8
+	plo 	ra
+	br 		__Line_CheckCount
+__Line_HIncrement: 															; next pixel across
+	ghi 	ra 																; shift mask right
+	shr
+	bnz 	__Line_HSave
+	inc 	ra 																; if zero (shifted out) next byte
+	ldi 	080h 															; new mask
+__Line_HSave:
+	phi 	ra 																; write mask back.
+__Line_CheckCount:
+	dec 	rc 																; done all
+	glo 	rc
+	ani 	7Fh 															; forget about bit 7.
+	bnz 	__Line_Loop														; if not loop back
+	endif
+	vreturn
+
+
+; ********************************************************************************************************************
+;
 ;												Included fonts, if any
 ;
 ; ********************************************************************************************************************
@@ -480,4 +526,4 @@ sound macro pitch,milliseconds
 	include font.mod 														; any fonts requested loaded here.
 	endif
 
-; TODO: Sound Code
+; TODO: Vertical and horizontal line.

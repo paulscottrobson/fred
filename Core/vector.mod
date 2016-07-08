@@ -3,6 +3,10 @@
 ;
 C_PrintString:
     dw FUNC_PrintString
+C_HLine:
+    dw FUNC_HLine
+C_VLine:
+    dw FUNC_VLine
 C_SetCursor:
     dw FUNC_SetCursor
 C_ClearScreen:
