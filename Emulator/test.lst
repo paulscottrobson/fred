@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/8/2016 18:58:13
 
 
        1/       0 :                     
@@ -61,7 +61,7 @@
       58/      27 :                     
       59/      27 :                     ; ***********************************************************************************************************
       60/      27 :                     ;
- AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/8/2016 18:58:13
 
 
       61/      27 :                     ;	CALL routine. Following byte contains a command function 00-7E which is an index into
@@ -124,7 +124,7 @@
      118/      55 : 23                  	dec 	r3 					; reget the first byte
      119/      56 : 43                  	lda 	r3
      120/      57 : FA 07               	ani 	07h 				; lower 3 bits only.
- AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/8/2016 18:58:13
 
 
      121/      59 :                     call_putH:
@@ -187,7 +187,7 @@
      178/      84 : A0                  	plo 	r0
      179/      85 : 42                  	lda 	r2 														; get key off stack and write.
      180/      86 : 50                  	str 	r0 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/8/2016 18:58:13
 
 
      181/      87 :                     int_nokey:
@@ -238,7 +238,7 @@
      226/      B0 : DE                  	sep 	re
      227/      B1 : 04                  	db 		S_Return
      228/      B2 :                     	
- AS V1.42 Beta [Bld 102] - source file test.asm - page 5 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 5 - 7/8/2016 18:58:13
 
 
   symbol table (* = unused):
@@ -249,7 +249,7 @@
 *BRANCHEXT :                      0 - |  CALL_HANDLER :                  27 C |
  CALL_LOAD_REGISTER :            41 C |  CALL_PUTH :                     59 C |
 *CASESENSITIVE :                  0 - | *CONSTPI :        3.141592653589793 - |
-*DATE :                    7/5/2016 - | *FALSE :                          0 - |
+*DATE :                    7/8/2016 - | *FALSE :                          0 - |
 *FULLPMMU :                       1 - |  FUNC_GETKEY :                   6F C |
  FUNC_RETURN :                   60 C |  FUNC_TEST :                     B0 C |
 *HAS64 :                          1 - | *HASDSP :                         0 - |
@@ -269,7 +269,7 @@
 *RELAXED :                        0 - |  RETURN_MAIN :                   67 C |
  RF :                             F - |  STACK_START :                  2FF - |
  S_GETKEY :                       6 C |  S_RETURN :                       4 C |
- S_TEST :                         8 C | *TIME :                    22:49:51 - |
+ S_TEST :                         8 C | *TIME :                    18:58:13 - |
 *TRUE :                           1 - | *VERSION :                     142F - |
  VIDEO_RAM :                      0 - |  WAIT :                          96 C |
  __DELAY :                       AA C |
@@ -277,7 +277,7 @@
      57 symbols
      28 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 6 - 7/5/2016 22:49:51
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 6 - 7/8/2016 18:58:13
 
 
   codepages:

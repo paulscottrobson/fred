@@ -41,6 +41,7 @@ rf = 15 																	; 3 byte 16 bit register loader.
 controlPort = 2 															; control port (bit 7 sound, 0/1 row/col)
 videoRAMSize = scWidth * scHeight / 8 										; amount of RAM allocated to memory.
 videoControlBits = (scWidth/64)+(scHeight/32)*2 							; bits written to video control port.
+soundControlBit = 080h 														; sound control bit.
 
 ; ********************************************************************************************************************
 ;
@@ -348,9 +349,6 @@ __ClearLoop:
 	bnz 	__ClearLoop
 	vReturn
 
-FUNC_Sound:
-	vReturn
-
 ; ********************************************************************************************************************
 ;
 ;					Set cursor to position in 2 bytes following call. (vCall C_SetCursor ; db x,y)
@@ -424,7 +422,53 @@ __FUNC_GotMask:
 	vReturn 																; return from subroutine
 	endif
 
+; ********************************************************************************************************************
+;
+;								Sound - toggle RA times with toggle time D
+;
+; ********************************************************************************************************************
 
+FUNC_Sound:																
+	if 		lib_sound
+	plo 	rc
+	ldi 	videoControlBits 												; put video control bits on stack.
+	dec 	r2
+	str 	r2
+__SoundOuter: 																; outer loop (half cycle)
+	glo 	rc 																; get loop counter [1]
+	plo 	rb 																; put in temp RB.0 [2]
+	sex 	r2 																; use R2 as stack [3]
+	out 	controlPort 													; write to sound port [4]
+	dec 	r2 																; fix up stack. [5]
+	ldi 	soundControlBit 												; XOR control bit [6]
+	xor 																	; [7]
+	str 	r2	 															; write back [8]
+__SoundInner:
+	dec 	rb 																; 3 x D cycles
+	glo 	rb
+	bnz 	__SoundInner
+
+	dec 	ra 																; dec counter [9]
+	glo 	ra 																; check undercount [10]
+	bnz 	__SoundOuter 													; loop back if not done [11]
+	ghi 	ra
+	bnz 	__SoundOuter  													; calc slightly out doesn't matter
+	inc 	r2 																; fix up stack.
+	vReturn
+	endif
+	
+;
+;	The outer loop (one half cycle = 3 x D + 11 instructions). A full cycles is twice this.
+;	each instruction is 16 clocks at 1 Mhz.
+;
+; 	1000000 / pitch / 32 is the number of instructions per half cycle. Take away 11 (fixed)
+;	and divide by 3 (loop size) for result.
+;
+sound macro pitch,milliseconds 
+	lrs 	ra,pitch * milliseconds / 1000 * 2								; set time.
+	ldi 	(1000000 / pitch / 32 - 11) / 3									; set pitch.
+	vcall 	C_Sound 														; call sound routine
+	endm
 
 ; ********************************************************************************************************************
 ;

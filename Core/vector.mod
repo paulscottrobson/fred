@@ -3,8 +3,8 @@
 ;
 C_PrintString:
     dw FUNC_PrintString
-C_GetKey:
-    dw FUNC_GetKey
+C_SetCursor:
+    dw FUNC_SetCursor
 C_ClearScreen:
     dw FUNC_ClearScreen
 C_CheckKey:
@@ -15,5 +15,5 @@ C_SetCursorXY:
     dw FUNC_SetCursorXY
 C_Sound:
     dw FUNC_Sound
-C_SetCursor:
-    dw FUNC_SetCursor
+C_GetKey:
+    dw FUNC_GetKey

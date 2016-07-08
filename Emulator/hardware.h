@@ -13,10 +13,10 @@
 #define _HARDWARE_H
 
 BYTE8 HWIProcessKey(BYTE8 key,BYTE8 isRunMode);
-WORD16 HWIEndFrame(WORD16 r0);
+WORD16 HWIEndFrame(WORD16 r0,LONG32 clock);
 void HWIReset(void);
 
-void HWIWriteControlPort(BYTE8 portValue);
+void HWIWriteControlPort(BYTE8 portValue,WORD16 cycles);
 
 BYTE8 HWIScreenWidth(void);
 BYTE8 HWIScreenHeight(void);

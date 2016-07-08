@@ -54,7 +54,7 @@ static BYTE8 ramMemory[MEMORYSIZE];
 
 #include "_1801_include.h"
 
-#define OUTPORT2(d)  HWIWriteControlPort(d)
+#define OUTPORT2(d)  HWIWriteControlPort(d,cycles)
 
 #include "_1801_ports.h"
 
@@ -84,7 +84,7 @@ BYTE8 CPUExecuteInstruction(void) {
 	if (IE != 0) {																	// Fire interrupt if it is enabled.
 		INTERRUPT();
 	}
-	R[0] = HWIEndFrame(R[0]);														// End of Frame code, setting R0 correctly.
+	R[0] = HWIEndFrame(R[0],CRYSTAL_CLOCK);											// End of Frame code, setting R0 correctly.
 	cycles = cycles - CYCLES_PER_FRAME;												// Adjust this frame rate.
 	return FRAME_RATE;																// Return frame rate.
 }

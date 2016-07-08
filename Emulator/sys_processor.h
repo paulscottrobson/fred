@@ -14,6 +14,7 @@
 
 #define MEMORYSIZE	(1024) 															// RAM allocated.
 
+typedef unsigned int LONG32; 														// 32 bit type.
 typedef unsigned short WORD16;														// 8 and 16 bit types.
 typedef unsigned char  BYTE8;
 
