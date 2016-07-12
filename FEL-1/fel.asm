@@ -21,17 +21,17 @@
 0004	B2					PHI R2
 0005	B4					PHI R4
 0006 	B8					PHI R8
-0007	F8 19 				LDI 19h 												; R1 = $119 Interrupt routine
+0007	F8 19 				LDI L0119 & 255 										; R1 = $119 Interrupt routine
 0009 	A1 					PLO R1
 000A	F8 FF 				LDI 0FFh 												; R2 = $1FF Stack top
 000C 	A2 					PLO R2
-000D 	F8 3B 				LDI 03Bh 
+000D 	F8 3B 				LDI L013B & 255 
 000F 	A4 					PLO R4 													; R4 = $13B Execute next instruction
-0010 	F8 66 				LDI 066h 
+0010 	F8 66 				LDI L0166 & 255 
 0012 	A8 					PLO R8 													; R8 = $166 Call $1nn where nn is next byte
 0013	90 					GHI R0 													
 0014 	B5 					PLO R5
-0015 	F8 B4 				LDI 0B4h 												; R5 = $0B4 "Macro PC"
+0015 	F8 04 				LDI L00B4 & 255 										; R5 = $0B4 "Macro PC"
 0017 	A5 					PHI R5 
 0018 	D4 					SEP R4													; go to "Util" in R4 
 ;
@@ -668,5 +668,66 @@
 02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
 02C6 	3A BA 				BNZ L02BA 												; tone, go back to tone loop
 02C8 	30 B4 				BR  L0284												; tape, go back to tape loop
+;
+;	4xkk 	Vx = kk & random
+;
+02CA 	19 					INC R9 													; bump and read random lower
+02CB 	89	 				GLO R9
+02CC 	A7 					PLO R7 													; R7 = $01<R9.0>
+02CD 	E7 					SEX R7 													; X points there, use as randomish data
+02CE 	99 					GHI R9 													; random high
+02CF 	F4 					ADD 													; R9.1 + Mem[$01<R9.0>]
+02D0 	22 					DEC R2 													; push on stack
+02D1 	52 					STR R2
+02D2 	F6 					SHR 													; add to self shifted right
+02D3 	E2 					SEX R2
+02D4 	F4 					ADD
+02D5 	B9 					PHI R9 													; update R9 high
+02D6 	56 		 			STR R6 													; save at Vx
+02D7 	E6 					SEX R6 													; RX points to Vx
+02D8 	45 					LDA R5 													; read low byte (mask)
+02D9 	F2 					AND 													; and with Vx
+02DA 	56 					STR R6 													; update
+02DB 	12 					INC R2 													; fix up stack and exit.
+02DC 	D4 					SEP R4
+;
+;	9xys 	Draw sxs pattern (5 or 8) x = pattern address in page 3 y = tv cell address. 
+;
+02DD 	45 		L02DD:		LDA R5 													; Get next byte
+02DE 	FA 0F 				ANI 0Fh 												; look at lower 4 bits which are size
+02E0 	AF 					PLO RF 													; RF.0 is the number of lines to do. 
+;
+;	RF = #lines
+;
+02E1 	E6 		L02E1:		SEX R6 													; R(x) points to VX
+02E2 	F0 					LDX 													; read X
+02E3 	AA 					PLO RA 													; save in RA.0
+02E4 	F8 03 				LDI 3 													; RA is $03[Vx]
+02E6 	BA 					PHI RA
+;
+;	RF = #lines. RA = address of graphic data. Calculate cell address from tv cell address. 
+;	Bits 3,4 are the vertical cell position (0-3, 8 pixels high cell). 
+;	Bits 0,1,2 are the horizontal position. (0-7, 8 pixels wide cell).
+;
+02E7 	47 					LDA R7 													; read Y (Cell number)
+02E8 	AB 					PLO RB 													; RB.0 = Y
+02E9 	F6 					SHR 													; R6 = Y >> 1 << 4 (Y * 8)
+02EA 	56 					STR R6   												; using shift left function, so bits
+02EB 	D8 					SEP R8 													; 3 and 4 are now in bits 6,7
+02EC 	4D 					DB  L024D & 255
+02ED 	8B 					GLO RB 													; get original cell number for bits 0-2
+02EE 	F1 					OR 														; or with bits 6-7
+02EF 	FA C7  				ANI 0C7h 												; remove so only bits 0-2 and bits 6-7
+02F1 	AB 					PLO RB
+02F2 	F8 07 				LDI 07 													; set RB.1 = 07<addr>
+02F4 	BB 					PHI RB
 
-[TODO] 2C8-2FF
+02F5 	4A 		L02F5: 		LDA RA 													; read first byte of data
+02F6 	5B 					STR RB 													; write to the screen
+02F7 	8B 					GLO RB 													; get low byte of screen address
+02F8 	FC 08 				ADI 08 													; go one row down
+02FA 	AB 					PLO RB 													; update screen address
+02FB 	2F 					DEC RF 													; decrement line counter.
+02FC 	8F 					GLO RF 													; check it
+02FD 	3A F5 				BNZ L02F5 												; do next row.
+02FF 	D4 					SEP R4
