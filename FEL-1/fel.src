@@ -1,5 +1,10 @@
+; ***************************************************************************************************************
 ;
-;	FEL-1 Disassembly
+;													FEL-1 Disassembly
+;													=================
+;
+;	Original version by RCA 1974, from the Billie Jo Call papers from Hagley. Recommented and converted by
+;	Paul Robson (paul@robsons.org.uk)
 ;
 ;	EF1 is 1 when a keypad byte is available. It is read from INP 0. There is a shift switch. 
 ;	I think this is set manually. (Implied). Horizontal resolution is set by a toggle switch.
@@ -15,7 +20,8 @@
 ;	Clock Frequency can be derived from the tone code. In BJC notes 04 is 360us. This is 160 + 40 + 40 *4
 ;	cycles. Hence it is clocked at 1Mhz. All the products in the table (kc x us) come to 1000
 ;
-; 	I think 
+; ***************************************************************************************************************
+
 0000	00					IDL
 0001	F8 01 				LDI 1 													; Set interrupt, stack
 0003	B1 					PHI R1
@@ -35,9 +41,13 @@
 0015 	F8 04 				LDI L00B4 & 255 										; R5 = $0B4 "Macro PC"
 0017 	A5 					PHI R5 
 0018 	D4 					SEP R4													; go to "Util" in R4 
+
+; ***************************************************************************************************************
 ;
-;	7xxx Instructions
+;												7xxx Instructions
 ;
+; ***************************************************************************************************************
+
 0019 	D8 					SEP R8 													; Fetch A and B from memory
 001A 	73 					DB L0273 & 255
 001B 	E6 					SEX R6 													; X points to register X
@@ -164,9 +174,13 @@
 0075 	56 					STR R6
 0076 	D4 					SEP R4
 0077	00 					DB 00
+
+; ***************************************************************************************************************
 ;
-;	Clear Screen Routine
+;													Clear Screen Routine
 ;
+; ***************************************************************************************************************
+
 0078	93 					GHI R3 													; RA = $800 (R3.1 = 0)
 0079	AA 					PLO RA
 007A 	F8 08 				LDI 8
@@ -177,9 +191,13 @@
 0080 	8A 					GLO RA 													; check RA.0
 0081 	3A 7D 				BNZ L007D 												; go back if not finished
 0083 	B4 					SEP R4 													; next instruction.
+
+; ***************************************************************************************************************
 ;
-;	This is the FEL-1 Boot Code / Micro monitor.
+;									This is the FEL-1 Boot Code / Micro monitor.
 ;
+; ***************************************************************************************************************
+
 0084	60 00 				FEL 	06000h											; stop tape
 0086 	02 2F 				FEL 	0022Fh 											; copy registers to stack space.
 ;
@@ -267,6 +285,12 @@
 00FC 	92 45 				FEL 	09245h 											; Draw V2 pattern at cell V4
 00FE 	02 6E 				FEL 	0026Eh 											; return
 
+; ***************************************************************************************************************
+;
+;											Register Area and Conversion table
+;
+; ***************************************************************************************************************
+
 0100	00 00 00 00 		DB 0,0,0,0 												; V0-VF
 0104	00 00 00 00 		DB 0,0,0,0
 0108	00 00 00 00 		DB 0,0,0,0
@@ -277,9 +301,12 @@
 0114 	64 					DB 100 													; dividers.
 0115 	0A 					DB 10
 0116 	01 					DB 1
+
+; ***************************************************************************************************************
 ;
-;	Interrupt Routine. Sets up R0 to point to display at $700 and decrements VD,VE,VF if non-zero.
+;		Interrupt Routine. Sets up R0 to point to display at $700 and decrements VD,VE,VF if non-zero.
 ;
+; ***************************************************************************************************************
 
 0117 	42 		L0117:		LDA R2 													; pop D off the stack
 0118 	70 					RET 													; return re-enabling interrupts.
@@ -315,9 +342,11 @@
 0138 	A6 					PLO R6
 0139 	30 17 				BR  L0117 												; and go back to exit the routine.
 
+; ***************************************************************************************************************
 ;
-;	Main execution loop, run in R4. Sets up R6 (X) R7 (Y) and calls code from table at 01C0h
+;			Main execution loop, run in R4. Sets up R6 (X) R7 (Y) and calls code from table at 01C0h
 ;
+; ***************************************************************************************************************
 
 013B 	94 		L013B:		GHI R4 													; D = 1
 013C 	B6 					PHI R6 													; Set R6,R7,RC High to Page 1.
@@ -355,9 +384,13 @@
 015C 	A3 		L015C:		PLO R3 													; save in R3.0, now has code address
 015D 	D3 					SEP R3 													; and call it
 015E 	30 3B  				BR  L013B 												; make re-entrant
+
+; ***************************************************************************************************************
 ;
-;	0aaa run machine code at aaa in P3.
+;										0aaa run machine code at aaa in P3.
 ;
+; ***************************************************************************************************************
+
 0160 	86		L0160:		GHI R6 													; get R6.1 (1)
 0161 	B3 					PHI R3 													; put in R3.1
 0162 	45 					LDA R5 													; read instruction second byte.
@@ -382,9 +415,12 @@
 0172 	8F 		L0172:		GLO RF 													
 0173 	30 6D 				BR 	L0171
 
+; ***************************************************************************************************************
 ;
-;	Exaa - execute code at 01aa with X = 6
+;										Exaa - execute code at 01aa with X = 6
 ;
+; ***************************************************************************************************************
+
 0175 	D8 		L0175:		SEP R8 													; load A and B into RA and RB
 0176 	73 					DB  L0273 & 255
 0177 	E6 					SEX R6 													; index is Vx
@@ -476,9 +512,12 @@
 01BD 	3A A2 				BNZ L01A2 												; if not keep going
 01BF 	D4 					SEP R4
 
+; ***************************************************************************************************************
 ;
-;	Instruction vector tables
+;												Instruction vector tables
 ;
+; ***************************************************************************************************************
+
 01C0 	00 		L01C0:		DB  0 													; 0xxx not decoded here
 01C1 	02 					DB 	L020D & 255 										; 1mmm Do program at mmm (subroutine call)
 01C2 	02					DB  L02B1 & 255 										; 2xkk Load kk into Vx
@@ -522,9 +561,13 @@
 01F4 	00 00 00 00 		DB 	0,0,0,0
 01F8 	00 00 00 00 		DB 	0,0,0,0
 01FC 	00 00 00 00 		DB 	0,0,0,0
+
+; ***************************************************************************************************************
 ;
-;	Ammm 	Load A with mmm
+;												Ammm 	Load A with mmm
 ;
+; ***************************************************************************************************************
+
 0200	F8 10 	L0200:		LDI 10h 												; point R7 to A
 0202	A7 		L0202:		PLO R7
 0203 	86 					GLO R6 													; get X address $10X so its $0X
@@ -533,14 +576,22 @@
 0206 	45 					LDA R5 													; get second byte of instruction
 0207 	57 					STR R7 													; write to low byte
 0208 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	Bmmm 	Load B with mmm
+;												Bmmm 	Load B with mmm
 ;
+; ***************************************************************************************************************
+
 0209	F8 12 	L0209:		LDI 12h													; point R7 to B and reuse code above
 020B 	30 02				BR  L0202
+
+; ***************************************************************************************************************
 ;
-;	1mmm	Do Program (Subroutine) at mmmm
+;										1mmm	Do Program (Subroutine) at mmmm
 ;
+; ***************************************************************************************************************
+
 020D 	15 		L020D:		INC R5 													; r5 point sto next instruction
 020E 	85 					GLO R5 													; get return address low
 020F 	22 					DEC R2 													; push on stack
@@ -549,17 +600,25 @@
 0212 	22 					DEC R2 													; push on stack
 0213 	52 
 0214 	25 					DEC R5 													; point R5 to low byte and fall through.
+
+; ***************************************************************************************************************
 ;
-;	Fmmm	Go to program at mmmm
+;											Fmmm	Go to program at mmmm
 ;
+; ***************************************************************************************************************
+
 0215	45 		L0215:		LDA R5 													; get low byte
 0216 	A5 					PLO R5 													; put in FEL PC Low
 0217 	86 					GLO R6 													; get X address $10X so this is $0X
 0218 	B5 					PHI R5 													; put in FEL PC hight
 0219 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	3xkk 	Skip instruction if vx != kk
+;										3xkk 	Skip instruction if vx != kk
 ;
+; ***************************************************************************************************************
+
 0223 	45 		L0223:		LDA R5 													; get kk value
 0224 	E6 		L0224:		SEX R6 													; R[X] points to Vx
 0225 	F3 					XOR 													; compare the values
@@ -567,15 +626,23 @@
 0228 	15 					INC R5 													; skip
 0229 	15 					INC R5
 022A 	D4 		L022A:		SEP R4
+
+; ***************************************************************************************************************
 ;
-;	Cxy0 	Skip if vx != vy
+;											Cxy0 	Skip if vx != vy
 ;
+; ***************************************************************************************************************
+
 022B 	15 		L022B: 		INC R5 													; ignore second byte
 022C 	47 					LDA R7 													; read Vy
 022D 	30 24 				BR  L0224 												; so now its same as 3xkk
+
+; ***************************************************************************************************************
 ;
-;	Copy Registers onto Stack
+;											Copy Registers onto Stack
 ;
+; ***************************************************************************************************************
+
 022F 	F8 00				LDI 0 													; point R6 to $100
 0231 	A6					PLO R6
 0232 	96 					GHI R6 													; set R7 to $1E0 stack space bottom.
@@ -589,18 +656,26 @@
 023B 	FB F4 				XRI 0F4h 												; copied all 20 bytes of data ?
 023D 	3A 37 				BNZ L0237
 023F 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	Turn the television off.
+;											Turn the television off.
 ;
+; ***************************************************************************************************************
+
 0240 	E3 					SEX R3 													; X = 3 (same as P)
 0241 	61 					OUT 1  													; select TV device (2)
 0242 	02 					DB  2 												
 0243 	61 					OUT 2 													; turn it off
 0244 	00 					DB 	0
 0245 	D4 					SEP R4 													
+
+; ***************************************************************************************************************
 ;
-;	Turn hex keypad on (probably run in RC)
+;									Turn hex keypad on (probably run in RC)
 ;
+; ***************************************************************************************************************
+
 0246 	EC 					SEX RC 													; X = C
 0247 	61  				OUT 1 													; select Keypad device (1)
 0248 	01 					DB 1 													
@@ -608,9 +683,13 @@
 024A 	01 					DB 1
 024B 	E6 					SEX R6 													; set X back and return.
 024C 	D3 					SEP R3 
+
+; ***************************************************************************************************************
 ;
-;	Shift Vx left 4
+;												Shift Vx left 4
 ;
+; ***************************************************************************************************************
+
 024D 	E6 					SEX R6 													; R(X) now points to Vx
 024E 	F0 					LDX 													; get Vx
 024F 	F4 					ADD 													; add it
@@ -629,9 +708,13 @@
 0259 	63 					OUT 3 													; write low byte of instruction to port 3
 025A 	D4 					SEP R4 													; return
 025B 	00 					DB 0 													; unused
+
+; ***************************************************************************************************************
 ;
-;	Turn the television on 
+;											Turn the television on 
 ;
+; ***************************************************************************************************************
+
 025C 	F8 00 				LDI 0 													; set display address to $700
 025E 	A0 					PLO R0
 025F 	F8 07 				LDI 7
@@ -642,18 +725,26 @@
 0265 	62 					OUT 2													; turn TV on (why 3 ?)
 0266 	03					DB 3 													
 0267 	D4 					SEP R4 													
+
+; ***************************************************************************************************************
 ;
-;	Turn hex keypad off
+;											Turn hex keypad off
 ;
+; ***************************************************************************************************************
+
 0268 	E3 					SEX R3 													; X = 3 (Same as P)
 0269 	61 					OUT 1 													; select keypad device (1)
 026A 	01					DB 1
 026B 	62  			 	OUT 2													; and turn it off
 026C 	00 					DB 0 
 026D 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	Return from subroutine
+;										Return from subroutine
 ;
+; ***************************************************************************************************************
+
 026E 	42 					LDA R2 													; pop high return 
 026F 	B5 					PHI R5 													; into R5
 0270 	42 					LDA R2 		 											; same with low
@@ -675,9 +766,13 @@
 027E 	4F 					LDA RF
 027F 	AB 					PLO RB
 0280 	D4 					SEP R3
+
+; ***************************************************************************************************************
 ;
-;	2xkk write kk to vX
+;											2xkk write kk to vX
 ;
+; ***************************************************************************************************************
+
 0281 	45 		L0281:		LDA R5 													; read 2nd instruction byte
 0282 	56 					STR R6 													; save in Vx
 0283 	D4 					SEP R4
@@ -705,9 +800,13 @@
 0296 	BA 					DB L02BA & 255
 0297 	15 					INC R5 													; fetch the 2nd byte
 0298 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	8xyn 	x = x or y (1) x and y (2) x+y(4) x-y (5), V0 is carry / not borrow
+;				8xyn 	x = x or y (1) x and y (2) x+y(4) x-y (5), V0 is carry / not borrow
 ;
+; ***************************************************************************************************************
+
 0299 	22 		L0299:		DEC R2 													; push $D3 on the stack
 029A 	F8 D3 				LDI 0D3h												; (SEP R3)
 029C 	52 					STR R2
@@ -726,9 +825,13 @@
 02AC 	F6 					SHR 													; D = 0
 02AD 	56 		L02AD:		STR R6 													; write DF out to V0 	
 02AE 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	Write DF to tape. Sets up R6 to return to tape code, and writes for 2 or 3 cycles depending on DF.
+;		Write DF to tape. Sets up R6 to return to tape code, and writes for 2 or 3 cycles depending on DF.
 ;
+; ***************************************************************************************************************
+
 02AF 	D3 		L02AF:		SEP R3
 02B0 	F8 72 	L02B0:		LDI L0172 & 255
 02B2 	A6 					PLO R6	
@@ -737,11 +840,15 @@
 02B6 	1B 					INC RB 													; inc parity value in RB.0
 02B7 	FC 03 				ORI 3 													; D = 3 
 02B9 	AF 		L02B9:		PLO RF 													; put write value in RF
+
+; ***************************************************************************************************************
 ;
 ;	Tone Generate (P = C), RE.1 = Pitch, RF.0 = Cycles to do it for.
 ;	R6 is set to 72 for read tape and 6E for make tone, which is how it figures out what to do afterwards
 ;	this is used for tape and cassette out.
 ;
+; ***************************************************************************************************************
+
 02BA 	EC  	L02BA:		SEX RC 													; X = P = C
 02BB  	63 					OUT 3 													; set External Function Register -> Run
 02BC 	05 					DB 05 													; speaker line
@@ -754,9 +861,13 @@
 02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
 02C6 	3A BA 				BNZ L02BA 												; tone, go back to tone loop
 02C8 	30 B4 				BR  L0284												; tape, go back to tape loop
+
+; ***************************************************************************************************************
 ;
-;	4xkk 	Vx = kk & random
+;											4xkk 	Vx = kk & random
 ;
+; ***************************************************************************************************************
+
 02CA 	19 					INC R9 													; bump and read random lower
 02CB 	89	 				GLO R9
 02CC 	A7 					PLO R7 													; R7 = $01<R9.0>
@@ -776,25 +887,36 @@
 02DA 	56 					STR R6 													; update
 02DB 	12 					INC R2 													; fix up stack and exit.
 02DC 	D4 					SEP R4
+
+; ***************************************************************************************************************
 ;
-;	9xys 	Draw sxs pattern (5 or 8) x = pattern address in page 3 y = tv cell address. 
+;			9xys 	Draw sxs pattern (5 or 8) x = pattern address in page 3 y = tv cell address. 
 ;
+; ***************************************************************************************************************
 02DD 	45 		L02DD:		LDA R5 													; Get next byte
 02DE 	FA 0F 				ANI 0Fh 												; look at lower 4 bits which are size
 02E0 	AF 					PLO RF 													; RF.0 is the number of lines to do. 
+
+; ***************************************************************************************************************
 ;
-;	RF = #lines
+;														RF = #lines
 ;
+; ***************************************************************************************************************
+
 02E1 	E6 		L02E1:		SEX R6 													; R(x) points to VX
 02E2 	F0 					LDX 													; read X
 02E3 	AA 					PLO RA 													; save in RA.0
 02E4 	F8 03 				LDI 3 													; RA is $03[Vx]
 02E6 	BA 					PHI RA
+
+; ***************************************************************************************************************
 ;
 ;	RF = #lines. RA = address of graphic data. Calculate cell address from tv cell address. 
 ;	Bits 3,4 are the vertical cell position (0-3, 8 pixels high cell). 
 ;	Bits 0,1,2 are the horizontal position. (0-7, 8 pixels wide cell).
 ;
+; ***************************************************************************************************************
+
 02E7 	47 					LDA R7 													; read Y (Cell number)
 02E8 	AB 					PLO RB 													; RB.0 = Y
 02E9 	F6 					SHR 													; R6 = Y >> 1 << 4 (Y * 8)
@@ -817,3 +939,122 @@
 02FC 	8F 					GLO RF 													; check it
 02FD 	3A F5 				BNZ L02F5 												; do next row.
 02FF 	D4 					SEP R4
+
+; ***************************************************************************************************************
+;
+;	0300 font data. First 16 bytes is offset for 0-9A-F and is required for the monitor. Everything after that
+;	is optional.
+;
+; ***************************************************************************************************************
+
+0300 48   DB L0348 & 255
+0301 10   DB L0310 & 255
+0302 2E   DB L032E & 255
+0303 2A   DB L032A & 255
+0304 19   DB L0319 & 255
+0305 32   DB L0332 & 255
+0306 44   DB L0344 & 255
+0307 14   DB L0314 & 255
+0308 4C   DB L034C & 255
+0309 1E   DB L031E & 255
+030A 50   DB L0350 & 255
+030B 22   DB L0322 & 255
+030C 40   DB L0340 & 255
+030D 26   DB L0326 & 255
+030E 37   DB L0337 & 255
+030F 3B   DB L033B & 255
+0310 10 L0310:  DB 010H ; ...X....
+0311 30         DB 030H ; ..XX....
+0312 10         DB 010H ; ...X....
+0313 10         DB 010H ; ...X....
+0314 7C L0314:  DB 07CH ; .XXXXX..
+0315 08         DB 008H ; ....X...
+0316 10         DB 010H ; ...X....
+0317 20         DB 020H ; ..X.....
+0318 40         DB 040H ; .X......
+0319 08 L0319:  DB 008H ; ....X...
+031A 18         DB 018H ; ...XX...
+031B 28         DB 028H ; ..X.X...
+031C 7C         DB 07CH ; .XXXXX..
+031D 08         DB 008H ; ....X...
+031E 38 L031E:  DB 038H ; ..XXX...
+031F 44         DB 044H ; .X...X..
+0320 3C         DB 03CH ; ..XXXX..
+0321 04         DB 004H ; .....X..
+0322 78 L0322:  DB 078H ; .XXXX...
+0323 24         DB 024H ; ..X..X..
+0324 38         DB 038H ; ..XXX...
+0325 24         DB 024H ; ..X..X..
+0326 78 L0326:  DB 078H ; .XXXX...
+0327 44         DB 044H ; .X...X..
+0328 44         DB 044H ; .X...X..
+0329 44         DB 044H ; .X...X..
+032A 78 L032A:  DB 078H ; .XXXX...
+032B 04         DB 004H ; .....X..
+032C 18         DB 018H ; ...XX...
+032D 04         DB 004H ; .....X..
+032E 78 L032E:  DB 078H ; .XXXX...
+032F 04         DB 004H ; .....X..
+0330 38         DB 038H ; ..XXX...
+0331 40         DB 040H ; .X......
+0332 7C L0332:  DB 07CH ; .XXXXX..
+0333 04         DB 004H ; .X..
+0334 78         DB 078H ; .XXXX...
+0335 04         DB 004H ; .....X..
+0336 78         DB 078H ; .XXXX...
+0337 7C L0337:  DB 07CH ; .XXXXX..
+0338 40         DB 040H ; .X......
+0339 7C         DB 07CH ; .XXXXX..
+033A 40         DB 040H ; .X......
+033B 7C L033B:  DB 07CH ; .XXXXX..
+033C 40         DB 040H ; .X......
+033D 7C         DB 07CH ; .XXXXX..
+033E 40         DB 040H ; .X......
+033F 40         DB 040H ; .X......
+0340 3C L0340:  DB 03CH ; ..XXXX..
+0341 40         DB 040H ; .X......
+0342 40         DB 040H ; .X......
+0343 40         DB 040H ; .X......
+0344 3C L0344:  DB 03CH ; ..XXXX..
+0345 40         DB 040H ; .X......
+0346 78         DB 078H ; .XXXX...
+0347 44         DB 044H ; .X...X..
+0348 38 L0348:  DB 038H ; ..XXX...
+0349 44         DB 044H ; .X...X..
+034A 44         DB 044H ; .X...X..
+034B 44         DB 044H ; .X...X..
+034C 38 L034C:  DB 038H ; ..XXX...
+034D 44         DB 044H ; .X...X..
+034E 38         DB 038H ; ..XXX...
+034F 44         DB 044H ; .X...X..
+0350 38 L0350:  DB 038H ; ..XXX...
+0351 44         DB 044H ; .X...X..
+0352 7C         DB 07CH ; .XXXXX..
+0353 44         DB 044H ; .X...X..
+0354 44 L0354:  DB 044H ; .X...X..
+0355 7C         DB 07CH ; .XXXXX..
+0356 44 L0356:  DB 044H ; .X...X..
+0357 44         DB 044H ; .X...X..
+0358 44         DB 044H ; .X...X..
+0359 44         DB 044H ; .X...X..
+035A 38         DB 038H ; ..XXX...
+035B 44 L035B:  DB 044H ; .X...X..
+035C 08         DB 008H ; ....X...
+035D 10 L035D:  DB 010H ; ...X....
+035E 10         DB 010H ; ...X....
+035F 00 L035F:  DB 000H ; ........
+0360 00 L0360:  DB 000H ; ........
+0361 00         DB 000H ; ........
+0362 00 L0362:  DB 000H ; ........
+0363 00         DB 000H ; ........
+0364 7C         DB 07CH ; .XXXXX..
+0365 00         DB 000H ; ........
+0366 00 L0366:  DB 000H ; ........
+0367 7C         DB 07CH ; .XXXXX..
+0368 00         DB 000H ; ........
+0369 7C         DB 07CH ; .XXXXX..
+036A 00 L036A:  DB 000H ; ........
+036B 18         DB 018H ; ...XX...
+036C 00         DB 000H ; ........
+036D 18         DB 018H ; ...XX...
+036E 00         DB 000H ; ........
