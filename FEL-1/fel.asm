@@ -100,7 +100,7 @@
 ;	7x3E Shift X left 4
 ;
 003E 	D8 					SEP R8 													; Do Vx << 4
-003F 	4D 					DB 4Dh
+003F 	4D 					DB  L024D & 255
 0040 	D4 					SEP R4
 ;
 ;	7x41 Shift X Right 4
@@ -436,8 +436,57 @@
 01F4 	00 00 00 00 		DB 	0,0,0,0
 01F8 	00 00 00 00 		DB 	0,0,0,0
 01FC 	00 00 00 00 		DB 	0,0,0,0
-
-[TODO] [200-22E]
+;
+;	Ammm 	Load A with mmm
+;
+0200	F8 10 	L0200:		LDI 10h 												; point R7 to A
+0202	A7 		L0202:		PLO R7
+0203 	86 					GLO R6 													; get X address $10X so its $0X
+0204 	57 					STR R7 													; write to A high and point to low
+0205 	17 					INC R7
+0206 	45 					LDA R5 													; get second byte of instruction
+0207 	57 					STR R7 													; write to low byte
+0208 	D4 					SEP R4
+;
+;	Bmmm 	Load B with mmm
+;
+0209	F8 12 	L0209:		LDI 12h													; point R7 to B and reuse code above
+020B 	30 02				BR  L0202
+;
+;	1mmm	Do Program (Subroutine) at mmmm
+;
+020D 	15 		L020D:		INC R5 													; r5 point sto next instruction
+020E 	85 					GLO R5 													; get return address low
+020F 	22 					DEC R2 													; push on stack
+0210	52 					STR R2
+0211	95 					GHI R5 													; get return address high
+0212 	22 					DEC R2 													; push on stack
+0213 	52 
+0214 	25 					DEC R5 													; point R5 to low byte and fall through.
+;
+;	Fmmm	Go to program at mmmm
+;
+0215	45 		L0215:		LDA R5 													; get low byte
+0216 	A5 					PLO R5 													; put in FEL PC Low
+0217 	86 					GLO R6 													; get X address $10X so this is $0X
+0218 	B5 					PHI R5 													; put in FEL PC hight
+0219 	D4 					SEP R4
+;
+;	3xkk 	Skip instruction if vx != kk
+;
+0223 	45 		L0223:		LDA R5 													; get kk value
+0224 	E6 		L0224:		SEX R6 													; R[X] points to Vx
+0225 	F3 					XOR 													; compare the values
+0226 	32 2A 				BZ L022A 												; exit if same
+0228 	15 					INC R5 													; skip
+0229 	15 					INC R5
+022A 	D4 		L022A:		SEP R4
+;
+;	Cxy0 	Skip if vx != vy
+;
+022B 	15 		L022B: 		INC R5 													; ignore second byte
+022C 	47 					LDA R7 													; read Vy
+022D 	30 24 				BR  L0224 												; so now its same as 3xkk
 ;
 ;	Copy Registers onto Stack
 ;
@@ -473,9 +522,27 @@
 024A 	01 					DB 1
 024B 	E6 					SEX R6 													; set X back and return.
 024C 	D3 					SEP R3 
-
-[TODO] 24D-25B
-
+;
+;	Shift Vx left 4
+;
+024D 	E6 					SEX R6 													; R(X) now points to Vx
+024E 	F0 					LDX 													; get Vx
+024F 	F4 					ADD 													; add it
+0250 	56 					STR R6 													; write back << 1
+0251 	F4 					ADD 													; add it
+0252 	56 					STR R6 													; write back << 2
+0253 	F4 					ADD 													; add it
+0254 	56 					STR R6 													; write back << 3
+0255 	F4 					ADD 													; add it, now << 4
+0256 	56 					STR R6 													; write back to Vx
+0257 	D3 					SEP R3 												
+;
+;	Tape Controller - code to write in low part of instruction
+;
+0258 	E5 					SEX R5 													; use R5 as X
+0259 	63 					OUT 3 													; write low byte of instruction to port 3
+025A 	D4 					SEP R4 													; return
+025B 	00 					DB 0 													; unused
 ;
 ;	Turn the television on 
 ;
@@ -552,8 +619,27 @@
 0296 	BA 					DB L02BA & 255
 0297 	15 					INC R5 													; fetch the 2nd byte
 0298 	D4 					SEP R4
-
-[TODO] 299-2AE
+;
+;	8xyn 	x = x or y (1) x and y (2) x+y(4) x-y (5), V0 is carry / not borrow
+;
+0299 	22 		L0299:		DEC R2 													; push $D3 on the stack
+029A 	F8 D3 				LDI 0D3h												; (SEP R3)
+029C 	52 					STR R2
+029D 	22 					DEC R2
+029E 	45 					LDA R5 													; get the low byte
+029F 	F9 F0 				ORI 0F0h 												; F1 F2 F4 F5 which are or and + -
+02A1 	52 					STR R2 													; save on stack
+02A2 	E6 					SEX R6 													; RX points to the Rx value
+02A3 	47 					LDA R7 													; get the RY value
+02A4 	D2 					SEP R2 													; call the code pushed on the stack
+02A5 	56 					STR R6 													; save at R6 (Vx)
+02A6 	F8 00 				LDI 0 													; set R6 to point to $100 V0
+02A8 	A6 					PLO R6
+02A9 	96 					GHI R6 													; D = 1
+02AA 	33 					BDF L02AD 												; if DF clear then
+02AC 	F6 					SHR 													; D = 0
+02AD 	56 		L02AD:		STR R6 													; write DF out to V0 	
+02AE 	D4 					SEP R4
 ;
 ;	Write DF to tape. Sets up R6 to return to tape code, and writes for 2 or 3 cycles depending on DF.
 ;
