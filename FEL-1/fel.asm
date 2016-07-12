@@ -15,6 +15,7 @@
 ;	Clock Frequency can be derived from the tone code. In BJC notes 04 is 360us. This is 160 + 40 + 40 *4
 ;	cycles. Hence it is clocked at 1Mhz. All the products in the table (kc x us) come to 1000
 ;
+; 	I think 
 0000	00					IDL
 0001	F8 01 				LDI 1 													; Set interrupt, stack
 0003	B1 					PHI R1
@@ -176,10 +177,95 @@
 0080 	8A 					GLO RA 													; check RA.0
 0081 	3A 7D 				BNZ L007D 												; go back if not finished
 0083 	B4 					SEP R4 													; next instruction.
-
-; 00B4 Boot FEL-1 Code
-
-[TODO] 84-FF FEL-1 Code.
+;
+;	This is the FEL-1 Boot Code / Micro monitor.
+;
+0084	60 00 				FEL 	06000h											; stop tape
+0086 	02 2F 				FEL 	0022Fh 											; copy registers to stack space.
+;
+;	Read key 0 for Run, C for Write, A for Read Mem, B for Write Mem
+;
+0088 	E1 7A 				FEL 	0E17Ah  										; read Byte into V1
+008A 	31 00 				FEL 	03100h 											; skip next instruction if not 00
+008C 	F4 00 				FEL 	0F400h											; if was 00, then run program from 400
+008E 	31 0C 				FEL 	0310Ch 											; if was 0C, then go to write code
+0090 	F0 CA 				FEL 	0F0CAh 											
+;
+;	Read three keystrokes into A
+;
+0092	02 5C 				FEL 	0025Ch											; turn television on.
+0094 	00 7B 				FEL 	0007Bh 											; clear screen memory
+0096 	E2 7A 				FEL 	0E27Ah 											; read byte to V2 (high address nibble)
+0098 	72 30 				FEL 	07230h  										; write to MSB of A
+009A	E2 7A 				FEL 	0E27Ah 											; read byte to V2 (middle address nibble)
+009C 	E3 7A 				FEL 	0E37Ah 											; read byte to V3 (low address nibble)
+009E 	10 E2 				FEL 	010E2h 											; call pack V2/V3 to V2
+00A0 	72 2A 				FEL 	0722Ah 											; write to LSB of A
+00A2 	29 00 				FEL 	02900h											; Clear V9
+;
+;	Display Address
+;
+00A4 	72 3B 				FEL 	0723Bh 											; MSB of A to V2
+00A6 	24 09 				FEL 	02409h 											; Set V4 = (1,1)
+00A8 	10 E8 				FEL 	010E8h 											; unpack and show V2
+00AA 	72 38 				FEL 	07238h 											; LSB of A to V2
+00AC 	24 0B 				FEL 	0240Bh 											; Set V4 = (3,1)
+00AE 	10 E8 				FEL 	010E8h 	 										; unpack and show V2
+;
+;	Display Data
+;
+00B0 	72 1E 				FEL 	0721Eh											; read contents of Memory(A) to V2
+00B2 	24 16 				FEL 	02416h 											; Set V4 = (6,2)
+00B4 	10 EB 				FEL 	010EBh 											; unpack and show V2
+;
+;	First time around, increment A to point to next cell, second time around go back to the display address code.
+;
+00B6 	39 01 				FEL 	03901h 											; increment A if V9 != 0 (not first time)
+00B8 	7F 6F 				FEL 	07F6Fh 											
+00BA 	E2 7A 				FEL 	0E27Ah  										; get hex key (upper nibble)
+00BC 	29 01 				FEL 	02901h 											; set V9 = 1 so increments next time 
+00BE 	31 0A 				FEL 	0310Ah 											; been round twice ?
+00C0 	F0 A4 				FEL 	0F0A4h 											; if command was A (read) do next w/o update
+00C2 	E3 7A 				FEL 	0E37Ah 											; get the low nibble
+00C4 	10 E2 				FEL 	010E2h 											; call pack V2/V3 to V2
+00C6 	72 24 				FEL 	07224h 											; store V(2) at M->A (e.g. new address)
+00C8 	F0 A4 				FEL 	0F0A4h 											; redisplay address and data.
+;
+;	Write code to tape
+;
+00CA 	02 68 				FEL 	00268h 											; disable hex keyboard input
+00CC 	21 FF 				FEL 	021FFh 											; set V1 = $FF (5 sec approx)
+00CE 	71 48 				FEL 	07148h 											; delay of this length so stabilises
+00D0 	21 40 				FEL 	02140h 											; set V1 = $40 (1 sec approx)
+00D2 	71 48 				FEL 	07148h	 										; more delay
+00D4 	D2 10 				FEL 	0D210h 											; tone and delay
+00D6 	71 48  				FEL 	07148h 											; delay with that tone (start tone ?)
+00D8 	A0 00 				FEL 	0A000h 											; A = 0
+00DA 	F0 DC 				FEL 	0F0DCh 											; (patched out)
+00DC 	E3 A0 				FEL 	0E3A0h 											; write tape M(A) to end
+00DE 	D2 10 				FEL 	0D210h 											; tone and delay
+00E0 	F0 E0 				FEL 	0F0E0h 											; stop
+;
+;	Pack V2/V3 nibbles into a single byte (subroutine)
+;
+00E2 	72 3E 				FEL 	0723Eh 											; Shift V2 left 4 bits
+00E4 	82 31 				FEL 	08231h 											; V2 = V2 or V3
+00E6 	02 6E 				FEL 	0026Eh 											; return
+;
+;	Unpack V2 into 2 digits and display at V4 (subroutine)
+;
+00E8 	B3 00 				FEL 	0B300h 											; point B to $300
+00EA 	23 0F 				FEL 	0230Fh 											; V3 = 0Fh
+00EC 	83 22 				FEL 	08322h 											; And out lowest nibble into V3
+00EE 	72 41 				FEL 	07241h 											; Shift V2 right 4, now has highest nibble
+00F0 	73 34 				FEL 	07334h   										; B = $03<low>
+00F2 	73 21 				FEL 	07321h 											; Read Mem(B) -> V3, addr of gfx data
+00F4 	93 45 				FEL 	09345h 											; Draw V3 pattern at cell V4
+00F6 	54 FF 				FEL 	054FFh 											; point to previous cell
+00F8 	72 34 				FEL 	07234h 											; B = $03<high>
+00FA 	72 21 				FEL 	07221h 											; Read Mem(B) -> V2, addr of gfx data
+00FC 	92 45 				FEL 	09245h 											; Draw V2 pattern at cell V4
+00FE 	02 6E 				FEL 	0026Eh 											; return
 
 0100	00 00 00 00 		DB 0,0,0,0 												; V0-VF
 0104	00 00 00 00 		DB 0,0,0,0
