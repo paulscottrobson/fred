@@ -1,13 +1,19 @@
 ;
 ;	FEL-1 Disassembly
 ;
-;	EF1 is 1 when a keypad byte is available. It is read from INP 0
-; 	EF2 and EF3 are external tests
+;	EF1 is 1 when a keypad byte is available. It is read from INP 0. There is a shift switch. 
+;	I think this is set manually. (Implied). Horizontal resolution is set by a toggle switch.
+;
+; 	EF2 and EF3 are external tests. EF2 detects tape stop. EF4 In ? Error ?
 ;
 ;	Port 1 is a device selector. 1 Keypad, 2 TV, 3 Tape Device
 ; 	Port 2 for keypad it is set to 0/1 for TV to 0/3, for Tape $20 is read.
-;	Port 4 is the external control register
+;	Port 3 is some flags bit 2 (4) is the audio/tape out and bit 0 (1) is run.
+;	Port 4 is the external control register. 
 ; 	Port 6 is an extension port (in and out)
+;
+;	Clock Frequency can be derived from the tone code. In BJC notes 04 is 360us. This is 160 + 40 + 40 *4
+;	cycles. Hence it is clocked at 1Mhz. All the products in the table (kc x us) come to 1000
 ;
 0000	00					IDL
 0001	F8 01 				LDI 1 													; Set interrupt, stack
@@ -173,7 +179,7 @@
 
 ; 00B4 Boot FEL-1 Code
 
-[TODO]
+[TODO] 84-FF FEL-1 Code.
 
 0100	00 00 00 00 		DB 0,0,0,0 												; V0-VF
 0104	00 00 00 00 		DB 0,0,0,0
@@ -287,7 +293,7 @@
 016F 	30 6D 				BR 	L016D
 ;
 0171	DC 		L0171:		SEP RC 													; get RF.0
-0172 	8F 		L0172:		GLO RF
+0172 	8F 		L0172:		GLO RF 													
 0173 	30 6D 				BR 	L0171
 
 ;
@@ -431,7 +437,7 @@
 01F8 	00 00 00 00 		DB 	0,0,0,0
 01FC 	00 00 00 00 		DB 	0,0,0,0
 
-[TODO]
+[TODO] [200-22E]
 ;
 ;	Copy Registers onto Stack
 ;
@@ -468,7 +474,7 @@
 024B 	E6 					SEX R6 													; set X back and return.
 024C 	D3 					SEP R3 
 
-[TODO]
+[TODO] 24D-25B
 
 ;
 ;	Turn the television on 
@@ -533,8 +539,48 @@
 028A 	3A 88 				BNZ L0288
 028C  	30 B0 				BR 	L02B0 												; next time, it will write 0/1
 
-[TODO]
 ;
-;	Write DF to tape
+;	Do tone Vx = Tone VY = Delay
 ;
-02B0 	
+028E 	46 		L028E:		LDA R6													; read X (tone)
+028F 	BE 					PHI RE 													; store in tone register 
+0290 	F8 6E 				LDI L016E & 255 										; set to identify return.
+0292 	A6 					PLO R6 	
+0293 	47 					LDA R7 													; read delay time.
+0294 	BF 					PHI RF 													; set RF counter.
+0295 	D8 					SEP R8 													; call the tone routine.
+0296 	BA 					DB L02BA & 255
+0297 	15 					INC R5 													; fetch the 2nd byte
+0298 	D4 					SEP R4
+
+[TODO] 299-2AE
+;
+;	Write DF to tape. Sets up R6 to return to tape code, and writes for 2 or 3 cycles depending on DF.
+;
+02AF 	D3 		L02AF:		SEP R3
+02B0 	F8 72 	L02B0:		LDI L0172 & 255
+02B2 	A6 					PLO R6	
+02B3 	9C 					GHI RC 													; D = 2 (write cycles)
+02B4 	3D B9  				BNF L02B9 												; if bit to write zero, skip
+02B6 	1B 					INC RB 													; inc parity value in RB.0
+02B7 	FC 03 				ORI 3 													; D = 3 
+02B9 	AF 		L02B9:		PLO RF 													; put write value in RF
+;
+;	Tone Generate (P = C), RE.1 = Pitch, RF.0 = Cycles to do it for.
+;	R6 is set to 72 for read tape and 6E for make tone, which is how it figures out what to do afterwards
+;	this is used for tape and cassette out.
+;
+02BA 	EC  	L02BA:		SEX RC 													; X = P = C
+02BB  	63 					OUT 3 													; set External Function Register -> Run
+02BC 	05 					DB 05 													; speaker line
+02BD 	9E 					GHI RE  												; value 3, set in write tape routine for tape
+02BE 	FF 01 	L02BE:		SMI 1 													; short delay loop
+02C0 	3A BE 				BNZ L02BE
+02C2 	63					OUT 3 													; reset speaker line.
+02C3 	01 					DB  01
+02C4 	2F 					DEC RF 													; done it correct number of times
+02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
+02C6 	3A BA 				BNZ L02BA 												; tone, go back to tone loop
+02C8 	30 B4 				BR  L0284												; tape, go back to tape loop
+
+[TODO] 2C8-2FF
