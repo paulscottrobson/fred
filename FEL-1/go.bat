@@ -8,4 +8,5 @@ if errorlevel 1 goto end
 del fel_source.zip
 zip fel_source.zip *
 fc /b fel.bin fel_src.bin
+copy /Y __fel1.h ..\Emulator
 :end

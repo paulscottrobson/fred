@@ -18,7 +18,7 @@ COMPILER_FLAGS = -Wall -DINCLUDE_DEBUGGING_SUPPORT -DWINDOWS
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 
 #OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = fred
+OBJ_NAME = fredii
 
 #This is the target that compiles our executable
 all : $(OBJS)

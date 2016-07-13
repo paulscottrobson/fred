@@ -126,10 +126,15 @@ class CodeTracker:
 			ocode[i] = 0x00
 		for d in self.lines:
 			d.compileBytes(ocode)
+
+		array = ",".join([str(x) for x in ocode[:0x36F]])
+		open("__fel1.h","w").write(array)
+
 		for i in range(0,1024):
 			if ocode[i] is None:
 				print("No data at {0:x}".format(i))
 		ocode = "".join([chr(x) for x in ocode])
 		open("fel_src.bin","wb").write(ocode)
+
 
 ct = CodeTracker()		

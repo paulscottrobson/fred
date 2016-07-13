@@ -18,18 +18,20 @@
 #include "gfx.h"																// Want the keyboard access.
 #endif
 
-static BYTE8 screenControlPort; 												// Screen control 
+static BYTE8 rows,columns;														// Screen size.
 static WORD16 renderingAddress; 												// Screen rendering address
 static BYTE8 keyAvailable; 														// Key pressed - $FF if not.
 static WORD16 snd0Time,snd1Time; 												// Time sound got value
+static BYTE8 isScreenOn;														// Non zero if screen on
 // *******************************************************************************************************************************
 //													Hardware Reset
 // *******************************************************************************************************************************
 
 void HWIReset(void) {
 	keyAvailable = 0xFF; 
-	screenControlPort = 0x03;
-	renderingAddress = 0x00;
+	columns = 64;rows = 32;
+	isScreenOn = 0;
+	renderingAddress = 0x0000;
 	snd0Time = snd1Time = 0;
 	GFXSetFrequency(0);
 }
@@ -55,12 +57,7 @@ BYTE8 HWIProcessKey(BYTE8 key,BYTE8 isRunMode) {
 
 WORD16 HWIEndFrame(WORD16 r0,LONG32 clock) {
 	renderingAddress = r0; 														// the rendering address is what R0 was set to last time.
-	r0 = r0 + HWIScreenWidth() * HWIScreenHeight() / 8; 						// this is what R0 should be after display rendering.
-	if (keyAvailable != 0xFF) { 												// Key pressed ?
-		CPUWriteMemory(r0,keyAvailable);										// Write the key in memory there.
-		r0++;	 																// and bump R0 - e.g. effectively DMA In the key.
-		keyAvailable = 0xFF;													// And clear key available flag.
-	}
+
 	if (snd0Time != 0 && snd1Time != 0) {
 		WORD16 cycles = abs(snd0Time-snd1Time); 								// Cycles per half cycle
 		cycles = cycles * 2 * 8;	 											// make whole clocks, 8 per cycle.
@@ -74,15 +71,11 @@ WORD16 HWIEndFrame(WORD16 r0,LONG32 clock) {
 }
 
 // *******************************************************************************************************************************
-//									   Written to the control port (currently port 2)
-//									(bit 0: 64 Columns, bit 1: 32 rows, bit 7: sound line)
+//													Check if screen on
 // *******************************************************************************************************************************
 
-void HWIWriteControlPort(BYTE8 portValue,WORD16 cycles) {
-	if (screenControlPort != portValue) {										// If changed
-		screenControlPort = portValue;  										// Remember video setup.
-		if (portValue & 0x80) snd1Time = cycles; else snd0Time = cycles;		// Assign sound 0/1 time.	
-	}	
+BYTE8 HWIIsScreenOn(void) {
+	return isScreenOn;
 }
 
 // *******************************************************************************************************************************
@@ -90,11 +83,11 @@ void HWIWriteControlPort(BYTE8 portValue,WORD16 cycles) {
 // *******************************************************************************************************************************
 
 BYTE8 HWIScreenWidth(void) { 
-	return (screenControlPort & 0x01) ? 64 : 32; 
+	return columns;
 }
 
 BYTE8 HWIScreenHeight(void) {
-	return (screenControlPort & 0x02) ? 32 : 16; 	
+	return rows;
 }
 // *******************************************************************************************************************************
 //													Set the rendering address

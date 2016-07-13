@@ -82,9 +82,11 @@ void DBGXRender(int *address,int runMode) {
 		GFXString(GRID(5,row),buffer,GRIDSIZE,isPC ? DBGC_HIGHLIGHT:DBGC_DATA,-1);	// Print the mnemonic
 	}
 
+
 	int width = HWIScreenWidth();													// Get screen display resolution.
 	int height = HWIScreenHeight();
 	int ramAddress = HWIGetDisplayAddress();
+
 	SDL_Rect rc;rc.x = _GFXX(21);rc.y = _GFXY(1)/2;									// Whole rectangle.
 	rc.w = 11 * GRIDSIZE * 6;rc.h = 5 *GRIDSIZE * 8; 										
 	if (runMode != 0) {
@@ -92,6 +94,18 @@ void DBGXRender(int *address,int runMode) {
 		rc.x = WIN_WIDTH/2-rc.w/2;rc.y = WIN_HEIGHT - rc.h - 64;
 	}
 	rc.w = rc.w/64*64;rc.h = rc.h/32*32;											// Make it /64 /32
+
+	if (!HWIIsScreenOn()) {															// Screen off, show static.
+		SDL_Rect rcp;		
+		rcp.w = rcp.h = rc.w/256;if (rcp.w == 0) rcp.w = rcp.h = 1;
+		GFXRectangle(&rc,0x00000000);
+		for (rcp.x = rc.x;rcp.x <= rc.x+rc.w;rcp.x += rcp.w)
+			for (rcp.y = rc.y;rcp.y <= rc.y+rc.h;rcp.y += rcp.h) {
+				if (rand() & 1) GFXRectangle(&rcp,0xFFFFFF);
+			}
+		return;		
+	}
+
 	SDL_Rect rcPixel;rcPixel.h = rc.h/32;rcPixel.w = rc.w / 64;						// Pixel rectangle.
 	SDL_Rect rcDraw;rcDraw.w = rcPixel.w/2;rcDraw.h = rcPixel.h/2;
 	GFXRectangle(&rc,0x0);															// Fill it black

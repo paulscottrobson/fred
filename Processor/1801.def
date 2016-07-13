@@ -37,8 +37,8 @@ B0-BF 		"PHI R@X"			R[@R] = (R[@R] & 0x00FF) | (((WORD16)D) << 8) 							// Put 
 //
 // ***********************************************************************************************************************************
 
-40-4F  		"LDA R@X"			D = READ(R[@R]);R[@R]++	 											// Load Memory(Rn) to D and Increment Rn
-50-5F 		"STR R@X"			WRITE(R[@R],D) 														// Store D to Memory(Rn)
+40-4F  		"LDA R@X"			D = READ(R[@R]);R[@R]++	 												// Load Memory(Rn) to D and Increment Rn
+50-5F 		"STR R@X"			WRITE(R[@R],D) 															// Store D to Memory(Rn)
 
 // ***********************************************************************************************************************************
 //
@@ -90,8 +90,8 @@ FF 			"SMI .1"			SUB(D,FETCH())															// Subtract immediate from D not b
 // ***********************************************************************************************************************************
 
 00 			"IDL"				;																		// do nothing with IDL 
-D0-DF 		"SEP R@X"			P = @R 																// set P register
-E0-EF 		"SEX R@X"			X = @R 																// set X register
+D0-DF 		"SEP R@X"			P = @R 																	// set P register
+E0-EF 		"SEX R@X"			X = @R 																	// set X register
 70 			"RET"				RETURN();IE = 1															// return and set IE
 71 			"DIS"				RETURN();IE = 0															// return and clear IE
 78 			"SAV"				WRITE(R[X],T)															// save T to Memory(Rx)

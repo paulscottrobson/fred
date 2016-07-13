@@ -1,13 +1,30 @@
 ;****************************************************************************************************************
+;****************************************************************************************************************
 ;                                                        
 ;                                                FEL-1 Disassembly
 ;                                                =================
 ;                                                        
-;     Original version by RCA 1974, from the Billie Jo Call papers from Hagley. Recommented and converted by
-;                                        Paul Robson (paul@robsons.org.uk)
+;          Original version by RCA 1974. Recommented and converted by Paul Robson (paul@robsons.org.uk)
+;                                                        
+;       Source provided courtesy of the Hagley Museum and Library from documents on "FRED" developments at
+;     RCA, dated 1974-75; "Fred Folder 1", Acc. 2464, Box 919 described as the "Billie Joe Call" Collection,
+;                      accession no. 2464.54.  Hagley Museum & Library, Wilmington, DE 19807
+;                                                        
+;           Many thanks to their Librarians, especially Lucas Clawson, for reproducing these documents
+;                                 for the 1802 (and related) Processor community.
+;                                                        
+;             The original author is not currently known but may well have been Joseph A. Weisbecker.
+;                                                        
+;                       The source format is for Alfred Arnolds open source "AS" assembler.
+;                                                        
+;****************************************************************************************************************
+;                                                        
+;        These hardware notes should not be viewed as definitive, this information is derived from reading
+;                        the above code. A more detailed document is under consideration.
 ;                                                        
 ;            EF1 is 1 when a keypad byte is available. It is read from INP 0. There is a shift switch.
-;            I think this is set manually. (Implied). Horizontal resolution is set by a toggle switch.
+;          I think this is set manually. (Implied). Horizontal resolution is set by a toggle switch. The
+;                            monitor code relies on this being in 'single byte' mode.
 ;                                                        
 ;                     EF2 and EF3 are external tests. EF2 detects tape stop. EF4 In ? Error ?
 ;                                                        
@@ -20,6 +37,7 @@
 ;      Clock Frequency can be derived from the tone code. In BJC notes 04 is 360us. This is 160 + 40 + 40 *4
 ;            cycles. Hence it is clocked at 1Mhz. All the products in the table (kc x us) come to 1000
 ;                                                        
+;****************************************************************************************************************
 ;****************************************************************************************************************
 
            include felinclude.inc
@@ -1181,3 +1199,11 @@ graphicequals:
         db      000h                                                     ; ........
         db      018h                                                     ; ...XX...
         db      000h                                                     ; ........
+
+;****************************************************************************************************************
+;                                                        
+;                                              Versions and Changes.
+;                                                        
+;                           13/07/2016 First complete and correctly attributed version.
+;                                                        
+;****************************************************************************************************************
