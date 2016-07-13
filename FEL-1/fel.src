@@ -22,23 +22,23 @@
 ;
 ; ***************************************************************************************************************
 
-0000	00					IDL
+0000	00			Start:	IDL
 0001	F8 01 				LDI 1 													; Set interrupt, stack
 0003	B1 					PHI R1
 0004	B2					PHI R2
 0005	B4					PHI R4
 0006 	B8					PHI R8
-0007	F8 19 				LDI L0119 & 255 										; R1 = $119 Interrupt routine
+0007	F8 19 				LDI interrupt & 255 										; R1 = $119 Interrupt routine
 0009 	A1 					PLO R1
 000A	F8 FF 				LDI 0FFh 												; R2 = $1FF Stack top
 000C 	A2 					PLO R2
-000D 	F8 3B 				LDI L013B & 255 
+000D 	F8 3B 				LDI nextInstruction & 255 
 000F 	A4 					PLO R4 													; R4 = $13B Execute next instruction
-0010 	F8 66 				LDI L0166 & 255 
+0010 	F8 66 				LDI call02 & 255 
 0012 	A8 					PLO R8 													; R8 = $166 Call $1nn where nn is next byte
 0013	90 					GHI R0 													
 0014 	A5 					PLO R5
-0015 	F8 84 				LDI L0084 & 255 										; R5 = $0B4 "Macro PC"
+0015 	F8 84 				LDI Monitor & 255 										; R5 = $0B4 "Macro PC"
 0017 	B5 					PHI R5 
 0018 	D4 					SEP R4													; go to "Util" in R4 
 
@@ -48,8 +48,8 @@
 ;
 ; ***************************************************************************************************************
 
-0019 	D8 		L0019:		SEP R8 													; Fetch A and B from memory
-001A 	73 					DB L0273 & 255
+0019 	D8 		opcode7:		SEP R8 													; Fetch A and B from memory
+001A 	73 					DB readABRegs & 255
 001B 	E6 					SEX R6 													; X points to register X
 001C 	45 					LDA R5 													; fetch low byte
 001D 	A3 					PLO R3 													; go there.
@@ -81,7 +81,7 @@
 ;	7x2A Vx -> A.0
 ;
 002A 	F8 11 				LDI 011h 												; point R7 to RA.0
-002C 	A7 		L002C:		PLO R7
+002C 	A7 		setAddrReg:		PLO R7
 002D 	46 					LDA R6 													; get Vx
 002E 	57 					STR R7 													; write it there.
 002F 	D4 					SEP R4
@@ -89,12 +89,12 @@
 ;	7x30 Vx -> A.1
 ;
 0030 	F8 10 				LDI 010h 												; RA.1 address
-0032 	30 2C 				BR  L002C
+0032 	30 2C 				BR  setAddrReg
 ; 
 ;	7x30 Vx -> B.0
 ;
 0034 	F8 13 				LDI 013h 												; RB.0 address
-0036 	30 2C 				BR  L002C
+0036 	30 2C 				BR  setAddrReg
 ;
 ; 	7x38 A.0 -> Vx
 ;
@@ -111,7 +111,7 @@
 ;	7x3E Shift X left 4
 ;
 003E 	D8 					SEP R8 													; Do Vx << 4
-003F 	4D 					DB  L024D & 255
+003F 	4D 					DB  shiftVxLeft4 & 255
 0040 	D4 					SEP R4
 ;
 ;	7x41 Shift X Right 4
@@ -129,11 +129,11 @@
 0048 	E3 					SEX R3 													; X = P = R3
 0049 	46 					LDA R6 													; read R(X)
 004A 	BF 					PHI RF 													; put in RF.0
-004B 	63		L004B: 		OUT 3 													; tape on, speaker on.
+004B 	63		tapeDelayLoop: 		OUT 3 													; tape on, speaker on.
 004C 	03 					DB 03
 004D 	2F 					DEC RF 													; dec counter
 004E 	9F 					GHI RF 													; timed out
-004F 	3A 4B 				BNZ L004B 												; keep going.
+004F 	3A 4B 				BNZ tapeDelayLoop 												; keep going.
 0051	D4 					SEP R4 	
 ;
 ;	7x52 Convert Vx to 3 digit decimal at A,A+1,A+2
@@ -143,22 +143,22 @@
 0054	F8 14 				LDI 14h 												; point R7 to the 100,10,1
 0056 	A7 					PLO R7
 0057 	2A 					DEC RA 													; predec RA
-0058 	1A 		L0058:		INC RA 													; A to next cell.
+0058 	1A 		nextDigit:		INC RA 													; A to next cell.
 0059 	93 					GHI R3 													; D = 0
 005A 	5A 					STR RA 													; clear counter
-005B 	47 		L005B:		LDA R7 													; read divisor
+005B 	47 		subtractUnit:		LDA R7 													; read divisor
 005C 	27 					DEC R7 													; unpick it
 005D 	F5 					SD 														; subtract from R(X) 
-005E 	3B 68 				BNF L0068 												; if no borrow then division complete
+005E 	3B 68 				BNF borrowOccurred 												; if no borrow then division complete
 0060	56 					STR R6 													; write it back to R(X)
 0061 	4A 					LDA RA 													; read counter of divisions
 0062 	2A 					DEC RA 													; undo inc
 0063 	FC 01 				ADI 01 													; inc counter
 0065 	5A					STR RA 													; write back
-0066 	30 5B 				BR  L005B 												; try to deduct it again. 				
-0068 	47 		L0068:		LDA R7 													; get R7 - divider just done and inc R7 to next
+0066 	30 5B 				BR  subtractUnit 												; try to deduct it again. 				
+0068 	47 		borrowOccurred:		LDA R7 													; get R7 - divider just done and inc R7 to next
 0069 	F6 					SHR 													; shift it right
-006A	3B 58 				BNF L0058 												; until found the 1, i.e. have done 1
+006A	3B 58 				BNF nextDigit 												; until found the 1, i.e. have done 1
 006C 	9F 					GHI RF 													; fix up R6 back
 006D 	56 					STR R6
 006E 	D4 					SEP R4
@@ -185,11 +185,11 @@
 0079	AA 					PLO RA
 007A 	F8 08 				LDI 8
 007C 	BA 					PHI RA 
-007D	2A 		L007D:		DEC RA 													; dec RA
+007D	2A 		clsLoop:		DEC RA 													; dec RA
 007E 	93 					GHI R3													; D = 0
 007F 	5A 					STR RA 													; clear screen space
 0080 	8A 					GLO RA 													; check RA.0
-0081 	3A 7D 				BNZ L007D 												; go back if not finished
+0081 	3A 7D 				BNZ clsLoop 												; go back if not finished
 0083 	D4 					SEP R4 													; next instruction.
 
 ; ***************************************************************************************************************
@@ -198,7 +198,7 @@
 ;
 ; ***************************************************************************************************************
 
-0084	60 00 		L0084:	FEL 	06000h											; stop tape
+0084	60 00 		Monitor:	FEL 	06000h											; stop tape
 0086 	02 2F 				FEL 	0022Fh 											; copy registers to stack space.
 ;
 ;	Read key 0 for Run, C for Write, A for Read Mem, B for Write Mem
@@ -309,9 +309,9 @@
 ;
 ; ***************************************************************************************************************
 
-0117 	42 		L0117:		LDA R2 													; pop D off the stack
+0117 	42 		exitInterrupt:		LDA R2 													; pop D off the stack
 0118 	70 					RET 													; return re-enabling interrupts.
-0119 	22 		L0119: 		DEC R2 													; save T on Stack
+0119 	22 		interrupt: 		DEC R2 													; save T on Stack
 011A 	78 					SAV		
 011B 	22 					DEC R2 													; save D on Stack
 011C 	52 					STR R2 													; Save on stack.
@@ -328,20 +328,20 @@
 
 0126 	F8 0D 				LDI 0Dh 								
 0128 	A6 					PLO R6
-0129 	46 		L0129:		LDA R6 													; read R6 (VD Timer first time around)
+0129 	46 		timerUpdateLoop:		LDA R6 													; read R6 (VD Timer first time around)
 012A 	26 					DEC R6 													; fix up R6
-012B 	32 31 				BZ 	L0131
+012B 	32 31 				BZ 	nextTimer
 012D 	AD 					PLO RD  												; save in RD.0 								
 012E 	2D 					DEC RD 													; decrement it (so we don't change DF)
 012F 	8D 					GLO RD 													; recover it
 0130 	56 					STR R6 													; save timer now updated
-0131 	16 	    L0131:		INC R6 													; point to next timer
+0131 	16 	    nextTimer:		INC R6 													; point to next timer
 0132 	86 					GLO R6 													; get low byte
 0133 	FB 10 				XRI 10h 												; done all timers
-0135 	3A 29 				BNZ L0129 												; if not, go back round again.
+0135 	3A 29 				BNZ timerUpdateLoop 												; if not, go back round again.
 0137 	9D 					GHI RD 													; get RD.1, fix R6 back up again.
 0138 	A6 					PLO R6
-0139 	30 17 				BR  L0117 												; and go back to exit the routine.
+0139 	30 17 				BR  exitInterrupt 												; and go back to exit the routine.
 
 ; ***************************************************************************************************************
 ;
@@ -349,7 +349,7 @@
 ;
 ; ***************************************************************************************************************
 
-013B 	94 		L013B:		GHI R4 													; D = 1
+013B 	94 		nextInstruction:		GHI R4 													; D = 1
 013C 	B6 					PHI R6 													; Set R6,R7,RC High to Page 1.
 013D 	B7 					PHI R7
 013E 	BC 					PHI RC
@@ -364,7 +364,7 @@
 0146 	F6 					SHR
 0147 	F6 					SHR
 0148 	F6 					SHR 													; instruction code in D
-0149 	32 60 				BZ  L0160 												; if zero, its a machine language
+0149 	32 60 				BZ  opcode0 												; if zero, its a machine language
 014B 	F9 C0 				ORI 0C0h 												; OR with $C0
 014D 	AC 					PLO RC 													; Put in RC.0  now points to vector table
 
@@ -382,9 +382,9 @@
 0158 	FC 0F 				ADI 0Fh 												; point to low address (+1 already)
 015A 	AC 					PLO RC 													; write it back
 015B 	4C 					LDA RC 													; get low byte of address
-015C 	A3 		L015C:		PLO R3 													; save in R3.0, now has code address
+015C 	A3 		execR3:		PLO R3 													; save in R3.0, now has code address
 015D 	D3 					SEP R3 													; and call it
-015E 	30 3B  				BR  L013B 												; make re-entrant
+015E 	30 3B  				BR  nextInstruction 												; make re-entrant
 
 ; ***************************************************************************************************************
 ;
@@ -392,29 +392,29 @@
 ;
 ; ***************************************************************************************************************
 
-0160 	96		L0160:		GHI R6 													; get R6.1 (1)
+0160 	96		opcode0:		GHI R6 													; get R6.1 (1)
 0161 	B3 					PHI R3 													; put in R3.1
 0162 	45 					LDA R5 													; read instruction second byte.
-0163 	30 5C 				BR L015C
+0163 	30 5C 				BR execR3
 ;
 ;	R8 points here. Calls the $02 <next byte> running in RC.
 ;
-0165 	DC 		L0165:		SEP RC 													; return.
-0166	43 		L0166:		LDA R3 													; read next byte in code
+0165 	DC 		exit02Call:		SEP RC 													; return.
+0166	43 		call02:		LDA R3 													; read next byte in code
 0167 	AC 					PLO RC 													; save in RC.0
 0168 	F8 02 				LDI 02 													; put 2xx in RC
 016A 	BC 					PHI RC 													
-016B 	30 65	L016B: 		BR 	L0165 												; and call it, making it re-entrant
+016B 	30 65		 		BR 	exit02Call 												; and call it, making it re-entrant
 ;
 ;	R8 routines to return RF.1, RF.0.
 ;
-016D	DC 		L016D:		SEP RC 													; get RF.1
-016E 	9F 		L016E:		GHI RF
-016F 	30 6D 				BR 	L016D
+016D	DC 		exitGhiRf:		SEP RC 													; get RF.1
+016E 	9F 		ghiRf:		GHI RF
+016F 	30 6D 				BR 	exitGhiRf
 ;
-0171	DC 		L0171:		SEP RC 													; get RF.0
-0172 	8F 		L0172:		GLO RF 													
-0173 	30 71 				BR 	L0171
+0171	DC 		exitGloRf:		SEP RC 													; get RF.0
+0172 	8F 		gloRf:		GLO RF 													
+0173 	30 71 				BR 	exitGloRf
 
 ; ***************************************************************************************************************
 ;
@@ -422,8 +422,8 @@
 ;
 ; ***************************************************************************************************************
 
-0175 	D8 		L0175:		SEP R8 													; load A and B into RA and RB
-0176 	73 					DB  L0273 & 255
+0175 	D8 		InstructionE:		SEP R8 													; load A and B into RA and RB
+0176 	73 					DB  readABRegs & 255
 0177 	E6 					SEX R6 													; index is Vx
 0178 	45 					LDA R5 													; get the 2nd instruction byte
 0179 	A3 					PLO R3 													; and go there, jump indirect.
@@ -431,28 +431,28 @@
 ;	Ex7A . Hex keypad on, wait for byte
 ;
 017A 	D8 					SEP R8 													; call hex keypad on at $0246
-017B 	46 					DB L0246 & 255 												
-017C 	3C 7C 	L017C:		BN1 L017C 												; wait for EF1 (byte ready)
-017E 	68 		L017E:		DB 	68H 												; read to M(X) (AS Cannot assemble INP0)
+017B 	46 					DB keypadOn & 255 												
+017C 	3C 7C 	waitKeyPress:		BN1 waitKeyPress 												; wait for EF1 (byte ready)
+017E 	68 		readKeyInput:		DB 	68H 												; read to M(X) (AS Cannot assemble INP0)
 017F 	D4 					SEP R4 
 ;
 ;	Ex80 . Hex keypad on, byte ready input else skip
 ;
 0180 	D8 					SEP R8 													; call hex keypad on at $0246
-0181 	46 					DB L0246 & 255												
-0182 	34 7E 				BT1 L017E 												; if byte ready get it.
-0184	15 		L0184:		INC R5 													; skip instruction
-0185 	15 		L0185:		INC R5
+0181 	46 					DB keypadOn & 255												
+0182 	34 7E 				BT1 readKeyInput 												; if byte ready get it.
+0184	15 		skipInstruction:		INC R5 													; skip instruction
+0185 	15 					INC R5
 0186 	D4 					SEP R4
 ;
 ;	Ex87 - EF2 Skip
 ;
-0187 	35 84 				BT2 L0184 												; skip if  EF2
+0187 	35 84 				BT2 skipInstruction 												; skip if  EF2
 0189 	D4 					SEP R4
 ;
 ;	Ex8A - EF3 Skip
 ;
-018A 	36 84 				BT3 L0184 												; skip if EF3
+018A 	36 84 				BT3 skipInstruction 												; skip if EF3
 018C 	D4 					SEP R4
 ;
 ;	Ex8D - Ext Bus to Vx
@@ -494,7 +494,7 @@
 ;
 01A0 	86 					GLO R6 													; read 3  (why E3A0)
 01A1 	BE 					PHI RE
-01A2 	93 		L01A2:		GHI R3 													; get R3.1 which is 1 (we are in R3)
+01A2 	93 		tapeByteOutLoop:		GHI R3 													; get R3.1 which is 1 (we are in R3)
 01A3 	F6 					SHR 													; set DF = 1 D = 0. DF set for writing start
 01A4 	AB  				PLO RB 													; save in RB.0 (parity)
 01A5 	F8 08 				LDI 8 													; bits to do.
@@ -502,22 +502,22 @@
 01A8 	4A 					LDA RA 													; read next byte
 01A9 	BB 					PHI RB 													; save in RB.0
 01AA 	D8 					SEP R8 													; write start bit
-01AB 	85  				DB  L0285 & 255 												
-01AC 	9B 		L01AC:		GHI RB 													; get the byte value
+01AB 	85  				DB  writeTapeDelay & 255 												
+01AC 	9B 		tapeBitOutLoop:		GHI RB 													; get the byte value
 01AD 	F6 					SHR 													; put LSB in DF
 01AE 	BB 					PHI RB 													; write it back
 01AF 	DC 					SEP RC 													; write out DF 0/1.
 01B0 	2E 					DEC RE 													; decrement bit counter
 01B1 	8E 					GLO RE 													; if non zero go back and do next bit.
-01B2 	3A AC 				BNZ L01AC 
+01B2 	3A AC 				BNZ tapeBitOutLoop 
 01B4 	8B 					GLO RB 													; get the parity count
 01B5 	F6 					SHR 													; shift into DF
 01B6 	DC 					SEP RC 													; write that parity bit out
 01B7 	8A 					GLO RA 													; check done whole page
-01B8 	3A A2 				BNZ L01A2 												; if not keep going
+01B8 	3A A2 				BNZ tapeByteOutLoop 												; if not keep going
 01BA 	9A 					GHI RA 													; done to $0700 ($06FF last)
 01BB 	FB 07 				XRI 7 													; (700 is video ram)
-01BD 	3A A2 				BNZ L01A2 												; if not keep going
+01BD 	3A A2 				BNZ tapeByteOutLoop 												; if not keep going
 01BF 	D4 					SEP R4
 
 ; ***************************************************************************************************************
@@ -526,40 +526,40 @@
 ;
 ; ***************************************************************************************************************
 
-01C0 	00 		L01C0:		DB  0 													; 0xxx not decoded here
-01C1 	02 					DB 	L020D / 256 										; 1mmm Do program at mmm (subroutine call)
-01C2 	02					DB  L0281 / 256 										; 2xkk Load kk into Vx
-01C3 	02					DB  L0223 / 256											; 3xkk Skip if Vx != kk
-01C4 	02					DB  L02CA / 256 										; 4xkk Vx = Random Number & kk
-01C5 	02					DB  L021A / 256 										; 5xkk Vx = Vx + kk,skip if vx = 0
-01C6 	02					DB  L0258 / 256											; 6xxx Assorted
-01C7 	00 					DB  L0019 / 256 										; 7xnn Assorted
-01C8 	02					DB  L0299 / 256											; 8xyf Arithmetic
-01C9 	02					DB  L02DD / 256 										; 9xys Display pattern
-01CA 	02					DB  L0200 / 256 										; Ammm Load A immediate
-01CB 	02					DB  L0209 / 256 										; Bmmm Load B immediate
-01CC 	02					DB  L022B / 256 										; Cxy0 Skip if vx != vy
-01CD 	02					DB  L02BE / 256											; Dxy0 Vx Tone, Vy Delay (Tape on spk off)
-01CE 	01					DB  L0175 / 256 										; Exxx Assorted
-01CF 	02					DB  L0215 / 256 										; Fmmm Jump to mmm
+01C0 	00 		instructionVector:		DB  0 													; 0xxx not decoded here
+01C1 	02 					DB 	opcode1 / 256 										; 1mmm Do program at mmm (subroutine call)
+01C2 	02					DB  opcode2 / 256 										; 2xkk Load kk into Vx
+01C3 	02					DB  opcode3 / 256											; 3xkk Skip if Vx != kk
+01C4 	02					DB  opcode4 / 256 										; 4xkk Vx = Random Number & kk
+01C5 	02					DB  opcode5 / 256 										; 5xkk Vx = Vx + kk,skip if vx = 0
+01C6 	02					DB  opcode6 / 256											; 6xxx Assorted
+01C7 	00 					DB  opcode7 / 256 										; 7xnn Assorted
+01C8 	02					DB  opcode8 / 256											; 8xyf Arithmetic
+01C9 	02					DB  opcode9 / 256 										; 9xys Display pattern
+01CA 	02					DB  InstructionA / 256 										; Ammm Load A immediate
+01CB 	02					DB  InstructionB / 256 										; Bmmm Load B immediate
+01CC 	02					DB  InstructionC / 256 										; Cxy0 Skip if vx != vy
+01CD 	02					DB  InstructionD / 256											; Dxy0 Vx Tone, Vy Delay (Tape on spk off)
+01CE 	01					DB  InstructionE / 256 										; Exxx Assorted
+01CF 	02					DB  InstructionF / 256 										; Fmmm Jump to mmm
 
 01D0 	00 					DB  0 													; 0aaa is not dispatched this way.
 
-01D1 	0D 					DB 	L020D & 255 										; instruction tables (low address)
-01D2 	81					DB  L0281 & 255
-01D3 	23					DB  L0223 & 255
-01D4 	CA					DB  L02CA & 255
-01D5 	1A					DB  L021A & 255
-01D6 	58					DB  L0258 & 255
-01D7 	19 					DB  L0019 & 255
-01D8 	99					DB  L0299 & 255
-01D9 	DD					DB  L02DD & 255
-01DA 	00					DB  L0200 & 255
-01DB 	09					DB  L0209 & 255
-01DC 	2B					DB  L022B & 255
-01DD 	BE					DB  L02BE & 255
-01DE 	75					DB  L0175 & 255
-01DF 	15					DB  L0215 & 255
+01D1 	0D 					DB 	opcode1 & 255 										; instruction tables (low address)
+01D2 	81					DB  opcode2 & 255
+01D3 	23					DB  opcode3 & 255
+01D4 	CA					DB  opcode4 & 255
+01D5 	1A					DB  opcode5 & 255
+01D6 	58					DB  opcode6 & 255
+01D7 	19 					DB  opcode7 & 255
+01D8 	99					DB  opcode8 & 255
+01D9 	DD					DB  opcode9 & 255
+01DA 	00					DB  InstructionA & 255
+01DB 	09					DB  InstructionB & 255
+01DC 	2B					DB  InstructionC & 255
+01DD 	BE					DB  InstructionD & 255
+01DE 	75					DB  InstructionE & 255
+01DF 	15					DB  InstructionF & 255
 
 01E0 	00 00 00 00 		DB 	0,0,0,0 											; stack space
 01E4 	00 00 00 00 		DB 	0,0,0,0
@@ -576,8 +576,8 @@
 ;
 ; ***************************************************************************************************************
 
-0200	F8 10 	L0200:		LDI 10h 												; point R7 to A
-0202	A7 		L0202:		PLO R7
+0200	F8 10 	InstructionA:		LDI 10h 												; point R7 to A
+0202	A7 		loadAddrConst:		PLO R7
 0203 	86 					GLO R6 													; get X address $10X so its $0X
 0204 	57 					STR R7 													; write to A high and point to low
 0205 	17 					INC R7
@@ -591,8 +591,8 @@
 ;
 ; ***************************************************************************************************************
 
-0209	F8 12 	L0209:		LDI 12h													; point R7 to B and reuse code above
-020B 	30 02				BR  L0202
+0209	F8 12 	InstructionB:		LDI 12h													; point R7 to B and reuse code above
+020B 	30 02				BR  loadAddrConst
 
 ; ***************************************************************************************************************
 ;
@@ -600,7 +600,7 @@
 ;
 ; ***************************************************************************************************************
 
-020D 	15 		L020D:		INC R5 													; r5 point sto next instruction
+020D 	15 		opcode1:		INC R5 													; r5 point sto next instruction
 020E 	85 					GLO R5 													; get return address low
 020F 	22 					DEC R2 													; push on stack
 0210	52 					STR R2
@@ -615,7 +615,7 @@
 ;
 ; ***************************************************************************************************************
 
-0215	45 		L0215:		LDA R5 													; get low byte
+0215	45 		InstructionF:		LDA R5 													; get low byte
 0216 	A5 					PLO R5 													; put in FEL PC Low
 0217 	86 					GLO R6 													; get X address $10X so this is $0X
 0218 	B5 					PHI R5 													; put in FEL PC hight
@@ -627,11 +627,11 @@
 ;
 ; ***************************************************************************************************************
 
-021A 	E6 		L021A:		SEX R6 													; access VX
+021A 	E6 		opcode5:		SEX R6 													; access VX
 021B 	45 					LDA R5 													; read 2nd byte
 021C 	F4 					ADD 													; add to VX
 021D 	56 					STR R6 													; write back
-021E 	32 28 				BZ  L0228 												; if zero skip
+021E 	32 28 				BZ  skipInstruction2 												; if zero skip
 0220 	D4 					SEP R4 	
 0221 	15 					INC R5 													; unused
 0222 	D4 					SEP R4 													; unused
@@ -642,13 +642,13 @@
 ;
 ; ***************************************************************************************************************
 
-0223 	45 		L0223:		LDA R5 													; get kk value
-0224 	E6 		L0224:		SEX R6 													; R[X] points to Vx
+0223 	45 		opcode3:		LDA R5 													; get kk value
+0224 	E6 		skipIfVxNotD:		SEX R6 													; R[X] points to Vx
 0225 	F3 					XOR 													; compare the values
-0226 	32 2A 				BZ L022A 												; exit if same
-0228 	15 	    L0228:		INC R5 													; skip
+0226 	32 2A 				BZ dontSkip 												; exit if same
+0228 	15 	    skipInstruction2:		INC R5 													; skip
 0229 	15 					INC R5
-022A 	D4 		L022A:		SEP R4
+022A 	D4 		dontSkip:		SEP R4
 
 ; ***************************************************************************************************************
 ;
@@ -656,9 +656,9 @@
 ;
 ; ***************************************************************************************************************
 
-022B 	15 		L022B: 		INC R5 													; ignore second byte
+022B 	15 		InstructionC: 		INC R5 													; ignore second byte
 022C 	47 					LDA R7 													; read Vy
-022D 	30 24 				BR  L0224 												; so now its same as 3xkk
+022D 	30 24 				BR  skipIfVxNotD 												; so now its same as 3xkk
 
 ; ***************************************************************************************************************
 ;
@@ -672,12 +672,12 @@
 0233 	B7 					PHI R7
 0234 	F8 E0 				LDI 0E0h
 0236 	A7 					PLO R7
-0237 	46 		L0237:		LDA R6 													; read variable data
+0237 	46 		copyRegLoop:		LDA R6 													; read variable data
 0238 	57 					STR R7 													; copy it out.
 0239 	17 					INC R7 													; next byte
 023A 	87 					GLO R7
 023B 	FB F4 				XRI 0F4h 												; copied all 20 bytes of data ?
-023D 	3A 37 				BNZ L0237
+023D 	3A 37 				BNZ copyRegLoop
 023F 	D4 					SEP R4
 
 ; ***************************************************************************************************************
@@ -699,7 +699,7 @@
 ;
 ; ***************************************************************************************************************
 
-0246 	EC 		L0246:		SEX RC 													; X = C
+0246 	EC 		keypadOn:		SEX RC 													; X = C
 0247 	61  				OUT 1 													; select Keypad device (1)
 0248 	01 					DB 1 													
 0249 	62					OUT 2 													; turn it on.
@@ -713,7 +713,7 @@
 ;
 ; ***************************************************************************************************************
 
-024D 	E6 		L024D:		SEX R6 													; R(X) now points to Vx
+024D 	E6 		shiftVxLeft4:		SEX R6 													; R(X) now points to Vx
 024E 	F0 					LDX 													; get Vx
 024F 	F4 					ADD 													; add it
 0250 	56 					STR R6 													; write back << 1
@@ -727,7 +727,7 @@
 ;
 ;	Tape Controller - code to write in low part of instruction
 ;
-0258 	E5 			L0258:	SEX R5 													; use R5 as X
+0258 	E5 			opcode6:	SEX R5 													; use R5 as X
 0259 	63 					OUT 3 													; write low byte of instruction to port 3
 025A 	D4 					SEP R4 													; return
 025B 	00 					DB 0 													; unused
@@ -776,7 +776,7 @@
 ;
 ;	Load A and B into RA and RB
 ;
-0273	96 		L0273:		GHI R6 													; RF = $110
+0273	96 		readABRegs:		GHI R6 													; RF = $110
 0274 	BF 					PHI RF
 0275 	F8 10 				LDI 10h 
 0277 	AF 					PLO RF
@@ -796,31 +796,31 @@
 ;
 ; ***************************************************************************************************************
 
-0281 	45 		L0281:		LDA R5 													; read 2nd instruction byte
+0281 	45 		opcode2:		LDA R5 													; read 2nd instruction byte
 0282 	56 					STR R6 													; save in Vx
 0283 	D4 					SEP R4
 ;
 ;	Write to tape - delay
 ;
-0284 	D3 		L0284:		SEP R3
-0285	F8 14   L0285:		LDI 14h 												; set timer counter
+0284 	D3 		exitWriteTape:		SEP R3
+0285	F8 14   writeTapeDelay:		LDI 14h 												; set timer counter
 0287 	AF   				PLO RF 
-0288 	2F 		L0288:		DEC RF
+0288 	2F 		writeTapeDelayLoop:		DEC RF
 0289 	8F 					GLO RF
-028A 	3A 88 				BNZ L0288
-028C  	30 B0 				BR 	L02B0 												; next time, it will write 0/1
+028A 	3A 88 				BNZ writeTapeDelayLoop
+028C  	30 B0 				BR 	writeDFBitTape 												; next time, it will write 0/1
 
 ;
 ;	Do tone Vx = Tone VY = Delay
 ;
-028E 	46 		L028E:		LDA R6													; read X (tone)
+028E 	46 		PlayTone:		LDA R6													; read X (tone)
 028F 	BE 					PHI RE 													; store in tone register 
-0290 	F8 6E 				LDI L016E & 255 										; set to identify return.
+0290 	F8 6E 				LDI ghiRf & 255 										; set to identify return.
 0292 	A6 					PLO R6 	
 0293 	47 					LDA R7 													; read delay time.
 0294 	BF 					PHI RF 													; set RF counter.
 0295 	D8 					SEP R8 													; call the tone routine.
-0296 	BA 					DB L02BA & 255
+0296 	BA 					DB toneGeneration & 255
 0297 	15 					INC R5 													; fetch the 2nd byte
 0298 	D4 					SEP R4
 
@@ -830,7 +830,7 @@
 ;
 ; ***************************************************************************************************************
 
-0299 	22 		L0299:		DEC R2 													; push $D3 on the stack
+0299 	22 		opcode8:		DEC R2 													; push $D3 on the stack
 029A 	F8 D3 				LDI 0D3h												; (SEP R3)
 029C 	52 					STR R2
 029D 	22 					DEC R2
@@ -844,9 +844,9 @@
 02A6 	F8 00 				LDI 0 													; set R6 to point to $100 V0
 02A8 	A6 					PLO R6
 02A9 	96 					GHI R6 													; D = 1
-02AA 	33 AD				BDF L02AD 												; if DF clear then
+02AA 	33 AD				BDF writeDF 												; if DF clear then
 02AC 	F6 					SHR 													; D = 0
-02AD 	56 		L02AD:		STR R6 													; write DF out to V0 	
+02AD 	56 		writeDF:		STR R6 													; write DF out to V0 	
 02AE 	D4 					SEP R4
 
 ; ***************************************************************************************************************
@@ -855,14 +855,14 @@
 ;
 ; ***************************************************************************************************************
 
-02AF 	D3 		L02AF:		SEP R3
-02B0 	F8 72 	L02B0:		LDI L0172 & 255
+02AF 	D3 		exitWriteBit:		SEP R3
+02B0 	F8 72 	writeDFBitTape:		LDI gloRf & 255
 02B2 	A6 					PLO R6	
 02B3 	9C 					GHI RC 													; D = 2 (write cycles)
-02B4 	3B B9  				BNF L02B9 												; if bit to write zero, skip
+02B4 	3B B9  				BNF saveCycleSize 												; if bit to write zero, skip
 02B6 	1B 					INC RB 													; inc parity value in RB.0
 02B7 	FC 03 				ADI 3 													; D = 5
-02B9 	AF 		L02B9:		PLO RF 													; put write value in RF
+02B9 	AF 		saveCycleSize:		PLO RF 													; put write value in RF
 
 ; ***************************************************************************************************************
 ;
@@ -872,18 +872,18 @@
 ;
 ; ***************************************************************************************************************
 
-02BA 	EC  	L02BA:		SEX RC 													; X = P = C
+02BA 	EC  	toneGeneration:		SEX RC 													; X = P = C
 02BB  	63 					OUT 3 													; set External Function Register -> Run
 02BC 	05 					DB 05 													; speaker line
 02BD 	9E 					GHI RE  												; value 3, set in write tape routine for tape
-02BE 	FF 01 	L02BE:		SMI 1 													; short delay loop
-02C0 	3A BE 				BNZ L02BE
+02BE 	FF 01 	InstructionD:		SMI 1 													; short delay loop
+02C0 	3A BE 				BNZ InstructionD
 02C2 	63					OUT 3 													; reset speaker line.
 02C3 	01 					DB  01
 02C4 	2F 					DEC RF 													; done it correct number of times
 02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
-02C6 	3A BA 				BNZ L02BA 												; tone, go back to tone loop
-02C8 	30 84 				BR  L0284												; tape, go back to tape loop
+02C6 	3A BA 				BNZ toneGeneration 												; tone, go back to tone loop
+02C8 	30 84 				BR  exitWriteTape												; tape, go back to tape loop
 
 ; ***************************************************************************************************************
 ;
@@ -891,7 +891,7 @@
 ;
 ; ***************************************************************************************************************
 
-02CA 	19 		L02CA:		INC R9 													; bump and read random lower
+02CA 	19 		opcode4:		INC R9 													; bump and read random lower
 02CB 	89	 				GLO R9
 02CC 	A7 					PLO R7 													; R7 = $01<R9.0>
 02CD 	E7 					SEX R7 													; X points there, use as randomish data
@@ -916,7 +916,7 @@
 ;			9xys 	Draw sxs pattern (5 or 8) x = pattern address in page 3 y = tv cell address. 
 ;
 ; ***************************************************************************************************************
-02DD 	45 		L02DD:		LDA R5 													; Get next byte
+02DD 	45 		opcode9:		LDA R5 													; Get next byte
 02DE 	FA 0F 				ANI 0Fh 												; look at lower 4 bits which are size
 02E0 	AF 					PLO RF 													; RF.0 is the number of lines to do. 
 
@@ -926,7 +926,7 @@
 ;
 ; ***************************************************************************************************************
 
-02E1 	E6 		L02E1:		SEX R6 													; R(x) points to VX
+02E1 	E6 					SEX R6 													; R(x) points to VX
 02E2 	F0 					LDX 													; read X
 02E3 	AA 					PLO RA 													; save in RA.0
 02E4 	F8 03 				LDI 3 													; RA is $03[Vx]
@@ -945,7 +945,7 @@
 02E9 	F6 					SHR 													; R6 = Y >> 1 << 4 (Y * 8)
 02EA 	56 					STR R6   												; using shift left function, so bits
 02EB 	D8 					SEP R8 													; 3 and 4 are now in bits 6,7
-02EC 	4D 					DB  L024D & 255
+02EC 	4D 					DB  shiftVxLeft4 & 255
 02ED 	8B 					GLO RB 													; get original cell number for bits 0-2
 02EE 	F1 					OR 														; or with bits 6-7
 02EF 	FA C7  				ANI 0C7h 												; remove so only bits 0-2 and bits 6-7
@@ -953,14 +953,14 @@
 02F2 	F8 07 				LDI 07 													; set RB.1 = 07<addr>
 02F4 	BB 					PHI RB
 
-02F5 	4A 		L02F5: 		LDA RA 													; read first byte of data
+02F5 	4A 		copyPixelData: 		LDA RA 													; read first byte of data
 02F6 	5B 					STR RB 													; write to the screen
 02F7 	8B 					GLO RB 													; get low byte of screen address
 02F8 	FC 08 				ADI 08 													; go one row down
 02FA 	AB 					PLO RB 													; update screen address
 02FB 	2F 					DEC RF 													; decrement line counter.
 02FC 	8F 					GLO RF 													; check it
-02FD 	3A F5 				BNZ L02F5 												; do next row.
+02FD 	3A F5 				BNZ copyPixelData 												; do next row.
 02FF 	D4 					SEP R4
 
 ; ***************************************************************************************************************
@@ -970,113 +970,113 @@
 ;
 ; ***************************************************************************************************************
 
-0300 48   db L0348 & 255
-0301 10   db L0310 & 255
-0302 2E   db L032E & 255
-0303 2A   db L032A & 255
-0304 19   db L0319 & 255
-0305 32   db L0332 & 255
-0306 44   db L0344 & 255
-0307 14   db L0314 & 255
-0308 4C   db L034C & 255
-0309 1E   db L031E & 255
-030A 50   db L0350 & 255
-030B 22   db L0322 & 255
-030C 40   db L0340 & 255
-030D 26   db L0326 & 255
-030E 37   db L0337 & 255
-030F 3B   db L033B & 255
-0310 10 L0310:  db 010H ; ...X....
+0300 48   db Graphic0 & 255
+0301 10   db Graphic1 & 255
+0302 2E   db Graphic2 & 255
+0303 2A   db Graphic3 & 255
+0304 19   db Graphic4 & 255
+0305 32   db Graphic5 & 255
+0306 44   db Graphic6 & 255
+0307 14   db Graphic7 & 255
+0308 4C   db Graphic8 & 255
+0309 1E   db Graphic9 & 255
+030A 50   db GraphicA & 255
+030B 22   db GraphicB & 255
+030C 40   db GraphicC & 255
+030D 26   db GraphicD & 255
+030E 37   db GraphicE & 255
+030F 3B   db GraphicF & 255
+0310 10 Graphic1:  db 010H ; ...X....
 0311 30         db 030H ; ..XX....
 0312 10         db 010H ; ...X....
 0313 10         db 010H ; ...X....
-0314 7C L0314:  db 07CH ; .XXXXX..
+0314 7C Graphic7:  db 07CH ; .XXXXX..
 0315 08         db 008H ; ....X...
 0316 10         db 010H ; ...X....
 0317 20         db 020H ; ..X.....
 0318 40         db 040H ; .X......
-0319 08 L0319:  db 008H ; ....X...
+0319 08 Graphic4:  db 008H ; ....X...
 031A 18         db 018H ; ...XX...
 031B 28         db 028H ; ..X.X...
 031C 7C         db 07CH ; .XXXXX..
 031D 08         db 008H ; ....X...
-031E 38 L031E:  db 038H ; ..XXX...
+031E 38 Graphic9:  db 038H ; ..XXX...
 031F 44         db 044H ; .X...X..
 0320 3C         db 03CH ; ..XXXX..
 0321 04         db 004H ; .....X..
-0322 78 L0322:  db 078H ; .XXXX...
+0322 78 GraphicB:  db 078H ; .XXXX...
 0323 24         db 024H ; ..X..X..
 0324 38         db 038H ; ..XXX...
 0325 24         db 024H ; ..X..X..
-0326 78 L0326:  db 078H ; .XXXX...
+0326 78 GraphicD:  db 078H ; .XXXX...
 0327 44         db 044H ; .X...X..
 0328 44         db 044H ; .X...X..
 0329 44         db 044H ; .X...X..
-032A 78 L032A:  db 078H ; .XXXX...
+032A 78 Graphic3:  db 078H ; .XXXX...
 032B 04         db 004H ; .....X..
 032C 18         db 018H ; ...XX...
 032D 04         db 004H ; .....X..
-032E 78 L032E:  db 078H ; .XXXX...
+032E 78 Graphic2:  db 078H ; .XXXX...
 032F 04         db 004H ; .....X..
 0330 38         db 038H ; ..XXX...
 0331 40         db 040H ; .X......
-0332 7C L0332:  db 07CH ; .XXXXX..
+0332 7C Graphic5:  db 07CH ; .XXXXX..
 0333 04         db 004H ; .X..
 0334 78         db 078H ; .XXXX...
 0335 04         db 004H ; .....X..
 0336 78         db 078H ; .XXXX...
-0337 7C L0337:  db 07CH ; .XXXXX..
+0337 7C GraphicE:  db 07CH ; .XXXXX..
 0338 40         db 040H ; .X......
 0339 7C         db 07CH ; .XXXXX..
 033A 40         db 040H ; .X......
-033B 7C L033B:  db 07CH ; .XXXXX..
+033B 7C GraphicF:  db 07CH ; .XXXXX..
 033C 40         db 040H ; .X......
 033D 7C         db 07CH ; .XXXXX..
 033E 40         db 040H ; .X......
 033F 40         db 040H ; .X......
-0340 3C L0340:  db 03CH ; ..XXXX..
+0340 3C GraphicC:  db 03CH ; ..XXXX..
 0341 40         db 040H ; .X......
 0342 40         db 040H ; .X......
 0343 40         db 040H ; .X......
-0344 3C L0344:  db 03CH ; ..XXXX..
+0344 3C Graphic6:  db 03CH ; ..XXXX..
 0345 40         db 040H ; .X......
 0346 78         db 078H ; .XXXX...
 0347 44         db 044H ; .X...X..
-0348 38 L0348:  db 038H ; ..XXX...
+0348 38 Graphic0:  db 038H ; ..XXX...
 0349 44         db 044H ; .X...X..
 034A 44         db 044H ; .X...X..
 034B 44         db 044H ; .X...X..
-034C 38 L034C:  db 038H ; ..XXX...
+034C 38 Graphic8:  db 038H ; ..XXX...
 034D 44         db 044H ; .X...X..
 034E 38         db 038H ; ..XXX...
 034F 44         db 044H ; .X...X..
-0350 38 L0350:  db 038H ; ..XXX...
+0350 38 GraphicA:  db 038H ; ..XXX...
 0351 44         db 044H ; .X...X..
 0352 7C         db 07CH ; .XXXXX..
-0353 44         db 044H ; .X...X..
-0354 44 L0354:  db 044H ; .X...X..
+0353 44 GraphicH:        db 044H ; .X...X..
+0354 44   db 044H ; .X...X..
 0355 7C         db 07CH ; .XXXXX..
-0356 44 L0356:  db 044H ; .X...X..
+0356 44 GraphicU:  db 044H ; .X...X..
 0357 44         db 044H ; .X...X..
 0358 44         db 044H ; .X...X..
 0359 44         db 044H ; .X...X..
-035A 38         db 038H ; ..XXX...
-035B 44 L035B:  db 044H ; .X...X..
+035A 38 GraphicQMark:        db 038H ; ..XXX...
+035B 44	  db 044H ; .X...X..
 035C 08         db 008H ; ....X...
-035D 10 L035D:  db 010H ; ...X....
+035D 10 GraphicApostrophe::  db 010H ; ...X....
 035E 10         db 010H ; ...X....
-035F 00 L035F:  db 000H ; ........
-0360 00 L0360:  db 000H ; ........
+035F 00 GraphicSpace:  db 000H ; ........
+0360 00 GraphicULine:  db 000H ; ........
 0361 00         db 000H ; ........
-0362 00 L0362:  db 000H ; ........
+0362 00 GraphicMinus:  db 000H ; ........
 0363 00         db 000H ; ........
 0364 7C         db 07CH ; .XXXXX..
 0365 00         db 000H ; ........
-0366 00 L0366:  db 000H ; ........
+0366 00 GraphicEquals:  db 000H ; ........
 0367 7C         db 07CH ; .XXXXX..
 0368 00         db 000H ; ........
 0369 7C         db 07CH ; .XXXXX..
-036A 00 L036A:  db 000H ; ........
+036A 00 :  db 000H ; ........
 036B 18         db 018H ; ...XX...
 036C 00         db 000H ; ........
 036D 18         db 018H ; ...XX...

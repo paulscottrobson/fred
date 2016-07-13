@@ -9,7 +9,5 @@ fel_src.bin
 This source file is assembled using Alfred Arnold's AS freeware assembler and compared against the typed
 in binary code.
 
-TODO: Rename the labels to something other than Lxxxx
-
 Paul Robson 12 July 2016
 

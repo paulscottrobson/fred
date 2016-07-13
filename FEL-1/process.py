@@ -59,7 +59,7 @@ class CodeLine(BaseLine):
 			self.byteData.append(int(line[:2],16))
 			line = line[3:].strip()
 		assert len(self.byteData) > 0,"No byte data"
-		m = re.match("^([0-9A-Z_]+)\\:\\s*(.*)$",line)
+		m = re.match("^([0-9A-Za-z_]+)\\:\\s*(.*)$",line)
 		if m is not None:
 			self.labelName = (m.group(1)+":").lower()
 			line = m.group(2)
@@ -74,7 +74,9 @@ class CodeLine(BaseLine):
 		self.assemblerCode = line.lower()
 
 	def render(self):
-		return "{0:10} {1:64} {2}".format(self.labelName,self.assemblerCode,"; "+self.comment if self.comment != "" else "")
+		s = self.labelName+"\n" if self.labelName != "" else ""
+		s = s +  "        {1:64} {2}".format(self.labelName,self.assemblerCode,"; "+self.comment if self.comment != "" else "")
+		return s
 
 	def compileBytes(self,byteArray):
 		for i in range(0,len(self.byteData)):
