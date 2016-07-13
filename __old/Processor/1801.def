@@ -1,0 +1,109 @@
+// ***********************************************************************************************************************************
+// ***********************************************************************************************************************************
+//
+//												CPU Definition. TA6889/6890 Datasheet Page 10
+//
+//	@X &15 	as hexadecimal digit.
+//	@X &15  as decimal.
+//	@F &3 	as flag 1-4
+//
+//	READ,WRITE,INPORT and OUTPORT macros need to be defined.
+//
+//	Byte values: 	D,DF,temp8,P,X,T,IE
+//	Word values:	R[16],temp16
+//
+// ***********************************************************************************************************************************
+// ***********************************************************************************************************************************
+
+:#define FETCH() 	READ(R[P]++)																		// Fetch Macro
+:#define RESET()	P = 0;R[0] = 0;IE = 1;DF &= 1 														// Set to reset and validate value in DF
+
+// ***********************************************************************************************************************************
+//
+//															Register Operations.
+//
+// ***********************************************************************************************************************************
+
+10-1F 		"INC R@X"			R[@R]++																	// Increment Rn
+20-2F 		"DEC R@X"			R[@R]--																	// Decrement Reference
+80-8F 		"GLO R@X"			D = R[@R] & 0xFF 														// Get Low Rn
+90-9F 		"GHI R@X"			D = (R[@R] >> 8) & 0xFF 												// Get High Rn
+A0-AF 		"PLO R@X"			R[@R] = (R[@R] & 0xFF00) | D 											// Put Low Rn
+B0-BF 		"PHI R@X"			R[@R] = (R[@R] & 0x00FF) | (((WORD16)D) << 8) 							// Put High Rn
+
+// ***********************************************************************************************************************************
+//
+//															 Memory Reference.
+//
+// ***********************************************************************************************************************************
+
+40-4F  		"LDA R@X"			D = READ(R[@R]);R[@R]++	 											// Load Memory(Rn) to D and Increment Rn
+50-5F 		"STR R@X"			WRITE(R[@R],D) 														// Store D to Memory(Rn)
+
+// ***********************************************************************************************************************************
+//
+//																ALU Operations
+//
+// ***********************************************************************************************************************************
+
+F0 			"LDX"				D = READ(R[X])															// Load from Memory
+F1 			"OR"				D |= READ(R[X])															// Or from memory
+F2 			"AND"				D &= READ(R[X])															// And from memory
+F3 			"XOR"				D ^= READ(R[X])															// Xor from memory
+F4 			"ADD"				ADD(READ(R[X]))															// Add memory to D with carry out.
+F5 			"SD"				SUB(READ(R[X]),D)														// Subtract D from memory to D with not borrow out
+F6 			"SHR"				DF = D & 1;D = (D >> 1) & 0x7F 											// Shift right into DF
+F7 			"SM"				SUB(D,READ(R[X]))														// Subtract memory from D not borrow out
+
+F8 			"LDI .1"			D = FETCH()																// Load immediate
+F9 			"ORI .1"			D |= FETCH()															// Or immediate
+FA 			"ANI .1"			D &= FETCH()															// And immediate
+FB 			"XRI .1"			D ^= FETCH()															// Xor immediate
+FC 			"ADI .1"			ADD(FETCH())															// Add memory to D with carry out.
+FD 			"SDI .1"			SUB(FETCH(),D)															// Subtract D from immediate to D with not borrow out
+FF 			"SMI .1"			SUB(D,FETCH())															// Subtract immediate from D not borrow out
+
+:#define ADD(v)		D = temp16 = D + (v);DF = (temp16 >> 8) & 1 										// Addition macro
+:#define SUB(n1,n2)	D = temp16 = (n1) + ((n2)^0xFF) + 1;DF = (temp16 >> 8) & 1							// Subtraction macro.
+
+// ***********************************************************************************************************************************
+//
+//														Branch Operations
+//
+// ***********************************************************************************************************************************
+
+30 			"BR .1"				temp8 = FETCH();R[P] = (R[P] & 0xFF00) | temp8							// unconditional branch
+32 			"BZ .1"				temp8 = FETCH();BRANCH(D == 0)											// branch if zero
+33 			"BDF .1"			temp8 = FETCH();BRANCH(DF != 0)											// branch if carry set
+34-37 		"B@F .1"			temp8 = FETCH();BRANCH(EFLAG@F() != 0)									// branch if Eflag set
+38 			"SKP"				R[P]++																	// skip
+3A 			"BNZ .1"			temp8 = FETCH();BRANCH(D != 0)											// branch if not zero
+3B 			"BNF .1"			temp8 = FETCH();BRANCH(DF == 0)											// branch if carry clear
+3C-3F 		"BN@F .1"			temp8 = FETCH();BRANCH(EFLAG@F() == 0)									// branch if Eflag clear
+
+:#define BRANCH(test) if ((test) != 0) R[P] = (R[P] & 0xFF00) | temp8									// Branch macro
+
+// ***********************************************************************************************************************************
+//
+//														Control Operations
+//	
+// ***********************************************************************************************************************************
+
+00 			"IDL"				;																		// do nothing with IDL 
+D0-DF 		"SEP R@X"			P = @R 																// set P register
+E0-EF 		"SEX R@X"			X = @R 																// set X register
+70 			"RET"				RETURN();IE = 1															// return and set IE
+71 			"DIS"				RETURN();IE = 0															// return and clear IE
+78 			"SAV"				WRITE(R[X],T)															// save T to Memory(Rx)
+
+:#define INTERRUPT()	T = P | (X << 4);P = 1;X = 2;IE = 0												// Interrupt call
+:#define RETURN()		temp8 = READ(R[X]++);P = temp8 & 0xF;X = (temp8 >> 4) & 0xF 					// Return from interrupt.
+
+// ***********************************************************************************************************************************
+//
+//															I/O Operations
+//
+// ***********************************************************************************************************************************
+
+60-67 		"OUT @X"			OUTPORT@X(READ(R[X]));R[X]++											// Output to port.
+68-6F 		"INP @X"			WRITE(R[X],INPORT@X())													// Input from port

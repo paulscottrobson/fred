@@ -24,13 +24,13 @@
 
 0000	00			Start:	IDL
 0001	F8 01 				LDI 1 													; Set interrupt, stack
-0003	B1 					PHI R1
+0003	B1 					PHI R1 													; they are all in Page 1
 0004	B2					PHI R2
 0005	B4					PHI R4
 0006 	B8					PHI R8
 0007	F8 19 				LDI interrupt & 255 										; R1 = $119 Interrupt routine
 0009 	A1 					PLO R1
-000A	F8 FF 				LDI 0FFh 												; R2 = $1FF Stack top
+000A	F8 FF 				LDI stacktop & 255 												; R2 = $1FF Stack top
 000C 	A2 					PLO R2
 000D 	F8 3B 				LDI nextInstruction & 255 
 000F 	A4 					PLO R4 													; R4 = $13B Execute next instruction
@@ -80,7 +80,7 @@
 ;
 ;	7x2A Vx -> A.0
 ;
-002A 	F8 11 				LDI 011h 												; point R7 to RA.0
+002A 	F8 11 				LDI (AReg+1) & 255 										; point R7 to RA.0
 002C 	A7 		setAddrReg:		PLO R7
 002D 	46 					LDA R6 													; get Vx
 002E 	57 					STR R7 													; write it there.
@@ -88,12 +88,12 @@
 ; 
 ;	7x30 Vx -> A.1
 ;
-0030 	F8 10 				LDI 010h 												; RA.1 address
+0030 	F8 10 				LDI AReg & 255 												; RA.1 address
 0032 	30 2C 				BR  setAddrReg
 ; 
 ;	7x30 Vx -> B.0
 ;
-0034 	F8 13 				LDI 013h 												; RB.0 address
+0034 	F8 13 				LDI (BReg+1) & 255												; RB.0 address
 0036 	30 2C 				BR  setAddrReg
 ;
 ; 	7x38 A.0 -> Vx
@@ -129,8 +129,8 @@
 0048 	E3 					SEX R3 													; X = P = R3
 0049 	46 					LDA R6 													; read R(X)
 004A 	BF 					PHI RF 													; put in RF.0
-004B 	63		tapeDelayLoop: 		OUT 3 													; tape on, speaker on.
-004C 	03 					DB 03
+004B 	63		tapeDelayLoop: 		OUT audioControl 													; tape on, speaker off.
+004C 	03 					DB aTapeBit+aConnect
 004D 	2F 					DEC RF 													; dec counter
 004E 	9F 					GHI RF 													; timed out
 004F 	3A 4B 				BNZ tapeDelayLoop 												; keep going.
@@ -140,7 +140,7 @@
 ;
 0052	F0 					LDX 													; get R(X)
 0053	BF 					PHI RF 													; save in RF.1
-0054	F8 14 				LDI 14h 												; point R7 to the 100,10,1
+0054	F8 14 				LDI DecTable & 255 												; point R7 to the 100,10,1
 0056 	A7 					PLO R7
 0057 	2A 					DEC RA 													; predec RA
 0058 	1A 		nextDigit:		INC RA 													; A to next cell.
@@ -183,7 +183,7 @@
 
 0078	93 					GHI R3 													; RA = $800 (R3.1 = 0)
 0079	AA 					PLO RA
-007A 	F8 08 				LDI 8
+007A 	F8 08 				LDI (screen / 256) + 1
 007C 	BA 					PHI RA 
 007D	2A 		clsLoop:		DEC RA 													; dec RA
 007E 	93 					GHI R3													; D = 0
@@ -207,7 +207,7 @@
 008A 	31 00 				FEL 	03100h 											; skip next instruction if not 00
 008C 	F4 00 				FEL 	0F400h											; if was 00, then run program from 400
 008E 	31 0C 				FEL 	0310Ch 											; if was 0C, then go to write code
-0090 	F0 CA 				FEL 	0F0CAh 											
+0090 	F0 CA 				FEL 	0F000h+FELWriteTape 											
 ;
 ;	Read three keystrokes into A
 ;
@@ -217,18 +217,18 @@
 0098 	72 30 				FEL 	07230h  										; write to MSB of A
 009A	E2 7A 				FEL 	0E27Ah 											; read byte to V2 (middle address nibble)
 009C 	E3 7A 				FEL 	0E37Ah 											; read byte to V3 (low address nibble)
-009E 	10 E2 				FEL 	010E2h 											; call pack V2/V3 to V2
+009E 	10 E2 				FEL 	01000h+FELPack 											; call pack V2/V3 to V2
 00A0 	72 2A 				FEL 	0722Ah 											; write to LSB of A
 00A2 	29 00 				FEL 	02900h											; Clear V9
 ;
 ;	Display Address
 ;
-00A4 	72 3B 				FEL 	0723Bh 											; MSB of A to V2
+00A4 	72 3B 	FELDisplay:			FEL 	0723Bh 											; MSB of A to V2
 00A6 	24 09 				FEL 	02409h 											; Set V4 = (1,1)
-00A8 	10 E8 				FEL 	010E8h 											; unpack and show V2
+00A8 	10 E8 				FEL 	01000h+FELShow 											; unpack and show V2
 00AA 	72 38 				FEL 	07238h 											; LSB of A to V2
 00AC 	24 0B 				FEL 	0240Bh 											; Set V4 = (3,1)
-00AE 	10 E8 				FEL 	010E8h 	 										; unpack and show V2
+00AE 	10 E8 				FEL 	01000h+FELShow	 										; unpack and show V2
 ;
 ;	Display Data
 ;
@@ -243,15 +243,15 @@
 00BA 	E2 7A 				FEL 	0E27Ah  										; get hex key (upper nibble)
 00BC 	29 01 				FEL 	02901h 											; set V9 = 1 so increments next time 
 00BE 	31 0A 				FEL 	0310Ah 											; been round twice ?
-00C0 	F0 A4 				FEL 	0F0A4h 											; if command was A (read) do next w/o update
+00C0 	F0 A4 				FEL 	0F000h+FELDisplay 											; if command was A (read) do next w/o update
 00C2 	E3 7A 				FEL 	0E37Ah 											; get the low nibble
 00C4 	10 E2 				FEL 	010E2h 											; call pack V2/V3 to V2
 00C6 	72 24 				FEL 	07224h 											; store V(2) at M->A (e.g. new address)
-00C8 	F0 A4 				FEL 	0F0A4h 											; redisplay address and data.
+00C8 	F0 A4 				FEL 	0F000h+FELDisplay 											; redisplay address and data.
 ;
 ;	Write code to tape
 ;
-00CA 	02 68 				FEL 	00268h 											; disable hex keyboard input
+00CA 	02 68 	FELWriteTape:			FEL 	00268h 											; disable hex keyboard input
 00CC 	21 FF 				FEL 	021FFh 											; set V1 = $FF (5 sec approx)
 00CE 	71 48 				FEL 	07148h 											; delay of this length so stabilises
 00D0 	21 40 				FEL 	02140h 											; set V1 = $40 (1 sec approx)
@@ -259,20 +259,20 @@
 00D4 	D2 10 				FEL 	0D210h 											; tone and delay
 00D6 	71 48  				FEL 	07148h 											; delay with that tone (start tone ?)
 00D8 	A0 00 				FEL 	0A000h 											; A = 0
-00DA 	F0 DC 				FEL 	0F0DCh 											; (patched out)
-00DC 	E3 A0 				FEL 	0E3A0h 											; write tape M(A) to end
+00DA 	F0 DC 				FEL 	0F000h+FELNext 										; (patched out)
+00DC 	E3 A0 	FELNext:	FEL 	0E3A0h 											; write tape M(A) to end
 00DE 	D2 10 				FEL 	0D210h 											; tone and delay
-00E0 	F0 E0 				FEL 	0F0E0h 											; stop
+00E0 	F0 E0 	FELStop:	FEL 	0F000h+FELStop 											; stop
 ;
 ;	Pack V2/V3 nibbles into a single byte (subroutine)
 ;
-00E2 	72 3E 				FEL 	0723Eh 											; Shift V2 left 4 bits
+00E2 	72 3E 	FELPack:			FEL 	0723Eh 											; Shift V2 left 4 bits
 00E4 	82 31 				FEL 	08231h 											; V2 = V2 or V3
 00E6 	02 6E 				FEL 	0026Eh 											; return
 ;
 ;	Unpack V2 into 2 digits and display at V4 (subroutine)
 ;
-00E8 	B3 00 				FEL 	0B300h 											; point B to $300
+00E8 	B3 00 	FELShow:			FEL 	0B300h 											; point B to $300
 00EA 	23 0F 				FEL 	0230Fh 											; V3 = 0Fh
 00EC 	83 22 				FEL 	08322h 											; And out lowest nibble into V3
 00EE 	72 41 				FEL 	07241h 											; Shift V2 right 4, now has highest nibble
@@ -291,14 +291,14 @@
 ;
 ; ***************************************************************************************************************
 
-0100	00 00 00 00 		DB 0,0,0,0 												; V0-VF
+0100	00 00 00 00 Registers:		DB 0,0,0,0 												; V0-VF
 0104	00 00 00 00 		DB 0,0,0,0
 0108	00 00 00 00 		DB 0,0,0,0
 010C	00 00 00 00 		DB 0,0,0,0
-0110 	00 00 				DB 0,0 													; A
-0112 	00 00 				DB 0,0 													; B
+0110 	00 00 		AReg:	DB 0,0 													; A
+0112 	00 00 		BReg:	DB 0,0 													; B
 
-0114 	64 					DB 100 													; dividers.
+0114 	64 		DecTable:	DB 100 													; dividers.
 0115 	0A 					DB 10
 0116 	01 					DB 1
 
@@ -316,9 +316,9 @@
 011B 	22 					DEC R2 													; save D on Stack
 011C 	52 					STR R2 													; Save on stack.
 
-011D 	F8 07 				LDI 7  													; set R0 (display pointer) to $700	
+011D 	F8 07 				LDI screen/256  													; set R0 (display pointer) to $700	
 011F 	B0 					PHI R0
-0120	F8 00 				LDI 0
+0120	F8 00 				LDI screen&255
 0122 	A0 					PLO R0
 
 0123 	19 					INC R9 													; increment R9 (timer ?)
@@ -326,7 +326,7 @@
 0124 	86 					GLO R6													; get R6 
 0125 	BD 					PHI RD 													; save in RD.1
 
-0126 	F8 0D 				LDI 0Dh 								
+0126 	F8 0D 				LDI (Registers + 0Dh) & 255 							; point to Vd 								
 0128 	A6 					PLO R6
 0129 	46 		timerUpdateLoop:		LDA R6 													; read R6 (VD Timer first time around)
 012A 	26 					DEC R6 													; fix up R6
@@ -337,7 +337,7 @@
 0130 	56 					STR R6 													; save timer now updated
 0131 	16 	    nextTimer:		INC R6 													; point to next timer
 0132 	86 					GLO R6 													; get low byte
-0133 	FB 10 				XRI 10h 												; done all timers
+0133 	FB 10 				XRI (Registers+10h) & 255 												; done all timers
 0135 	3A 29 				BNZ timerUpdateLoop 												; if not, go back round again.
 0137 	9D 					GHI RD 													; get RD.1, fix R6 back up again.
 0138 	A6 					PLO R6
@@ -365,7 +365,7 @@
 0147 	F6 					SHR
 0148 	F6 					SHR 													; instruction code in D
 0149 	32 60 				BZ  opcode0 												; if zero, its a machine language
-014B 	F9 C0 				ORI 0C0h 												; OR with $C0
+014B 	F9 C0 				ORI instructionVector & 255 												; OR with $C0
 014D 	AC 					PLO RC 													; Put in RC.0  now points to vector table
 
 014E 	45 					LDA R5 													; Read low byte of instruction
@@ -433,7 +433,7 @@
 017A 	D8 					SEP R8 													; call hex keypad on at $0246
 017B 	46 					DB keypadOn & 255 												
 017C 	3C 7C 	waitKeyPress:		BN1 waitKeyPress 												; wait for EF1 (byte ready)
-017E 	68 		readKeyInput:		DB 	68H 												; read to M(X) (AS Cannot assemble INP0)
+017E 	68 		readKeyInput:		DB 	68H+keypadPort 												; read to M(X) (AS Cannot assemble INP0)
 017F 	D4 					SEP R4 
 ;
 ;	Ex80 . Hex keypad on, byte ready input else skip
@@ -457,17 +457,17 @@
 ;
 ;	Ex8D - Ext Bus to Vx
 ;
-018D 	6E 					INP 6 													; read port 6 input.
+018D 	6E 					INP externalBus 													; read port 6 input.
 018E 	D4 					SEP R4
 ;
 ;	Ex8F - Vx to Ext Bus
 ;
-018F 	66 					OUT 6 													; out to port 6
+018F 	66 					OUT externalBus 													; out to port 6
 0190 	D4 					SEP R4
 ;
 ;	Ex91 - Write Vx to External Control Register
 ;
-0191 	64 					OUT 4 													; external control register
+0191 	64 					OUT externalControl 												; external control register
 0192 	D4 					SEP R4
 ;
 ;	E093 - Read tape -> M(A) concurrent using DMA Off. Need to turn TV off and Start tape before. 
@@ -478,10 +478,10 @@
 0195	8A 					GLO RA
 0196 	A0 					PLO R0
 0197 	E3 					SEX R3 													; X = P = 3
-0198 	61 					OUT 1 													; select tape
-0199 	03 					DB 03
-019A 	62 					OUT 2 													; tape read
-019B  	20 					DB 20H
+0198 	61 					OUT selectDevice 										; select tape
+0199 	03 					DB devTape
+019A 	62 					OUT controlDevice 													; tape read
+019B  	20 					DB cTapeRead
 019C 	D4 					SEP R4
 ;
 ;	R1(0)  -> Vx
@@ -561,14 +561,15 @@
 01DE 	75					DB  InstructionE & 255
 01DF 	15					DB  InstructionF & 255
 
-01E0 	00 00 00 00 		DB 	0,0,0,0 											; stack space
+01E0 	00 00 00 00 Stack:	DB 	0,0,0,0 											; stack space
 01E4 	00 00 00 00 		DB 	0,0,0,0
 01E8 	00 00 00 00 		DB 	0,0,0,0
 01EC 	00 00 00 00 		DB 	0,0,0,0
 01F0 	00 00 00 00 		DB 	0,0,0,0
 01F4 	00 00 00 00 		DB 	0,0,0,0
 01F8 	00 00 00 00 		DB 	0,0,0,0
-01FC 	00 00 00 00 		DB 	0,0,0,0
+01FC 	00 00 00 	 		DB 	0,0,0
+01FF 	00 		StackTop:	DB 	0
 
 ; ***************************************************************************************************************
 ;
@@ -576,7 +577,7 @@
 ;
 ; ***************************************************************************************************************
 
-0200	F8 10 	InstructionA:		LDI 10h 												; point R7 to A
+0200	F8 10 	InstructionA:		LDI AReg & 255 												; point R7 to A
 0202	A7 		loadAddrConst:		PLO R7
 0203 	86 					GLO R6 													; get X address $10X so its $0X
 0204 	57 					STR R7 													; write to A high and point to low
@@ -591,7 +592,7 @@
 ;
 ; ***************************************************************************************************************
 
-0209	F8 12 	InstructionB:		LDI 12h													; point R7 to B and reuse code above
+0209	F8 12 	InstructionB:		LDI BReg & 255													; point R7 to B and reuse code above
 020B 	30 02				BR  loadAddrConst
 
 ; ***************************************************************************************************************
@@ -670,7 +671,7 @@
 0231 	A6					PLO R6
 0232 	96 					GHI R6 													; set R7 to $1E0 stack space bottom.
 0233 	B7 					PHI R7
-0234 	F8 E0 				LDI 0E0h
+0234 	F8 E0 				LDI Stack & 255
 0236 	A7 					PLO R7
 0237 	46 		copyRegLoop:		LDA R6 													; read variable data
 0238 	57 					STR R7 													; copy it out.
@@ -687,10 +688,10 @@
 ; ***************************************************************************************************************
 
 0240 	E3 					SEX R3 													; X = 3 (same as P)
-0241 	61 					OUT 1  													; select TV device (2)
-0242 	02 					DB  2 												
-0243 	62 					OUT 2 													; turn it off
-0244 	00 					DB 	0
+0241 	61 					OUT selectDevice  													; select TV device (2)
+0242 	02 					DB  devTV 												
+0243 	62 					OUT controlDevice 													; turn it off
+0244 	00 					DB 	cTVOff
 0245 	D4 					SEP R4 													
 
 ; ***************************************************************************************************************
@@ -700,10 +701,10 @@
 ; ***************************************************************************************************************
 
 0246 	EC 		keypadOn:		SEX RC 													; X = C
-0247 	61  				OUT 1 													; select Keypad device (1)
-0248 	01 					DB 1 													
-0249 	62					OUT 2 													; turn it on.
-024A 	01 					DB 1
+0247 	61  				OUT selectDevice 													; select Keypad device (1)
+0248 	01 					DB devKeypad 													
+0249 	62					OUT controlDevice 													; turn it on.
+024A 	01 					DB cKeyOn
 024B 	E6 					SEX R6 													; set X back and return.
 024C 	D3 					SEP R3 
 
@@ -728,7 +729,7 @@
 ;	Tape Controller - code to write in low part of instruction
 ;
 0258 	E5 			opcode6:	SEX R5 													; use R5 as X
-0259 	63 					OUT 3 													; write low byte of instruction to port 3
+0259 	63 					OUT audioControl 													; write low byte of instruction to port 3
 025A 	D4 					SEP R4 													; return
 025B 	00 					DB 0 													; unused
 
@@ -740,13 +741,13 @@
 
 025C 	F8 00 				LDI 0 													; set display address to $700
 025E 	A0 					PLO R0
-025F 	F8 07 				LDI 7
+025F 	F8 07 				LDI screen / 256
 0261 	B0  				PHI R0
 0262 	E3 					SEX R3 													; X = 3 (same as P)
-0263 	61 					OUT 1 													; select TV device (2)
-0264 	02 					DB 2
-0265 	62 					OUT 2													; turn TV on (why 3 ?)
-0266 	03					DB 3 													
+0263 	61 					OUT selectDevice 													; select TV device (2)
+0264 	02 					DB devTV
+0265 	62 					OUT controlDevice													; turn TV on (why 3 ?)
+0266 	03					DB cTVOn 													
 0267 	D4 					SEP R4 													
 
 ; ***************************************************************************************************************
@@ -756,10 +757,10 @@
 ; ***************************************************************************************************************
 
 0268 	E3 					SEX R3 													; X = 3 (Same as P)
-0269 	61 					OUT 1 													; select keypad device (1)
-026A 	01					DB 1
-026B 	62  			 	OUT 2													; and turn it off
-026C 	00 					DB 0 
+0269 	61 					OUT selectDevice 													; select keypad device (1)
+026A 	01					DB devKeypad
+026B 	62  			 	OUT controlDevice													; and turn it off
+026C 	00 					DB ckeyOff 
 026D 	D4 					SEP R4
 
 ; ***************************************************************************************************************
@@ -778,7 +779,7 @@
 ;
 0273	96 		readABRegs:		GHI R6 													; RF = $110
 0274 	BF 					PHI RF
-0275 	F8 10 				LDI 10h 
+0275 	F8 10 				LDI AReg & 255
 0277 	AF 					PLO RF
 0278 	4F 					LDA RF 													; load in A
 0279 	BA 					PHI RA
@@ -873,13 +874,13 @@
 ; ***************************************************************************************************************
 
 02BA 	EC  	toneGeneration:		SEX RC 													; X = P = C
-02BB  	63 					OUT 3 													; set External Function Register -> Run
-02BC 	05 					DB 05 													; speaker line
+02BB  	63 					OUT audioControl 													; set External Function Register -> Run
+02BC 	05 					DB aSpeakerBit+aConnect 													; speaker line
 02BD 	9E 					GHI RE  												; value 3, set in write tape routine for tape
 02BE 	FF 01 	InstructionD:		SMI 1 													; short delay loop
 02C0 	3A BE 				BNZ InstructionD
-02C2 	63					OUT 3 													; reset speaker line.
-02C3 	01 					DB  01
+02C2 	63					OUT audioControl 													; reset speaker line.
+02C3 	01 					DB  aConnect
 02C4 	2F 					DEC RF 													; done it correct number of times
 02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
 02C6 	3A BA 				BNZ toneGeneration 												; tone, go back to tone loop
@@ -929,7 +930,7 @@
 02E1 	E6 					SEX R6 													; R(x) points to VX
 02E2 	F0 					LDX 													; read X
 02E3 	AA 					PLO RA 													; save in RA.0
-02E4 	F8 03 				LDI 3 													; RA is $03[Vx]
+02E4 	F8 03 				LDI Graphics / 256 												; RA is $03[Vx]
 02E6 	BA 					PHI RA
 
 ; ***************************************************************************************************************
@@ -950,7 +951,7 @@
 02EE 	F1 					OR 														; or with bits 6-7
 02EF 	FA C7  				ANI 0C7h 												; remove so only bits 0-2 and bits 6-7
 02F1 	AB 					PLO RB
-02F2 	F8 07 				LDI 07 													; set RB.1 = 07<addr>
+02F2 	F8 07 				LDI screen/256 											; set RB.1 = 07<addr>
 02F4 	BB 					PHI RB
 
 02F5 	4A 		copyPixelData: 		LDA RA 													; read first byte of data
@@ -970,7 +971,7 @@
 ;
 ; ***************************************************************************************************************
 
-0300 48   db Graphic0 & 255
+0300 48  Graphics: db Graphic0 & 255
 0301 10   db Graphic1 & 255
 0302 2E   db Graphic2 & 255
 0303 2A   db Graphic3 & 255

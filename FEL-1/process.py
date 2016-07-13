@@ -70,8 +70,9 @@ class CodeLine(BaseLine):
 		assert line != "","No code in line"
 		if line[:2] == "BT":
 			line = "B"+line[2:]
-
-		self.assemblerCode = line.lower()
+		n = (line+" ").find(" ")
+		line = (line[:n]+"         ")[:8]+(line[n:].strip())
+		self.assemblerCode = line.lower().strip()
 
 	def render(self):
 		s = self.labelName+"\n" if self.labelName != "" else ""
