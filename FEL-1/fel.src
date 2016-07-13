@@ -147,8 +147,8 @@
 0048 	E3 					SEX R3 													; X = P = R3
 0049 	46 					LDA R6 													; read R(X)
 004A 	BF 					PHI RF 													; put in RF.0
-004B 	63		tapeDelayLoop: 		OUT audioControl 													; tape on, speaker off.
-004C 	03 					DB aTapeBit+aConnect
+004B 	63		tapeDelayLoop: 		OUT controlLatch 													; tape on, speaker off.
+004C 	03 					DB clTapeBit+clRunMode
 004D 	2F 					DEC RF 													; dec counter
 004E 	9F 					GHI RF 													; timed out
 004F 	3A 4B 				BNZ tapeDelayLoop 												; keep going.
@@ -747,7 +747,7 @@
 ;	Tape Controller - code to write in low part of instruction
 ;
 0258 	E5 			opcode6:	SEX R5 													; use R5 as X
-0259 	63 					OUT audioControl 													; write low byte of instruction to port 3
+0259 	63 					OUT controlLatch 													; write low byte of instruction to port 3
 025A 	D4 					SEP R4 													; return
 025B 	00 					DB 0 													; unused
 
@@ -892,13 +892,13 @@
 ; ***************************************************************************************************************
 
 02BA 	EC  	toneGeneration:		SEX RC 													; X = P = C
-02BB  	63 					OUT audioControl 													; set External Function Register -> Run
-02BC 	05 					DB aSpeakerBit+aConnect 													; speaker line
+02BB  	63 					OUT controlLatch 													; set External Function Register -> Run
+02BC 	05 					DB clSpeakerBit+clRunMode 													; speaker line
 02BD 	9E 					GHI RE  												; value 3, set in write tape routine for tape
 02BE 	FF 01 	InstructionD:		SMI 1 													; short delay loop
 02C0 	3A BE 				BNZ InstructionD
-02C2 	63					OUT audioControl 													; reset speaker line.
-02C3 	01 					DB  aConnect
+02C2 	63					OUT controlLatch 													; reset speaker line.
+02C3 	01 					DB  clRunMode
 02C4 	2F 					DEC RF 													; done it correct number of times
 02C5 	D6 					SEP R6  												; call F0/F1 -> D, identify caller
 02C6 	3A BA 				BNZ toneGeneration 												; tone, go back to tone loop

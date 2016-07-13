@@ -26,7 +26,7 @@ rf = 15
 keypadPort = 0 													; keypad read (in only)
 selectDevice = 1 												; select DMA device (tape 3 tv 2 keypad 1)
 controlDevice = 2 												; control of selected device
-audioControl = 3  												; control tape/audio
+controlLatch = 3  												; control tape/audio/run mode.
 externalControl = 4 											; external control register (used in monitor)
 
 externalBus = 6 												; external bus (in/out)
@@ -43,9 +43,9 @@ cTVOn = 3
 cTVOff = 0
 cTapeRead = 20h
 
-aSpeakerBit = 4 												; bit 2 is speaker out
-aTapeBit = 2 													; bit 1 is tape out
-aConnect = 1 													; bit 0 seems to be 1 to connect it.
+clSpeakerBit = 4 												; bit 2 is speaker out
+clTapeBit = 2 													; bit 1 is tape out
+clRunMode = 1 													; bit 0 is run mode
 
 fel macro 	fw 													; compile FEL-1 instruction in Hi-Low order
 	db 	(fw) / 256

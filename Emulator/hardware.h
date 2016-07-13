@@ -19,4 +19,7 @@ BYTE8 HWIScreenWidth(void);
 BYTE8 HWIScreenHeight(void);
 WORD16 HWIGetDisplayAddress(void);
 BYTE8 HWIIsScreenOn(void);
+void HWIWriteDevice(BYTE8 device,BYTE8 controlValue);
+BYTE8 HWIGetCurrentKeyLatch(void);
+BYTE8 HWIIsKeyAvailable(void);
 #endif

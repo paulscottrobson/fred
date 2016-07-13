@@ -36,6 +36,7 @@
 
 static BYTE8   	D,DF,X,P,T,IE,temp8;
 static WORD16   R[16],temp16,cycles;
+static BYTE8 	currentDevice;
 
 static BYTE8 ramMemory[MEMORYSIZE];													
 
@@ -53,6 +54,14 @@ static BYTE8 ramMemory[MEMORYSIZE];
 // *******************************************************************************************************************************
 
 #include "_1801_include.h"
+
+#define INPORT0() 	HWIGetCurrentKeyLatch()										// In 0 reads the hex keypad.
+
+#define OUTPORT1(n)	currentDevice = (n)											// Out 1 sets the current currentDevice
+#define OUTPORT2(n) HWIWriteDevice(currentDevice,n)								// Out 2 writes to the current device.
+
+#define EFLAG1() 	HWIIsKeyAvailable() 										// EFlag 1 set when keyboard data available
+
 #include "_1801_ports.h"
 
 // *******************************************************************************************************************************

@@ -1,0 +1,130 @@
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/13/2016 22:26:18
+
+
+       1/       0 :                     
+       2/       0 :                     	cpu 	1802
+       3/       0 :                     	
+       4/       0 : =0H                 r0 = 0
+       5/       0 : =1H                 r1 = 1
+       6/       0 : =2H                 r2 = 2
+       7/       0 : =3H                 r3 = 3
+       8/       0 : =4H                 r4 = 4
+       9/       0 : =5H                 r5 = 5
+      10/       0 : =6H                 r6 = 6
+      11/       0 :                     
+      12/       0 : =700H               screen = 0700h
+      13/       0 :                     
+      14/       0 : 00                  	idl																		; switch to P = 3
+      15/       1 : 90                  	ghi 	r0
+      16/       2 : B3                  	phi 	r3
+      17/       3 : F8 07               	ldi 	start & 255
+      18/       5 : A3                  	plo 	r3
+      19/       6 : D3                  	sep 	r3
+      20/       7 :                     start:
+      21/       7 : F8 06               	ldi 	6 																; set stack to 6FFh
+      22/       9 : B2                  	phi 	r2
+      23/       A : F8 FF               	ldi 	0FFh
+      24/       C : A2                  	plo 	r2
+      25/       D :                     
+      26/       D : F8 07               	ldi 	screen/256														; R0 points to screen
+      27/       F : B0                  	phi 	r0
+      28/      10 : F8 00               	ldi 	0
+      29/      12 : A0                  	plo 	r0
+      30/      13 : B1                  	phi 	r1 																; set interrupt
+      31/      14 : F8 31               	ldi 	interruptRoutine & 255
+      32/      16 : A1                  	plo 	r1
+      33/      17 :                     
+      34/      17 : E3                  	sex 	r3 																; X = P = 3
+      35/      18 : 61                  	out 	1
+      36/      19 : 02                  	db 		2 																; select device 2
+      37/      1A : 62                  	out 	2
+      38/      1B : 03                  	db 	 	3 																; command 3 (TV on)
+      39/      1C :                     
+      40/      1C : 61                  	out 	1  																; select device 1
+      41/      1D : 01                  	db 		1
+      42/      1E : 62                  	out 	2 																; command 1 (keypad on)
+      43/      1F : 01                  	db 		1
+      44/      20 :                     
+      45/      20 : F8 C0               	ldi 	0C0h 															; set R4 to 0xC0
+      46/      22 : A4                  	plo 	r4
+      47/      23 : 90                  	ghi 	r0
+      48/      24 : B4                  	phi 	r4
+      49/      25 :                     
+      50/      25 :                     loop:
+      51/      25 : 3C 25               	bn1 	loop 															; wait for key press
+      52/      27 :                     wait:
+      53/      27 : E2                  	sex 	r2
+      54/      28 : 68                  	db 		068h 															; INP 0 reads it to M(2)
+      55/      29 : 42                  	lda 	r2																; read it.
+      56/      2A : 22                  	dec 	r2
+      57/      2B : 54                  	str 	r4 																; copy to R4.
+      58/      2C : 14                  	inc 	r4
+      59/      2D : 30 25               	br 		loop
+      60/      2F :                     
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/13/2016 22:26:18
+
+
+      61/      2F :                     interruptExit:
+      62/      2F : 42                  	lda 	r2 																; restore D and return.
+      63/      30 : 70                  	ret 
+      64/      31 :                     interruptRoutine:
+      65/      31 : 22                  	dec 	r2 																; save XP on stack
+      66/      32 : 78                  	sav 
+      67/      33 : 22                  	dec 	r2 																; save D on stack.
+      68/      34 : 52                  	str 	r2
+      69/      35 : F8 07               	ldi 	screen/256														; reset screen address
+      70/      37 : B0                  	phi 	r0
+      71/      38 : F8 00               	ldi 	0
+      72/      3A : A0                  	plo 	r0
+      73/      3B : 30 2F               	br 		interruptExit
+      74/      3D :                     
+      75/      3D :                     
+      76/      3D :                     
+      77/      3D :                     
+      78/      3D :                     
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/13/2016 22:26:18
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
+*BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   7/13/2016 - |
+*FALSE :                          0 - | *FULLPMMU :                       1 - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - |  INTERRUPTEXIT :                 2F C |
+ INTERRUPTROUTINE :              31 C | *LISTON :                         1 - |
+ LOOP :                          25 C | *MACEXP :                         1 - |
+*MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - |  R0 :                             0 - |
+ R1 :                             1 - |  R2 :                             2 - |
+ R3 :                             3 - |  R4 :                             4 - |
+*R5 :                             5 - | *R6 :                             6 - |
+*RELAXED :                        0 - |  SCREEN :                       700 - |
+ START :                          7 C | *TIME :                    22:26:18 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+*WAIT :                          27 C |
+
+     41 symbols
+     31 unused symbols
+
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/13/2016 22:26:18
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.00 seconds assembly time
+
+     78 lines source file
+      2 passes
+      0 errors
+      0 warnings

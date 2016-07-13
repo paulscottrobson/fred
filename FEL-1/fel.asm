@@ -153,8 +153,8 @@ setaddrreg:
         lda     r6                                                       ; read R(X)
         phi     rf                                                       ; put in RF.0
 tapedelayloop:
-        out     audiocontrol                                             ; tape on, speaker off.
-        db      atapebit+aconnect                                        
+        out     controllatch                                             ; tape on, speaker off.
+        db      cltapebit+clrunmode                                      
         dec     rf                                                       ; dec counter
         ghi     rf                                                       ; timed out
         bnz     tapedelayloop                                            ; keep going.
@@ -805,7 +805,7 @@ shiftvxleft4:
 ;   
 opcode6:
         sex     r5                                                       ; use R5 as X
-        out     audiocontrol                                             ; write low byte of instruction to port 3
+        out     controllatch                                             ; write low byte of instruction to port 3
         sep     r4                                                       ; return
         db      0                                                        ; unused
 
@@ -962,14 +962,14 @@ savecyclesize:
 
 tonegeneration:
         sex     rc                                                       ; X = P = C
-        out     audiocontrol                                             ; set External Function Register -> Run
-        db      aspeakerbit+aconnect                                     ; speaker line
+        out     controllatch                                             ; set External Function Register -> Run
+        db      clspeakerbit+clrunmode                                   ; speaker line
         ghi     re                                                       ; value 3, set in write tape routine for tape
 instructiond:
         smi     1                                                        ; short delay loop
         bnz     instructiond                                             
-        out     audiocontrol                                             ; reset speaker line.
-        db      aconnect                                                 
+        out     controllatch                                             ; reset speaker line.
+        db      clrunmode                                                
         dec     rf                                                       ; done it correct number of times
         sep     r6                                                       ; call F0/F1 -> D, identify caller
         bnz     tonegeneration                                           ; tone, go back to tone loop
