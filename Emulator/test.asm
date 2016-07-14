@@ -8,7 +8,9 @@ r3 = 3
 r4 = 4
 r5 = 5
 r6 = 6
-
+rc = 12
+re = 14
+rf = 15
 screen = 0700h
 
 	idl																		; switch to P = 3
@@ -56,6 +58,38 @@ wait:
 	dec 	r2
 	str 	r4 																; copy to R4.
 	inc 	r4
+
+	ldi 	2
+	phi 	rf
+	plo 	rf
+	ldi 	31
+	phi 	re
+	;
+	;	Mark is 2 + RE.1 x 2 instructions. 	[15 = 32]
+	; 	Space is 8 instructions.  FEL-1 coding. [15 = 40]
+	;
+
+tonegeneration:
+	sex 	r3 																; set index [8]
+	out 	3  																; go logic 1 here [1]
+	db 		5 	
+	ghi 	re 																; fetch pitch count [2]
+
+	;
+	;	Delay for RE x 2 x 16 = RE x 32 cycles.
+	;
+delay:
+	smi 	1 																; decrement delay count [1]
+	bnz 	delay 															; bnz delay [2] ;
+
+	out 	3 																; turn back on again [1]
+	db 		1
+	dec 	rf 																; decrement counter [2]
+	inc 	rc 																; this counts as SEP R6 [3]
+	inc 	rc 																; [4]
+	inc 	rc																; [5]
+	ghi 	rf 																; get counter [6]
+	bnz 	tonegeneration 													; loop back if non zero [7]
 	br 		loop
 
 interruptExit:

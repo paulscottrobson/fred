@@ -37,6 +37,7 @@
 static BYTE8   	D,DF,X,P,T,IE,temp8;
 static WORD16   R[16],temp16,cycles;
 static BYTE8 	currentDevice;
+static WORD16 	maxCycles;
 
 static BYTE8 ramMemory[MEMORYSIZE];													
 
@@ -59,6 +60,7 @@ static BYTE8 ramMemory[MEMORYSIZE];
 
 #define OUTPORT1(n)	currentDevice = (n)											// Out 1 sets the current currentDevice
 #define OUTPORT2(n) HWIWriteDevice(currentDevice,n)								// Out 2 writes to the current device.
+#define OUTPORT3(n) HWIWriteSpeakerLatch(n,cycles) 								// Out 3 writes to the speaker HWIWriteSpeakerLatch
 
 #define EFLAG1() 	HWIIsKeyAvailable() 										// EFlag 1 set when keyboard data available
 
@@ -71,6 +73,7 @@ static BYTE8 ramMemory[MEMORYSIZE];
 void CPUReset(void) {
 	HWIReset();
 	RESET();
+	maxCycles = CYCLES_PER_FRAME;
 }
 
 // *******************************************************************************************************************************
@@ -86,12 +89,12 @@ BYTE8 CPUExecuteInstruction(void) {
 	}
 
 	cycles = cycles + 2;															// 2 cycles per instruction
-	if (cycles < CYCLES_PER_FRAME) return 0;										// Not completed a frame.
+	if (cycles < maxCycles) return 0;												// Not completed a frame.
 	if (IE != 0) {																	// Fire interrupt if it is enabled.
 		INTERRUPT();
 	}
 	R[0] = HWIEndFrame(R[0],CRYSTAL_CLOCK);											// End of Frame code, setting R0 correctly.
-	cycles = cycles - CYCLES_PER_FRAME;												// Adjust this frame rate.
+	cycles = cycles - maxCycles;													// Adjust this frame rate.
 	return FRAME_RATE;																// Return frame rate.
 }
 

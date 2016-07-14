@@ -25,6 +25,7 @@ static BYTE8 isScreenOn;														// Non zero if screen on
 static BYTE8 isKeypadOn;														// Non zero if keypad on.
 static BYTE8 keypadLatch; 														// State of keypad latch
 static BYTE8 isLatchKeyAvailable; 												// Is byte/key data available.
+static BYTE8 speakerLatch; 														// Value in speaker latch.
 
 static void HWIHandleKeyEvent(BYTE8 hexValue,BYTE8 shiftPressed);
 
@@ -41,6 +42,7 @@ void HWIReset(void) {
 	keypadLatch = 0;															// Keypad latch empty
 	isLatchKeyAvailable = 0;													// No key available.
 	isKeypadOn = 0;																// Keypad circuitry on.
+	speakerLatch = 0x01;														// Speaker latch (run on)
 }
 
 // *******************************************************************************************************************************
@@ -69,10 +71,12 @@ WORD16 HWIEndFrame(WORD16 r0,LONG32 clock) {
 	renderingAddress = r0; 														// the rendering address is what R0 was set to last time.
 
 	if (snd0Time != 0 && snd1Time != 0) {
-		WORD16 cycles = abs(snd0Time-snd1Time); 								// Cycles per half cycle
-		cycles = cycles * 2 * 8;	 											// make whole clocks, 8 per cycle.
-		LONG32 freq = 1000000 / cycles; 										// Pitch
-		GFXSetFrequency(freq);
+		WORD16 cycles = abs(snd0Time-snd1Time); 								// Cycles per full cycle.
+																				// Example F, this returns 80.
+		cycles = cycles * 8;													// 8 Clocks per cycle.
+		cycles = cycles * 780 / 640; 											// Scale for DMA out going on.
+		LONG32 freq = 1000000 / ((LONG32)cycles);								// Convert to pitch in Hz.
+		GFXSetFrequency(freq);													// And play that note this frame.
 	} else {
 		GFXSetFrequency(0);
 	}
@@ -111,6 +115,18 @@ void HWIWriteDevice(BYTE8 device,BYTE8 controlValue) {
 			isScreenOn = (controlValue & 3) == 3; 								// 00 off 11 on in 2 lower bits.
 			break;
 	}
+}
+
+// *******************************************************************************************************************************
+//										Write to speaker latch (port 3)
+// *******************************************************************************************************************************
+
+void HWIWriteSpeakerLatch(BYTE8 newValue,WORD16 clock) {
+	if ((newValue & 4) == 0 && (speakerLatch & 4) != 0) {						// Low -> High speaker transition
+		if (snd0Time == 0) snd0Time = clock;									// Return first two this frame.
+		else if (snd1Time == 0) snd1Time = clock;
+	}
+	speakerLatch = newValue;
 }
 
 // *******************************************************************************************************************************

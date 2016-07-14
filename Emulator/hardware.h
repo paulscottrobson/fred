@@ -20,6 +20,7 @@ BYTE8 HWIScreenHeight(void);
 WORD16 HWIGetDisplayAddress(void);
 BYTE8 HWIIsScreenOn(void);
 void HWIWriteDevice(BYTE8 device,BYTE8 controlValue);
+void HWIWriteSpeakerLatch(BYTE8 newValue,WORD16 clock);
 BYTE8 HWIGetCurrentKeyLatch(void);
 BYTE8 HWIIsKeyAvailable(void);
 #endif
