@@ -1,0 +1,80 @@
+;
+;			uForth 1801 Runtime
+;
+;
+;			This runs in R4. On entry R3 is the return stack (going down)
+;			R3 the data stack (going up)
+;
+;			RF points to the code to be executed.
+;
+ExecuteCompiledWord:
+
+	lda 	rf 										; get the first byte of the next command
+	adi 	8 										; this produces an overflow for $F8...$FF which are long calls.
+	bdf 	ECW_LongCall 
+
+	smi 	8 										; fix back and put in RE
+	plo 	re 										
+	ldi 	0
+	phi 	re
+ECW_ExecuteWord:
+	sep 	re 										; and execute it.
+	br 		ExecuteCompileWord 						; function is re-entrant.
+
+ECW_LongCall:
+	phi 	re 										; we added 8 , so $F8..$FF will be 0-7 which is address high
+	lda 	rf 										; get address low
+	plo 	re
+	br 		ECW_ExecuteWord 						; and go and run it.
+
+;
+;	If the code that we have just executed is a compiled word, it will be begin with SEP R5. This will go here.
+; 	so this runs in R5.
+;
+
+NewCompiledWord:
+	dec 	r2 										; push RF.1 on the return stack.
+	ghi 	rf
+	str 	r2
+	dec 	r2
+	glo 	rf
+	str 	r2
+
+	glo 	re 										; we called it with SEP RE, so RE will point to the word code.
+	plo 	rf 										; so put that in RF.
+	ghi 	re
+	phi 	rf
+	sep 	r4 										; and call "ExecuteCompiledWord"
+	br 		NewCompiledWord
+
+;
+;	The return word comes here, which is in R6, and is called by the Return function.
+;
+
+DoReturn:
+	lda 	r2 										; unstack the return address.
+	plo 	rf
+	lda 	r2
+	phi 	rf
+	sep 	r4 										; and execute the next word
+	br 		DoReturn
+
+;
+;	So if we execute a word it can be.
+;	
+; 	RF points to code (say) LDI 0 for simplicity. The word will be F8 00 D4 and will be run in RE.
+;	On exit RF if unmodified will point to the byte after D4.
+;
+;	If it points to compiled code say 14, and 14 is D5 15 where 15 does the code D6 (SEP R6)
+;
+;	ExecuteCompileWord runs first, with RF pointing to the byte '14'. It reads the byte 14, sets RE to 14
+;		and executes the code there.
+;
+;	That code is D5, so it switches to NewCompiledWord with RE pointing to the byte after '14'. RF 
+; 	(now pointing to 15) is pushed on the stack. The value of RE, pointing to the byte after the D5, is 
+;	copied into RF, and ExecuteCompiledWord is called via the SEP R4.
+;
+;	It consequentially executes D6 (when it executes the 15 as in the first example)
+;
+;	When this happens the original RF value + 1 (after the first fetch) is pulled off the stack and we can 
+;	continue by re-enetering ExecuteCompiledWord

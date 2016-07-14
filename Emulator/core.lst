@@ -1,0 +1,201 @@
+ AS V1.42 Beta [Bld 102] - source file core.asm - page 1 - 7/14/2016 3:40:00
+
+
+       1/       0 :                     	
+       2/       0 :                     	cpu 	1802
+       3/       0 :                     
+       4/       0 : =2H                 r2 = 2 												; return stack (down, words) points to TOS.
+       5/       0 : =3H                 r3 = 3 												; data stack (up, bytes) points to TOS.
+       6/       0 : =4H                 r4 = 4 												; execute word at RF
+       7/       0 : =5H                 r5 = 5 												; defines word as a code word
+       8/       0 : =6H                 r6 = 6 												; return from code word
+       9/       0 : =EH                 re = 14 											; run P for code
+      10/       0 : =FH                 rf = 15 											; code pointer.
+      11/       0 :                     
+      12/       0 : 00                  	idl
+      13/       1 :                     
+      14/       1 : F8 06               	ldi 	6 										; set up return stack.
+      15/       3 : B2                  	phi 	r2
+      16/       4 : F8 00               	ldi 	0
+      17/       6 : A2                  	plo 	r2
+      18/       7 :                     
+      19/       7 : F8 05               	ldi 	5
+      20/       9 : B3                  	phi 	r3
+      21/       A : F8 00               	ldi 	0
+      22/       C : A3                  	plo 	r3
+      23/       D : E3                  	sex 	r3 										; if you change it change it back !
+      24/       E :                     
+      25/       E : F8 00               	ldi 	ExecuteAnyWord/256
+      26/      10 : B4                  	phi 	r4
+      27/      11 : F8 36               	ldi 	ExecuteAnyWord&255
+      28/      13 : A4                  	plo 	r4
+      29/      14 :                     
+      30/      14 : F8 00               	ldi 	ExecuteCompiledWord/256
+      31/      16 : B5                  	phi 	r5
+      32/      17 : F8 4A               	ldi 	ExecuteCompiledWord&255
+      33/      19 : A5                  	plo 	r5
+      34/      1A :                     
+      35/      1A : F8 00               	ldi 	ReturnCompiledWord/256
+      36/      1C : B6                  	phi	 	r6
+      37/      1D : F8 57               	ldi 	ReturnCompiledWord&255
+      38/      1F : A6                  	plo 	r6
+      39/      20 :                     
+      40/      20 : F8 00               	ldi 	CodeWord/256
+      41/      22 : BF                  	phi 	rf
+      42/      23 : F8 27               	ldi 	CodeWord&255
+      43/      25 : AF                  	plo 	rf
+      44/      26 :                     
+      45/      26 : D4                  	sep 	r4
+      46/      27 :                     
+      47/      27 :                     CodeWord:
+      48/      27 : 2E 33 FF            	db 		Definition,033h,0FFh
+      49/      2A :                     
+      50/      2A :                     ClearD:
+      51/      2A : F8 00 D4            	db 		0F8h,00h,0D4h				; code word just clears D silly
+      52/      2D :                     
+      53/      2D :                     ReturnCode:
+      54/      2D : D6                  	db 		0D6h 						; code word does return.
+      55/      2E :                     
+      56/      2E :                     Definition:
+      57/      2E : D5 32 2A 2D         	db 		0D5h,Constant,42,ReturnCode ; compiled word pushes 42 and calls the return function.
+      58/      32 :                     
+      59/      32 :                     Constant:
+      60/      32 : 4F                  	lda 	rf 							; get inline 8 bit constant
+ AS V1.42 Beta [Bld 102] - source file core.asm - page 2 - 7/14/2016 3:40:00
+
+
+      61/      33 : 13                  	inc 	r3 							; push on stack.
+      62/      34 : 53                  	str 	r3 
+      63/      35 : D4                  	sep 	r4
+      64/      36 :                     
+      65/      36 :                     ;
+      66/      36 :                     ;			uForth 1801 Runtime
+      67/      36 :                     ;
+      68/      36 :                     ;
+      69/      36 :                     ;			This runs in R4. On entry R2 is the return stack (going down)
+      70/      36 :                     ;			R2 the data stack (going up)
+      71/      36 :                     ;
+      72/      36 :                     ;			RF points to the code to be executed.
+      73/      36 :                     ;
+      74/      36 :                     ExecuteAnyWord:
+      75/      36 :                     
+      76/      36 : 4F                  	lda 	rf 										; get the first byte of the next command
+      77/      37 : FC 08               	adi 	8 										; this produces an overflow for $F8...$FF which are long calls.
+      78/      39 : 33 44               	bdf 	ECW_LongCall 
+      79/      3B :                     
+      80/      3B : FF 08               	smi 	8 										; fix back and put in RE
+      81/      3D : AE                  	plo 	re 										
+      82/      3E : F8 00               	ldi 	0
+      83/      40 : BE                  	phi 	re
+      84/      41 : DE                  	sep 	re 										; and execute it.
+      85/      42 : 30 36               	br 		ExecuteAnyWord 					; function is re-entrant.
+      86/      44 :                     
+      87/      44 :                     ECW_LongCall:
+      88/      44 : BE                  	phi 	re 										; we added 8 , so $F8..$FF will be 0-7 which is address high
+      89/      45 : 4F                  	lda 	rf 										; get address low
+      90/      46 : AE                  	plo 	re
+      91/      47 : DE                  	sep 	re 										; and execute it.
+      92/      48 : 30 36               	br 		ExecuteAnyWord 					; function is re-entrant.
+      93/      4A :                     
+      94/      4A :                     ;
+      95/      4A :                     ;	If the code that we have just executed is a compiled word, it will be begin with SEP R5. This will go here.
+      96/      4A :                     ; 	so this runs in R5.
+      97/      4A :                     ;
+      98/      4A :                     
+      99/      4A :                     ExecuteCompiledWord:
+     100/      4A : 22                  	dec 	r2 										; push RF.1 on the return stack.
+     101/      4B : 9F                  	ghi 	rf
+     102/      4C : 52                  	str 	r2
+     103/      4D : 22                  	dec 	r2
+     104/      4E : 8F                  	glo 	rf
+     105/      4F : 52                  	str 	r2
+     106/      50 :                     
+     107/      50 : 8E                  	glo 	re 										; we called it with SEP RE, so RE will point to the word code.
+     108/      51 : AF                  	plo 	rf 										; so put that in RF.
+     109/      52 : 9E                  	ghi 	re
+     110/      53 : BF                  	phi 	rf
+     111/      54 : D4                  	sep 	r4 										; and call "ExecuteAnyWord"
+     112/      55 : 30 4A               	br 		ExecuteCompiledWord
+     113/      57 :                     
+     114/      57 :                     ;
+     115/      57 :                     ;	The return word comes here, which is in R6, and is called by the Return function.
+     116/      57 :                     ;
+     117/      57 :                     
+     118/      57 :                     ReturnCompiledWord:
+     119/      57 : 42                  	lda 	r2 										; unstack the return address.
+     120/      58 : AF                  	plo 	rf
+ AS V1.42 Beta [Bld 102] - source file core.asm - page 3 - 7/14/2016 3:40:00
+
+
+     121/      59 : 42                  	lda 	r2
+     122/      5A : BF                  	phi 	rf
+     123/      5B : D4                  	sep 	r4 										; and execute the next word
+     124/      5C : 30 57               	br 		ReturnCompiledWord
+     125/      5E :                     
+     126/      5E :                     ;
+     127/      5E :                     ;	So if we execute a word it can be.
+     128/      5E :                     ;	
+     129/      5E :                     ; 	RF points to code (say) LDI 0 for simplicity. The word will be F8 00 D4 and will be run in RE.
+     130/      5E :                     ;	On exit RF if unmodified will point to the byte after D4.
+     131/      5E :                     ;
+     132/      5E :                     ;	If it points to compiled code say 14, and 14 is D5 15 where 15 does the code D6 (SEP R6)
+     133/      5E :                     ;
+     134/      5E :                     ;	ExecuteAnyWord runs first, with RF pointing to the byte '14'. It reads the byte 14, sets RE to 14
+     135/      5E :                     ;		and executes the code there.
+     136/      5E :                     ;
+     137/      5E :                     ;	That code is D5, so it switches to ExecuteCompiledWord with RE pointing to the byte after '14'. RF 
+     138/      5E :                     ; 	(now pointing to 15) is pushed on the stack. The value of RE, pointing to the byte after the D5, is 
+     139/      5E :                     ;	copied into RF, and ExecuteAnyWord is called via the SEP R4.
+     140/      5E :                     ;
+     141/      5E :                     ;	It consequentially executes D6 (when it executes the 15 as in the first example)
+     142/      5E :                     ;
+     143/      5E :                     ;	When this happens the original RF value + 1 (after the first fetch) is pulled off the stack and we can 
+     144/      5E :                     ;	continue by re-enetering ExecuteAnyWord
+     145/      5E :                     
+ AS V1.42 Beta [Bld 102] - source file core.asm - page 4 - 7/14/2016 3:40:00
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
+*BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
+*CLEARD :                        2A C |  CODEWORD :                      27 C |
+ CONSTANT :                      32 C | *CONSTPI :        3.141592653589793 - |
+*DATE :                   7/14/2016 - |  DEFINITION :                    2E C |
+ ECW_LONGCALL :                  44 C |  EXECUTEANYWORD :                36 C |
+ EXECUTECOMPILEDWORD :           4A C | *FALSE :                          0 - |
+*FULLPMMU :                       1 - | *HAS64 :                          1 - |
+*HASDSP :                         0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - | *INEXTMODE :                      0 - |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+*LISTON :                         1 - | *MACEXP :                         1 - |
+*MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - |  R2 :                             2 - |
+ R3 :                             3 - |  R4 :                             4 - |
+ R5 :                             5 - |  R6 :                             6 - |
+ RE :                             E - | *RELAXED :                        0 - |
+ RETURNCODE :                    2D C |  RETURNCOMPILEDWORD :            57 C |
+ RF :                             F - | *TIME :                     3:40:00 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+
+     44 symbols
+     29 unused symbols
+
+ AS V1.42 Beta [Bld 102] - source file core.asm - page 5 - 7/14/2016 3:40:00
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.00 seconds assembly time
+
+    145 lines source file
+      2 passes
+      0 errors
+      0 warnings
