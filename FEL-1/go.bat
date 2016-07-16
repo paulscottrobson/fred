@@ -9,4 +9,6 @@ del fel_source.zip
 zip fel_source.zip *
 fc /b fel.bin fel_src.bin
 copy /Y __fel1.h ..\Emulator
+copy /Y fel.bin ..\Emulator
+..\emulator\fredii.exe fel.bin
 :end

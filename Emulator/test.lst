@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/14/2016 22:02:44
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/16/2016 21:49:58
 
 
        1/       0 :                     
@@ -61,7 +61,7 @@
       58/      2A : 22                  	dec 	r2
       59/      2B : 54                  	str 	r4 																; copy to R4.
       60/      2C : 14                  	inc 	r4
- AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/14/2016 22:02:44
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/16/2016 21:49:58
 
 
       61/      2D :                     
@@ -116,7 +116,7 @@
      110/      55 :                     
      111/      55 :                     
      112/      55 :                     
- AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/14/2016 22:02:44
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/16/2016 21:49:58
 
 
   symbol table (* = unused):
@@ -124,7 +124,7 @@
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
 *BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
-*CONSTPI :        3.141592653589793 - | *DATE :                   7/14/2016 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   7/16/2016 - |
  DELAY :                         38 C | *FALSE :                          0 - |
 *FULLPMMU :                       1 - | *HAS64 :                          1 - |
 *HASDSP :                         0 - | *HASFPU :                         0 - |
@@ -142,14 +142,14 @@
 *R6 :                             6 - |  RC :                             C - |
  RE :                             E - | *RELAXED :                        0 - |
  RF :                             F - |  SCREEN :                       700 - |
- START :                          7 C | *TIME :                    22:02:44 - |
+ START :                          7 C | *TIME :                    21:49:58 - |
  TONEGENERATION :                34 C | *TRUE :                           1 - |
 *VERSION :                     142F - | *WAIT :                          27 C |
 
      46 symbols
      31 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/14/2016 22:02:44
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/16/2016 21:49:58
 
 
   codepages:

@@ -58,9 +58,9 @@ start:
         ldi     call02 & 255                                             
         plo     r8                                                       ; R8 = $166 Call $1nn where nn is next byte
         ghi     r0                                                       
-        plo     r5                                                       
-        ldi     monitor & 255                                            ; R5 = $0B4 "Macro PC"
         phi     r5                                                       
+        ldi     monitor & 255                                            ; R5 = $0B4 "Macro PC"
+        plo     r5                                                       
         sep     r4                                                       ; go to "Util" in R4
 
 ;****************************************************************************************************************
@@ -241,7 +241,7 @@ monitor:
 ;   Read three keystrokes into A
 ;   
         fel     0025ch                                                   ; turn television on.
-        fel     0007bh                                                   ; clear screen memory
+        fel     00078h                                                   ; clear screen memory
         fel     0e27ah                                                   ; read byte to V2 (high address nibble)
         fel     07230h                                                   ; write to MSB of A
         fel     0e27ah                                                   ; read byte to V2 (middle address nibble)
@@ -264,7 +264,7 @@ feldisplay:
 ;   
         fel     0721eh                                                   ; read contents of Memory(A) to V2
         fel     02416h                                                   ; Set V4 = (6,2)
-        fel     010ebh                                                   ; unpack and show V2
+        fel     01000h+felshow                                           ; unpack and show V2
 ;   
 ;   First time around, increment A to point to next cell, second time around go back to the display address code.
 ;   
@@ -438,7 +438,7 @@ execr3:
 ;****************************************************************************************************************
 
 opcode0:
-        ghi     r6                                                       ; get R6.1 (1)
+        glo     r6                                                       ; get R6.0 (Hi)
         phi     r3                                                       ; put in R3.1
         lda     r5                                                       ; read instruction second byte.
         br      execr3                                                   

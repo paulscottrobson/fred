@@ -55,9 +55,9 @@
 0010 	F8 66 				LDI call02 & 255 
 0012 	A8 					PLO R8 													; R8 = $166 Call $1nn where nn is next byte
 0013	90 					GHI R0 													
-0014 	A5 					PLO R5
+0014 	B5 					PHI R5
 0015 	F8 84 				LDI Monitor & 255 										; R5 = $0B4 "Macro PC"
-0017 	B5 					PHI R5 
+0017 	A5 					PLO R5 
 0018 	D4 					SEP R4													; go to "Util" in R4 
 
 ; ***************************************************************************************************************
@@ -216,7 +216,7 @@
 ;
 ; ***************************************************************************************************************
 
-0084	60 00 		Monitor:	FEL 	06000h											; stop tape
+0084	60 00 		Monitor:	FEL 	06000h										; stop tape
 0086 	02 2F 				FEL 	0022Fh 											; copy registers to stack space.
 ;
 ;	Read key 0 for Run, C for Write, A for Read Mem, B for Write Mem
@@ -230,7 +230,7 @@
 ;	Read three keystrokes into A
 ;
 0092	02 5C 				FEL 	0025Ch											; turn television on.
-0094 	00 7B 				FEL 	0007Bh 											; clear screen memory
+0094 	00 78 				FEL 	00078h 											; clear screen memory
 0096 	E2 7A 				FEL 	0E27Ah 											; read byte to V2 (high address nibble)
 0098 	72 30 				FEL 	07230h  										; write to MSB of A
 009A	E2 7A 				FEL 	0E27Ah 											; read byte to V2 (middle address nibble)
@@ -252,7 +252,7 @@
 ;
 00B0 	72 1E 				FEL 	0721Eh											; read contents of Memory(A) to V2
 00B2 	24 16 				FEL 	02416h 											; Set V4 = (6,2)
-00B4 	10 EB 				FEL 	010EBh 											; unpack and show V2
+00B4 	10 E8 				FEL 	01000h+FELShow 									; unpack and show V2
 ;
 ;	First time around, increment A to point to next cell, second time around go back to the display address code.
 ;
@@ -410,7 +410,7 @@
 ;
 ; ***************************************************************************************************************
 
-0160 	96		opcode0:		GHI R6 													; get R6.1 (1)
+0160 	86		opcode0:		GLO R6 													; get R6.0 (Hi)
 0161 	B3 					PHI R3 													; put in R3.1
 0162 	45 					LDA R5 													; read instruction second byte.
 0163 	30 5C 				BR execR3
