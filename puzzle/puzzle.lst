@@ -1,0 +1,1660 @@
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm - page 1 - 7/17/2016 16:23:23
+
+
+       1/       0 :                         include "fel.asm"
+(1)    1/       0 :                     ;****************************************************************************************************************
+(1)    2/       0 :                     ;****************************************************************************************************************
+(1)    3/       0 :                     ;                                                        
+(1)    4/       0 :                     ;                                                FEL-1 Disassembly
+(1)    5/       0 :                     ;                                                =================
+(1)    6/       0 :                     ;                                                        
+(1)    7/       0 :                     ;          Original version by RCA 1974. Recommented and converted by Paul Robson (paul@robsons.org.uk)
+(1)    8/       0 :                     ;                                                        
+(1)    9/       0 :                     ;       Source provided courtesy of the Hagley Museum and Library from documents on "FRED" developments at
+(1)   10/       0 :                     ;     RCA, dated 1974-75; "Fred Folder 1", Acc. 2464, Box 919 described as the "Billie Joe Call" Collection,
+(1)   11/       0 :                     ;                      accession no. 2464.54.  Hagley Museum & Library, Wilmington, DE 19807
+(1)   12/       0 :                     ;                                                        
+(1)   13/       0 :                     ;           Many thanks to their Librarians, especially Lucas Clawson, for reproducing these documents
+(1)   14/       0 :                     ;                                 for the 1802 (and related) Processor community.
+(1)   15/       0 :                     ;                                                        
+(1)   16/       0 :                     ;             The original author is not currently known but may well have been Joseph A. Weisbecker.
+(1)   17/       0 :                     ;                                                        
+(1)   18/       0 :                     ;                       The source format is for Alfred Arnolds open source "AS" assembler.
+(1)   19/       0 :                     ;                                                        
+(1)   20/       0 :                     ;****************************************************************************************************************
+(1)   21/       0 :                     ;                                                        
+(1)   22/       0 :                     ;        These hardware notes should not be viewed as definitive, this information is derived from reading
+(1)   23/       0 :                     ;                        the above code. A more detailed document is under consideration.
+(1)   24/       0 :                     ;                                                        
+(1)   25/       0 :                     ;            EF1 is 1 when a keypad byte is available. It is read from INP 0. There is a shift switch.
+(1)   26/       0 :                     ;          I think this is set manually. (Implied). Horizontal resolution is set by a toggle switch. The
+(1)   27/       0 :                     ;                            monitor code relies on this being in 'single byte' mode.
+(1)   28/       0 :                     ;                                                        
+(1)   29/       0 :                     ;                     EF2 and EF3 are external tests. EF2 detects tape stop. EF4 In ? Error ?
+(1)   30/       0 :                     ;                                                        
+(1)   31/       0 :                     ;                           Port 1 is a device selector. 1 Keypad, 2 TV, 3 Tape Device
+(1)   32/       0 :                     ;                     Port 2 for keypad it is set to 0/1 for TV to 0/3, for Tape $20 is read.
+(1)   33/       0 :                     ;                   Port 3 is some flags bit 2 (4) is the audio/tape out and bit 0 (1) is run.
+(1)   34/       0 :                     ;                                    Port 4 is the external control register.
+(1)   35/       0 :                     ;                                    Port 6 is an extension port (in and out)
+(1)   36/       0 :                     ;                                                        
+(1)   37/       0 :                     ;      Clock Frequency can be derived from the tone code. In BJC notes 04 is 360us. This is 160 + 40 + 40 *4
+(1)   38/       0 :                     ;            cycles. Hence it is clocked at 1Mhz. All the products in the table (kc x us) come to 1000
+(1)   39/       0 :                     ;                                                        
+(1)   40/       0 :                     ;****************************************************************************************************************
+(1)   41/       0 :                     ;****************************************************************************************************************
+(1)   42/       0 :                     
+(1)   43/       0 :                                include felinclude.inc
+(2)    1/       0 :                     ;****************************************************************************************************************
+(2)    2/       0 :                     ;
+(2)    3/       0 :                     ;													1802 Includes
+(2)    4/       0 :                     ;
+(2)    5/       0 :                     ;****************************************************************************************************************
+(2)    6/       0 :                     
+(2)    7/       0 :                     	cpu 1802
+(2)    8/       0 :                     
+(2)    9/       0 : =0H                 r0 = 0 															; register definitions
+(2)   10/       0 : =1H                 r1 = 1
+(2)   11/       0 : =2H                 r2 = 2
+(2)   12/       0 : =3H                 r3 = 3
+(2)   13/       0 : =4H                 r4 = 4
+(2)   14/       0 : =5H                 r5 = 5
+(2)   15/       0 : =6H                 r6 = 6
+(2)   16/       0 : =7H                 r7 = 7
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(felinclude.inc) - page 2 - 7/17/2016 16:23:23
+
+
+(2)   17/       0 : =8H                 r8 = 8
+(2)   18/       0 : =9H                 r9 = 9
+(2)   19/       0 : =AH                 ra = 10
+(2)   20/       0 : =BH                 rb = 11
+(2)   21/       0 : =CH                 rc = 12
+(2)   22/       0 : =DH                 rd = 13
+(2)   23/       0 : =EH                 re = 14
+(2)   24/       0 : =FH                 rf = 15
+(2)   25/       0 :                     
+(2)   26/       0 : =0H                 keypadPort = 0 													; keypad read (in only)
+(2)   27/       0 : =1H                 selectDevice = 1 												; select DMA device (tape 3 tv 2 keypad 1)
+(2)   28/       0 : =2H                 controlDevice = 2 												; control of selected device
+(2)   29/       0 : =3H                 controlLatch = 3  												; control tape/audio/run mode.
+(2)   30/       0 : =4H                 externalControl = 4 											; external control register (used in monitor)
+(2)   31/       0 :                     
+(2)   32/       0 : =6H                 externalBus = 6 												; external bus (in/out)
+(2)   33/       0 :                     
+(2)   34/       0 : =700H               screen = 0700h													; screen RAM is here.
+(2)   35/       0 :                     
+(2)   36/       0 : =1H                 devKeypad = 1 													; device IDs for port 1
+(2)   37/       0 : =2H                 devTV = 2
+(2)   38/       0 : =3H                 devTape = 3
+(2)   39/       0 :                     
+(2)   40/       0 : =0H                 cKeyOff = 0 													; controls for keyboard, TV and Tape
+(2)   41/       0 : =1H                 cKeyOn = 1 														; for port 2.
+(2)   42/       0 : =3H                 cTVOn = 3
+(2)   43/       0 : =0H                 cTVOff = 0
+(2)   44/       0 : =20H                cTapeRead = 20h
+(2)   45/       0 :                     
+(2)   46/       0 : =4H                 clSpeakerBit = 4 												; bit 2 is speaker out
+(2)   47/       0 : =2H                 clTapeBit = 2 													; bit 1 is tape out
+(2)   48/       0 : =1H                 clRunMode = 1 													; bit 0 is run mode
+(2)   49/       0 :                     
+(2)   50/       0 :                     fel macro 	fw 													; compile FEL-1 instruction in Hi-Low order
+(2)   51/       0 :                     	db 	(fw) / 256
+(2)   52/       0 :                     	db 	(fw) & 255
+(2)   53/       0 :                     	endm
+(2)   54/       0 :                     
+(1)   44/       0 :                     
+(1)   45/       0 :                     start:
+(1)   46/       0 : 00                          idl                                                              
+(1)   47/       1 : F8 01                       ldi     1                                                        ; Set interrupt, stack
+(1)   48/       3 : B1                          phi     r1                                                       ; they are all in Page 1
+(1)   49/       4 : B2                          phi     r2                                                       
+(1)   50/       5 : B4                          phi     r4                                                       
+(1)   51/       6 : B8                          phi     r8                                                       
+(1)   52/       7 : F8 19                       ldi     interrupt & 255                                          ; R1 = $119 Interrupt routine
+(1)   53/       9 : A1                          plo     r1                                                       
+(1)   54/       A : F8 FF                       ldi     stacktop & 255                                           ; R2 = $1FF Stack top
+(1)   55/       C : A2                          plo     r2                                                       
+(1)   56/       D : F8 3B                       ldi     nextinstruction & 255                                    
+(1)   57/       F : A4                          plo     r4                                                       ; R4 = $13B Execute next instruction
+(1)   58/      10 : F8 66                       ldi     call02 & 255                                             
+(1)   59/      12 : A8                          plo     r8                                                       ; R8 = $166 Call $1nn where nn is next byte
+(1)   60/      13 : 90                          ghi     r0                                                       
+(1)   61/      14 : B5                          phi     r5                                                       
+(1)   62/      15 : F8 84                       ldi     monitor & 255                                            ; R5 = $0B4 "Macro PC"
+(1)   63/      17 : A5                          plo     r5                                                       
+(1)   64/      18 : D4                          sep     r4                                                       ; go to "Util" in R4
+(1)   65/      19 :                     
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 3 - 7/17/2016 16:23:23
+
+
+(1)   66/      19 :                     ;****************************************************************************************************************
+(1)   67/      19 :                     ;                                                        
+(1)   68/      19 :                     ;                                                7xxx Instructions
+(1)   69/      19 :                     ;                                                        
+(1)   70/      19 :                     ;****************************************************************************************************************
+(1)   71/      19 :                     
+(1)   72/      19 :                     opcode7:
+(1)   73/      19 : D8                          sep     r8                                                       ; Fetch A and B from memory
+(1)   74/      1A : 73                          db      readabregs & 255                                         
+(1)   75/      1B : E6                          sex     r6                                                       ; X points to register X
+(1)   76/      1C : 45                          lda     r5                                                       ; fetch low byte
+(1)   77/      1D : A3                          plo     r3                                                       ; go there.
+(1)   78/      1E :                     ;   
+(1)   79/      1E :                     ;   7x1E M(A)->Vx
+(1)   80/      1E :                     ;   
+(1)   81/      1E : 4A                          lda     ra                                                       ; read M(RA)
+(1)   82/      1F : 56                          str     r6                                                       ; save in X
+(1)   83/      20 : D4                          sep     r4                                                       
+(1)   84/      21 :                     ;   
+(1)   85/      21 :                     ;   7x21 M(B)->Vx
+(1)   86/      21 :                     ;   
+(1)   87/      21 : 4B                          lda     rb                                                       ; read M(RB)
+(1)   88/      22 : 56                          str     r6                                                       ; save in X
+(1)   89/      23 : D4                          sep     r4                                                       
+(1)   90/      24 :                     ;   
+(1)   91/      24 :                     ;   7x24 Vx->M(A)
+(1)   92/      24 :                     ;   
+(1)   93/      24 : 46                          lda     r6                                                       ; get Vx
+(1)   94/      25 : 5A                          str     ra                                                       ; write to M(RA)
+(1)   95/      26 : D4                          sep     r4                                                       
+(1)   96/      27 :                     ;   
+(1)   97/      27 :                     ;   7x27 Vx->M(B)
+(1)   98/      27 :                     ;   
+(1)   99/      27 : 46                          lda     r6                                                       ; get Vx
+(1)  100/      28 : 5B                          str     rb                                                       ; write to M(RB)
+(1)  101/      29 : D4                          sep     r4                                                       
+(1)  102/      2A :                     ;   
+(1)  103/      2A :                     ;   7x2A Vx -> A.0
+(1)  104/      2A :                     ;   
+(1)  105/      2A : F8 11                       ldi     (areg+1) & 255                                           ; point R7 to RA.0
+(1)  106/      2C :                     setaddrreg:
+(1)  107/      2C : A7                          plo     r7                                                       
+(1)  108/      2D : 46                          lda     r6                                                       ; get Vx
+(1)  109/      2E : 57                          str     r7                                                       ; write it there.
+(1)  110/      2F : D4                          sep     r4                                                       
+(1)  111/      30 :                     ;   
+(1)  112/      30 :                     ;   7x30 Vx -> A.1
+(1)  113/      30 :                     ;   
+(1)  114/      30 : F8 10                       ldi     areg & 255                                               ; RA.1 address
+(1)  115/      32 : 30 2C                       br      setaddrreg                                               
+(1)  116/      34 :                     ;   
+(1)  117/      34 :                     ;   7x30 Vx -> B.0
+(1)  118/      34 :                     ;   
+(1)  119/      34 : F8 13                       ldi     (breg+1) & 255                                           ; RB.0 address
+(1)  120/      36 : 30 2C                       br      setaddrreg                                               
+(1)  121/      38 :                     ;   
+(1)  122/      38 :                     ;   7x38 A.0 -> Vx
+(1)  123/      38 :                     ;   
+(1)  124/      38 : 8A                          glo     ra                                                       ; RA.0 value
+(1)  125/      39 : 56                          str     r6                                                       ; put in X
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 4 - 7/17/2016 16:23:23
+
+
+(1)  126/      3A : D4                          sep     r4                                                       
+(1)  127/      3B :                     ;   
+(1)  128/      3B :                     ;   7x3B A.1 -> Vx
+(1)  129/      3B :                     ;   
+(1)  130/      3B : 9A                          ghi     ra                                                       ; RA.1 value
+(1)  131/      3C : 56                          str     r6                                                       ; put in X
+(1)  132/      3D : D4                          sep     r4                                                       
+(1)  133/      3E :                     ;   
+(1)  134/      3E :                     ;   7x3E Shift X left 4
+(1)  135/      3E :                     ;   
+(1)  136/      3E : D8                          sep     r8                                                       ; Do Vx << 4
+(1)  137/      3F : 4D                          db      shiftvxleft4 & 255                                       
+(1)  138/      40 : D4                          sep     r4                                                       
+(1)  139/      41 :                     ;   
+(1)  140/      41 :                     ;   7x41 Shift X Right 4
+(1)  141/      41 :                     ;   
+(1)  142/      41 : F0                          ldx                                                              ; Read R(X)
+(1)  143/      42 : F6                          shr                                                              
+(1)  144/      43 : F6                          shr                                                              
+(1)  145/      44 : F6                          shr                                                              
+(1)  146/      45 : F6                          shr                                                              
+(1)  147/      46 : 56                          str     r6                                                       ; write it back
+(1)  148/      47 : F6                          shr                                                              
+(1)  149/      48 :                     ;   
+(1)  150/      48 :                     ;   7x4B Vx Delay (Tape On, Speaker off)
+(1)  151/      48 :                     ;   
+(1)  152/      48 : E3                          sex     r3                                                       ; X = P = R3
+(1)  153/      49 : 46                          lda     r6                                                       ; read R(X)
+(1)  154/      4A : BF                          phi     rf                                                       ; put in RF.0
+(1)  155/      4B :                     tapedelayloop:
+(1)  156/      4B : 63                          out     controllatch                                             ; tape on, speaker off.
+(1)  157/      4C : 03                          db      cltapebit+clrunmode                                      
+(1)  158/      4D : 2F                          dec     rf                                                       ; dec counter
+(1)  159/      4E : 9F                          ghi     rf                                                       ; timed out
+(1)  160/      4F : 3A 4B                       bnz     tapedelayloop                                            ; keep going.
+(1)  161/      51 : D4                          sep     r4                                                       
+(1)  162/      52 :                     ;   
+(1)  163/      52 :                     ;   7x52 Convert Vx to 3 digit decimal at A,A+1,A+2
+(1)  164/      52 :                     ;   
+(1)  165/      52 : F0                          ldx                                                              ; get R(X)
+(1)  166/      53 : BF                          phi     rf                                                       ; save in RF.1
+(1)  167/      54 : F8 14                       ldi     dectable & 255                                           ; point R7 to the 100,10,1
+(1)  168/      56 : A7                          plo     r7                                                       
+(1)  169/      57 : 2A                          dec     ra                                                       ; predec RA
+(1)  170/      58 :                     nextdigit:
+(1)  171/      58 : 1A                          inc     ra                                                       ; A to next cell.
+(1)  172/      59 : 93                          ghi     r3                                                       ; D = 0
+(1)  173/      5A : 5A                          str     ra                                                       ; clear counter
+(1)  174/      5B :                     subtractunit:
+(1)  175/      5B : 47                          lda     r7                                                       ; read divisor
+(1)  176/      5C : 27                          dec     r7                                                       ; unpick it
+(1)  177/      5D : F5                          sd                                                               ; subtract from R(X)
+(1)  178/      5E : 3B 68                       bnf     borrowoccurred                                           ; if no borrow then division complete
+(1)  179/      60 : 56                          str     r6                                                       ; write it back to R(X)
+(1)  180/      61 : 4A                          lda     ra                                                       ; read counter of divisions
+(1)  181/      62 : 2A                          dec     ra                                                       ; undo inc
+(1)  182/      63 : FC 01                       adi     01                                                       ; inc counter
+(1)  183/      65 : 5A                          str     ra                                                       ; write back
+(1)  184/      66 : 30 5B                       br      subtractunit                                             ; try to deduct it again.
+(1)  185/      68 :                     borrowoccurred:
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 5 - 7/17/2016 16:23:23
+
+
+(1)  186/      68 : 47                          lda     r7                                                       ; get R7 - divider just done and inc R7 to next
+(1)  187/      69 : F6                          shr                                                              ; shift it right
+(1)  188/      6A : 3B 58                       bnf     nextdigit                                                ; until found the 1, i.e. have done 1
+(1)  189/      6C : 9F                          ghi     rf                                                       ; fix up R6 back
+(1)  190/      6D : 56                          str     r6                                                       
+(1)  191/      6E : D4                          sep     r4                                                       
+(1)  192/      6F :                     ;   
+(1)  193/      6F :                     ;   7F6F INC A. Must use 7F6F so R6 points to VF, the byte before A
+(1)  194/      6F :                     ;   
+(1)  195/      6F : 1A                          inc     ra                                                       ; increment RA
+(1)  196/      70 : 16                          inc     r6                                                       ; R6 now points to RA
+(1)  197/      71 : 9A                          ghi     ra                                                       ; write it back.
+(1)  198/      72 : 56                          str     r6                                                       
+(1)  199/      73 : 16                          inc     r6                                                       
+(1)  200/      74 : 8A                          glo     ra                                                       
+(1)  201/      75 : 56                          str     r6                                                       
+(1)  202/      76 : D4                          sep     r4                                                       
+(1)  203/      77 : 00                          db      00                                                       
+(1)  204/      78 :                     
+(1)  205/      78 :                     ;****************************************************************************************************************
+(1)  206/      78 :                     ;                                                        
+(1)  207/      78 :                     ;                                              Clear Screen Routine
+(1)  208/      78 :                     ;                                                        
+(1)  209/      78 :                     ;****************************************************************************************************************
+(1)  210/      78 :                     
+(1)  211/      78 : 93                          ghi     r3                                                       ; RA = $800 (R3.1 = 0)
+(1)  212/      79 : AA                          plo     ra                                                       
+(1)  213/      7A : F8 08                       ldi     (screen / 256) + 1                                       
+(1)  214/      7C : BA                          phi     ra                                                       
+(1)  215/      7D :                     clsloop:
+(1)  216/      7D : 2A                          dec     ra                                                       ; dec RA
+(1)  217/      7E : 93                          ghi     r3                                                       ; D = 0
+(1)  218/      7F : 5A                          str     ra                                                       ; clear screen space
+(1)  219/      80 : 8A                          glo     ra                                                       ; check RA.0
+(1)  220/      81 : 3A 7D                       bnz     clsloop                                                  ; go back if not finished
+(1)  221/      83 : D4                          sep     r4                                                       ; next instruction.
+(1)  222/      84 :                     
+(1)  223/      84 :                     ;****************************************************************************************************************
+(1)  224/      84 :                     ;                                                        
+(1)  225/      84 :                     ;                                  This is the FEL-1 Boot Code / Micro monitor.
+(1)  226/      84 :                     ;                                                        
+(1)  227/      84 :                     ;****************************************************************************************************************
+(1)  228/      84 :                     
+(1)  229/      84 :                     monitor:
+(1)  230/      84 : (MACRO)                     fel     06000h                                                   ; stop tape
+(1)  230/      84 : 60                          db      (06000H) / 256
+(1)  230/      85 : 00                          db      (06000H) & 255
+(1)  231/      86 : (MACRO)                     fel     0022fh                                                   ; copy registers to stack space.
+(1)  231/      86 : 02                          db      (0022FH) / 256
+(1)  231/      87 : 2F                          db      (0022FH) & 255
+(1)  232/      88 :                     ;   
+(1)  233/      88 :                     ;   Read key 0 for Run, C for Write, A for Read Mem, B for Write Mem
+(1)  234/      88 :                     ;   
+(1)  235/      88 : (MACRO)                     fel     0e17ah                                                   ; read Byte into V1
+(1)  235/      88 : E1                          db      (0E17AH) / 256
+(1)  235/      89 : 7A                          db      (0E17AH) & 255
+(1)  236/      8A : (MACRO)                     fel     03100h                                                   ; skip next instruction if not 00
+(1)  236/      8A : 31                          db      (03100H) / 256
+(1)  236/      8B : 00                          db      (03100H) & 255
+(1)  237/      8C : (MACRO)                     fel     0f400h                                                   ; if was 00, then run program from 400
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 6 - 7/17/2016 16:23:23
+
+
+(1)  237/      8C : F4                          db      (0F400H) / 256
+(1)  237/      8D : 00                          db      (0F400H) & 255
+(1)  238/      8E : (MACRO)                     fel     0310ch                                                   ; if was 0C, then go to write code
+(1)  238/      8E : 31                          db      (0310CH) / 256
+(1)  238/      8F : 0C                          db      (0310CH) & 255
+(1)  239/      90 : (MACRO)                     fel     0f000h+felwritetape                                      
+(1)  239/      90 : F0                          db      (0F000H+FELWRITETAPE) / 256
+(1)  239/      91 : CA                          db      (0F000H+FELWRITETAPE) & 255
+(1)  240/      92 :                     ;   
+(1)  241/      92 :                     ;   Read three keystrokes into A
+(1)  242/      92 :                     ;   
+(1)  243/      92 : (MACRO)                     fel     0025ch                                                   ; turn television on.
+(1)  243/      92 : 02                          db      (0025CH) / 256
+(1)  243/      93 : 5C                          db      (0025CH) & 255
+(1)  244/      94 : (MACRO)                     fel     00078h                                                   ; clear screen memory
+(1)  244/      94 : 00                          db      (00078H) / 256
+(1)  244/      95 : 78                          db      (00078H) & 255
+(1)  245/      96 : (MACRO)                     fel     0e27ah                                                   ; read byte to V2 (high address nibble)
+(1)  245/      96 : E2                          db      (0E27AH) / 256
+(1)  245/      97 : 7A                          db      (0E27AH) & 255
+(1)  246/      98 : (MACRO)                     fel     07230h                                                   ; write to MSB of A
+(1)  246/      98 : 72                          db      (07230H) / 256
+(1)  246/      99 : 30                          db      (07230H) & 255
+(1)  247/      9A : (MACRO)                     fel     0e27ah                                                   ; read byte to V2 (middle address nibble)
+(1)  247/      9A : E2                          db      (0E27AH) / 256
+(1)  247/      9B : 7A                          db      (0E27AH) & 255
+(1)  248/      9C : (MACRO)                     fel     0e37ah                                                   ; read byte to V3 (low address nibble)
+(1)  248/      9C : E3                          db      (0E37AH) / 256
+(1)  248/      9D : 7A                          db      (0E37AH) & 255
+(1)  249/      9E : (MACRO)                     fel     01000h+felpack                                           ; call pack V2/V3 to V2
+(1)  249/      9E : 10                          db      (01000H+FELPACK) / 256
+(1)  249/      9F : E2                          db      (01000H+FELPACK) & 255
+(1)  250/      A0 : (MACRO)                     fel     0722ah                                                   ; write to LSB of A
+(1)  250/      A0 : 72                          db      (0722AH) / 256
+(1)  250/      A1 : 2A                          db      (0722AH) & 255
+(1)  251/      A2 : (MACRO)                     fel     02900h                                                   ; Clear V9
+(1)  251/      A2 : 29                          db      (02900H) / 256
+(1)  251/      A3 : 00                          db      (02900H) & 255
+(1)  252/      A4 :                     ;   
+(1)  253/      A4 :                     ;   Display Address
+(1)  254/      A4 :                     ;   
+(1)  255/      A4 :                     feldisplay:
+(1)  256/      A4 : (MACRO)                     fel     0723bh                                                   ; MSB of A to V2
+(1)  256/      A4 : 72                          db      (0723BH) / 256
+(1)  256/      A5 : 3B                          db      (0723BH) & 255
+(1)  257/      A6 : (MACRO)                     fel     02409h                                                   ; Set V4 = (1,1)
+(1)  257/      A6 : 24                          db      (02409H) / 256
+(1)  257/      A7 : 09                          db      (02409H) & 255
+(1)  258/      A8 : (MACRO)                     fel     01000h+felshow                                           ; unpack and show V2
+(1)  258/      A8 : 10                          db      (01000H+FELSHOW) / 256
+(1)  258/      A9 : E8                          db      (01000H+FELSHOW) & 255
+(1)  259/      AA : (MACRO)                     fel     07238h                                                   ; LSB of A to V2
+(1)  259/      AA : 72                          db      (07238H) / 256
+(1)  259/      AB : 38                          db      (07238H) & 255
+(1)  260/      AC : (MACRO)                     fel     0240bh                                                   ; Set V4 = (3,1)
+(1)  260/      AC : 24                          db      (0240BH) / 256
+(1)  260/      AD : 0B                          db      (0240BH) & 255
+(1)  261/      AE : (MACRO)                     fel     01000h+felshow                                           ; unpack and show V2
+(1)  261/      AE : 10                          db      (01000H+FELSHOW) / 256
+(1)  261/      AF : E8                          db      (01000H+FELSHOW) & 255
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 7 - 7/17/2016 16:23:23
+
+
+(1)  262/      B0 :                     ;   
+(1)  263/      B0 :                     ;   Display Data
+(1)  264/      B0 :                     ;   
+(1)  265/      B0 : (MACRO)                     fel     0721eh                                                   ; read contents of Memory(A) to V2
+(1)  265/      B0 : 72                          db      (0721EH) / 256
+(1)  265/      B1 : 1E                          db      (0721EH) & 255
+(1)  266/      B2 : (MACRO)                     fel     02416h                                                   ; Set V4 = (6,2)
+(1)  266/      B2 : 24                          db      (02416H) / 256
+(1)  266/      B3 : 16                          db      (02416H) & 255
+(1)  267/      B4 : (MACRO)                     fel     01000h+felshow                                           ; unpack and show V2
+(1)  267/      B4 : 10                          db      (01000H+FELSHOW) / 256
+(1)  267/      B5 : E8                          db      (01000H+FELSHOW) & 255
+(1)  268/      B6 :                     ;   
+(1)  269/      B6 :                     ;   First time around, increment A to point to next cell, second time around go back to the display address code.
+(1)  270/      B6 :                     ;   
+(1)  271/      B6 : (MACRO)                     fel     03901h                                                   ; increment A if V9 != 0 (not first time)
+(1)  271/      B6 : 39                          db      (03901H) / 256
+(1)  271/      B7 : 01                          db      (03901H) & 255
+(1)  272/      B8 : (MACRO)                     fel     07f6fh                                                   
+(1)  272/      B8 : 7F                          db      (07F6FH) / 256
+(1)  272/      B9 : 6F                          db      (07F6FH) & 255
+(1)  273/      BA : (MACRO)                     fel     0e27ah                                                   ; get hex key (upper nibble)
+(1)  273/      BA : E2                          db      (0E27AH) / 256
+(1)  273/      BB : 7A                          db      (0E27AH) & 255
+(1)  274/      BC : (MACRO)                     fel     02901h                                                   ; set V9 = 1 so increments next time
+(1)  274/      BC : 29                          db      (02901H) / 256
+(1)  274/      BD : 01                          db      (02901H) & 255
+(1)  275/      BE : (MACRO)                     fel     0310ah                                                   ; been round twice ?
+(1)  275/      BE : 31                          db      (0310AH) / 256
+(1)  275/      BF : 0A                          db      (0310AH) & 255
+(1)  276/      C0 : (MACRO)                     fel     0f000h+feldisplay                                        ; if command was A (read) do next w/o update
+(1)  276/      C0 : F0                          db      (0F000H+FELDISPLAY) / 256
+(1)  276/      C1 : A4                          db      (0F000H+FELDISPLAY) & 255
+(1)  277/      C2 : (MACRO)                     fel     0e37ah                                                   ; get the low nibble
+(1)  277/      C2 : E3                          db      (0E37AH) / 256
+(1)  277/      C3 : 7A                          db      (0E37AH) & 255
+(1)  278/      C4 : (MACRO)                     fel     010e2h                                                   ; call pack V2/V3 to V2
+(1)  278/      C4 : 10                          db      (010E2H) / 256
+(1)  278/      C5 : E2                          db      (010E2H) & 255
+(1)  279/      C6 : (MACRO)                     fel     07224h                                                   ; store V(2) at M->A (e.g. new address)
+(1)  279/      C6 : 72                          db      (07224H) / 256
+(1)  279/      C7 : 24                          db      (07224H) & 255
+(1)  280/      C8 : (MACRO)                     fel     0f000h+feldisplay                                        ; redisplay address and data.
+(1)  280/      C8 : F0                          db      (0F000H+FELDISPLAY) / 256
+(1)  280/      C9 : A4                          db      (0F000H+FELDISPLAY) & 255
+(1)  281/      CA :                     ;   
+(1)  282/      CA :                     ;   Write code to tape
+(1)  283/      CA :                     ;   
+(1)  284/      CA :                     felwritetape:
+(1)  285/      CA : (MACRO)                     fel     00268h                                                   ; disable hex keyboard input
+(1)  285/      CA : 02                          db      (00268H) / 256
+(1)  285/      CB : 68                          db      (00268H) & 255
+(1)  286/      CC : (MACRO)                     fel     021ffh                                                   ; set V1 = $FF (5 sec approx)
+(1)  286/      CC : 21                          db      (021FFH) / 256
+(1)  286/      CD : FF                          db      (021FFH) & 255
+(1)  287/      CE : (MACRO)                     fel     07148h                                                   ; delay of this length so stabilises
+(1)  287/      CE : 71                          db      (07148H) / 256
+(1)  287/      CF : 48                          db      (07148H) & 255
+(1)  288/      D0 : (MACRO)                     fel     02140h                                                   ; set V1 = $40 (1 sec approx)
+(1)  288/      D0 : 21                          db      (02140H) / 256
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 8 - 7/17/2016 16:23:23
+
+
+(1)  288/      D1 : 40                          db      (02140H) & 255
+(1)  289/      D2 : (MACRO)                     fel     07148h                                                   ; more delay
+(1)  289/      D2 : 71                          db      (07148H) / 256
+(1)  289/      D3 : 48                          db      (07148H) & 255
+(1)  290/      D4 : (MACRO)                     fel     0d210h                                                   ; tone and delay
+(1)  290/      D4 : D2                          db      (0D210H) / 256
+(1)  290/      D5 : 10                          db      (0D210H) & 255
+(1)  291/      D6 : (MACRO)                     fel     07148h                                                   ; delay with that tone (start tone ?)
+(1)  291/      D6 : 71                          db      (07148H) / 256
+(1)  291/      D7 : 48                          db      (07148H) & 255
+(1)  292/      D8 : (MACRO)                     fel     0a000h                                                   ; A = 0
+(1)  292/      D8 : A0                          db      (0A000H) / 256
+(1)  292/      D9 : 00                          db      (0A000H) & 255
+(1)  293/      DA : (MACRO)                     fel     0f000h+felnext                                           ; (patched out)
+(1)  293/      DA : F0                          db      (0F000H+FELNEXT) / 256
+(1)  293/      DB : DC                          db      (0F000H+FELNEXT) & 255
+(1)  294/      DC :                     felnext:
+(1)  295/      DC : (MACRO)                     fel     0e3a0h                                                   ; write tape M(A) to end
+(1)  295/      DC : E3                          db      (0E3A0H) / 256
+(1)  295/      DD : A0                          db      (0E3A0H) & 255
+(1)  296/      DE : (MACRO)                     fel     0d210h                                                   ; tone and delay
+(1)  296/      DE : D2                          db      (0D210H) / 256
+(1)  296/      DF : 10                          db      (0D210H) & 255
+(1)  297/      E0 :                     felstop:
+(1)  298/      E0 : (MACRO)                     fel     0f000h+felstop                                           ; stop
+(1)  298/      E0 : F0                          db      (0F000H+FELSTOP) / 256
+(1)  298/      E1 : E0                          db      (0F000H+FELSTOP) & 255
+(1)  299/      E2 :                     ;   
+(1)  300/      E2 :                     ;   Pack V2/V3 nibbles into a single byte (subroutine)
+(1)  301/      E2 :                     ;   
+(1)  302/      E2 :                     felpack:
+(1)  303/      E2 : (MACRO)                     fel     0723eh                                                   ; Shift V2 left 4 bits
+(1)  303/      E2 : 72                          db      (0723EH) / 256
+(1)  303/      E3 : 3E                          db      (0723EH) & 255
+(1)  304/      E4 : (MACRO)                     fel     08231h                                                   ; V2 = V2 or V3
+(1)  304/      E4 : 82                          db      (08231H) / 256
+(1)  304/      E5 : 31                          db      (08231H) & 255
+(1)  305/      E6 : (MACRO)                     fel     0026eh                                                   ; return
+(1)  305/      E6 : 02                          db      (0026EH) / 256
+(1)  305/      E7 : 6E                          db      (0026EH) & 255
+(1)  306/      E8 :                     ;   
+(1)  307/      E8 :                     ;   Unpack V2 into 2 digits and display at V4 (subroutine)
+(1)  308/      E8 :                     ;   
+(1)  309/      E8 :                     felshow:
+(1)  310/      E8 : (MACRO)                     fel     0b300h                                                   ; point B to $300
+(1)  310/      E8 : B3                          db      (0B300H) / 256
+(1)  310/      E9 : 00                          db      (0B300H) & 255
+(1)  311/      EA : (MACRO)                     fel     0230fh                                                   ; V3 = 0Fh
+(1)  311/      EA : 23                          db      (0230FH) / 256
+(1)  311/      EB : 0F                          db      (0230FH) & 255
+(1)  312/      EC : (MACRO)                     fel     08322h                                                   ; And out lowest nibble into V3
+(1)  312/      EC : 83                          db      (08322H) / 256
+(1)  312/      ED : 22                          db      (08322H) & 255
+(1)  313/      EE : (MACRO)                     fel     07241h                                                   ; Shift V2 right 4, now has highest nibble
+(1)  313/      EE : 72                          db      (07241H) / 256
+(1)  313/      EF : 41                          db      (07241H) & 255
+(1)  314/      F0 : (MACRO)                     fel     07334h                                                   ; B = $03<low>
+(1)  314/      F0 : 73                          db      (07334H) / 256
+(1)  314/      F1 : 34                          db      (07334H) & 255
+(1)  315/      F2 : (MACRO)                     fel     07321h                                                   ; Read Mem(B) -> V3, addr of gfx data
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 9 - 7/17/2016 16:23:23
+
+
+(1)  315/      F2 : 73                          db      (07321H) / 256
+(1)  315/      F3 : 21                          db      (07321H) & 255
+(1)  316/      F4 : (MACRO)                     fel     09345h                                                   ; Draw V3 pattern at cell V4
+(1)  316/      F4 : 93                          db      (09345H) / 256
+(1)  316/      F5 : 45                          db      (09345H) & 255
+(1)  317/      F6 : (MACRO)                     fel     054ffh                                                   ; point to previous cell
+(1)  317/      F6 : 54                          db      (054FFH) / 256
+(1)  317/      F7 : FF                          db      (054FFH) & 255
+(1)  318/      F8 : (MACRO)                     fel     07234h                                                   ; B = $03<high>
+(1)  318/      F8 : 72                          db      (07234H) / 256
+(1)  318/      F9 : 34                          db      (07234H) & 255
+(1)  319/      FA : (MACRO)                     fel     07221h                                                   ; Read Mem(B) -> V2, addr of gfx data
+(1)  319/      FA : 72                          db      (07221H) / 256
+(1)  319/      FB : 21                          db      (07221H) & 255
+(1)  320/      FC : (MACRO)                     fel     09245h                                                   ; Draw V2 pattern at cell V4
+(1)  320/      FC : 92                          db      (09245H) / 256
+(1)  320/      FD : 45                          db      (09245H) & 255
+(1)  321/      FE : (MACRO)                     fel     0026eh                                                   ; return
+(1)  321/      FE : 02                          db      (0026EH) / 256
+(1)  321/      FF : 6E                          db      (0026EH) & 255
+(1)  322/     100 :                     
+(1)  323/     100 :                     ;****************************************************************************************************************
+(1)  324/     100 :                     ;                                                        
+(1)  325/     100 :                     ;                                       Register Area and Conversion table
+(1)  326/     100 :                     ;                                                        
+(1)  327/     100 :                     ;****************************************************************************************************************
+(1)  328/     100 :                     
+(1)  329/     100 :                     registers:
+(1)  330/     100 : 00 00 00 00                 db      0,0,0,0                                                  ; V0-VF
+(1)  331/     104 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  332/     108 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  333/     10C : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  334/     110 :                     areg:
+(1)  335/     110 : 00 00                       db      0,0                                                      ; A
+(1)  336/     112 :                     breg:
+(1)  337/     112 : 00 00                       db      0,0                                                      ; B
+(1)  338/     114 :                     
+(1)  339/     114 :                     dectable:
+(1)  340/     114 : 64                          db      100                                                      ; dividers.
+(1)  341/     115 : 0A                          db      10                                                       
+(1)  342/     116 : 01                          db      1                                                        
+(1)  343/     117 :                     
+(1)  344/     117 :                     ;****************************************************************************************************************
+(1)  345/     117 :                     ;                                                        
+(1)  346/     117 :                     ;                                               Interrupt Routine.
+(1)  347/     117 :                     ;                   Sets up R0 to point to display at $700 and decrements VD,VE,VF if non-zero.
+(1)  348/     117 :                     ;                                                        
+(1)  349/     117 :                     ;****************************************************************************************************************
+(1)  350/     117 :                     
+(1)  351/     117 :                     exitinterrupt:
+(1)  352/     117 : 42                          lda     r2                                                       ; pop D off the stack
+(1)  353/     118 : 70                          ret                                                              ; return re-enabling interrupts.
+(1)  354/     119 :                     interrupt:
+(1)  355/     119 : 22                          dec     r2                                                       ; save T on Stack
+(1)  356/     11A : 78                          sav                                                              
+(1)  357/     11B : 22                          dec     r2                                                       ; save D on Stack
+(1)  358/     11C : 52                          str     r2                                                       ; Save on stack.
+(1)  359/     11D :                     
+(1)  360/     11D : F8 07                       ldi     screen/256                                               ; set R0 (display pointer) to $700
+(1)  361/     11F : B0                          phi     r0                                                       
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 10 - 7/17/2016 16:23:23
+
+
+(1)  362/     120 : F8 00                       ldi     screen&255                                               
+(1)  363/     122 : A0                          plo     r0                                                       
+(1)  364/     123 :                     
+(1)  365/     123 : 19                          inc     r9                                                       ; increment R9 (timer ?)
+(1)  366/     124 :                     
+(1)  367/     124 : 86                          glo     r6                                                       ; get R6
+(1)  368/     125 : BD                          phi     rd                                                       ; save in RD.1
+(1)  369/     126 :                     
+(1)  370/     126 : F8 0D                       ldi     (registers + 0dh) & 255                                  ; point to Vd
+(1)  371/     128 : A6                          plo     r6                                                       
+(1)  372/     129 :                     timerupdateloop:
+(1)  373/     129 : 46                          lda     r6                                                       ; read R6 (VD Timer first time around)
+(1)  374/     12A : 26                          dec     r6                                                       ; fix up R6
+(1)  375/     12B : 32 31                       bz      nexttimer                                                
+(1)  376/     12D : AD                          plo     rd                                                       ; save in RD.0
+(1)  377/     12E : 2D                          dec     rd                                                       ; decrement it (so we don't change DF)
+(1)  378/     12F : 8D                          glo     rd                                                       ; recover it
+(1)  379/     130 : 56                          str     r6                                                       ; save timer now updated
+(1)  380/     131 :                     nexttimer:
+(1)  381/     131 : 16                          inc     r6                                                       ; point to next timer
+(1)  382/     132 : 86                          glo     r6                                                       ; get low byte
+(1)  383/     133 : FB 10                       xri     (registers+10h) & 255                                    ; done all timers
+(1)  384/     135 : 3A 29                       bnz     timerupdateloop                                          ; if not, go back round again.
+(1)  385/     137 : 9D                          ghi     rd                                                       ; get RD.1, fix R6 back up again.
+(1)  386/     138 : A6                          plo     r6                                                       
+(1)  387/     139 : 30 17                       br      exitinterrupt                                            ; and go back to exit the routine.
+(1)  388/     13B :                     
+(1)  389/     13B :                     ;****************************************************************************************************************
+(1)  390/     13B :                     ;                                                        
+(1)  391/     13B :                     ;            Main execution loop, run in R4. Sets up R6 (X) R7 (Y) and calls code from table at 01C0h
+(1)  392/     13B :                     ;                                                        
+(1)  393/     13B :                     ;****************************************************************************************************************
+(1)  394/     13B :                     
+(1)  395/     13B :                     nextinstruction:
+(1)  396/     13B : 94                          ghi     r4                                                       ; D = 1
+(1)  397/     13C : B6                          phi     r6                                                       ; Set R6,R7,RC High to Page 1.
+(1)  398/     13D : B7                          phi     r7                                                       
+(1)  399/     13E : BC                          phi     rc                                                       
+(1)  400/     13F :                     
+(1)  401/     13F : 45                          lda     r5                                                       ; Read R5 (instruction High)
+(1)  402/     140 : AC                          plo     rc                                                       ; Save in RC.0
+(1)  403/     141 : FA 0F                       ani     0fh                                                      ; get the X register number
+(1)  404/     143 : A6                          plo     r6                                                       ; R6 now points to Register X.
+(1)  405/     144 :                     
+(1)  406/     144 : 8C                          glo     rc                                                       ; get the instruction High
+(1)  407/     145 : F6                          shr                                                              ; shift right four times.
+(1)  408/     146 : F6                          shr                                                              
+(1)  409/     147 : F6                          shr                                                              
+(1)  410/     148 : F6                          shr                                                              ; instruction code in D
+(1)  411/     149 : 32 60                       bz      opcode0                                                  ; if zero, its a machine language
+(1)  412/     14B : F9 C0                       ori     instructionvector & 255                                  ; OR with $C0
+(1)  413/     14D : AC                          plo     rc                                                       ; Put in RC.0  now points to vector table
+(1)  414/     14E :                     
+(1)  415/     14E : 45                          lda     r5                                                       ; Read low byte of instruction
+(1)  416/     14F : 25                          dec     r5                                                       ; Point it back to R5
+(1)  417/     150 : F6                          shr                                                              ; shift right four times
+(1)  418/     151 : F6                          shr                                                              
+(1)  419/     152 : F6                          shr                                                              
+(1)  420/     153 : F6                          shr                                                              ; D now contains the Y register number
+(1)  421/     154 : A7                          plo     r7                                                       ; R7 now points to Register Y.
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 11 - 7/17/2016 16:23:23
+
+
+(1)  422/     155 :                     
+(1)  423/     155 : 4C                          lda     rc                                                       ; Read High byte of program
+(1)  424/     156 : B3                          phi     r3                                                       ; save in R3.1
+(1)  425/     157 : 8C                          glo     rc                                                       ; get low byte of RC
+(1)  426/     158 : FC 0F                       adi     0fh                                                      ; point to low address (+1 already)
+(1)  427/     15A : AC                          plo     rc                                                       ; write it back
+(1)  428/     15B : 4C                          lda     rc                                                       ; get low byte of address
+(1)  429/     15C :                     execr3:
+(1)  430/     15C : A3                          plo     r3                                                       ; save in R3.0, now has code address
+(1)  431/     15D : D3                          sep     r3                                                       ; and call it
+(1)  432/     15E : 30 3B                       br      nextinstruction                                          ; make re-entrant
+(1)  433/     160 :                     
+(1)  434/     160 :                     ;****************************************************************************************************************
+(1)  435/     160 :                     ;                                                        
+(1)  436/     160 :                     ;                                       0aaa run machine code at aaa in P3.
+(1)  437/     160 :                     ;                                                        
+(1)  438/     160 :                     ;****************************************************************************************************************
+(1)  439/     160 :                     
+(1)  440/     160 :                     opcode0:
+(1)  441/     160 : 86                          glo     r6                                                       ; get R6.0 (Hi)
+(1)  442/     161 : B3                          phi     r3                                                       ; put in R3.1
+(1)  443/     162 : 45                          lda     r5                                                       ; read instruction second byte.
+(1)  444/     163 : 30 5C                       br      execr3                                                   
+(1)  445/     165 :                     ;   
+(1)  446/     165 :                     ;   R8 points here. Calls the $02 <next byte> running in RC.
+(1)  447/     165 :                     ;   
+(1)  448/     165 :                     exit02call:
+(1)  449/     165 : DC                          sep     rc                                                       ; return.
+(1)  450/     166 :                     call02:
+(1)  451/     166 : 43                          lda     r3                                                       ; read next byte in code
+(1)  452/     167 : AC                          plo     rc                                                       ; save in RC.0
+(1)  453/     168 : F8 02                       ldi     02                                                       ; put 2xx in RC
+(1)  454/     16A : BC                          phi     rc                                                       
+(1)  455/     16B : 30 65                       br      exit02call                                               ; and call it, making it re-entrant
+(1)  456/     16D :                     ;   
+(1)  457/     16D :                     ;   R8 routines to return RF.1, RF.0.
+(1)  458/     16D :                     ;   
+(1)  459/     16D :                     exitghirf:
+(1)  460/     16D : DC                          sep     rc                                                       ; get RF.1
+(1)  461/     16E :                     ghirf:
+(1)  462/     16E : 9F                          ghi     rf                                                       
+(1)  463/     16F : 30 6D                       br      exitghirf                                                
+(1)  464/     171 :                     ;   
+(1)  465/     171 :                     exitglorf:
+(1)  466/     171 : DC                          sep     rc                                                       ; get RF.0
+(1)  467/     172 :                     glorf:
+(1)  468/     172 : 8F                          glo     rf                                                       
+(1)  469/     173 : 30 71                       br      exitglorf                                                
+(1)  470/     175 :                     
+(1)  471/     175 :                     ;****************************************************************************************************************
+(1)  472/     175 :                     ;                                                        
+(1)  473/     175 :                     ;                                     Exaa - execute code at 01aa with X = 6
+(1)  474/     175 :                     ;                                                        
+(1)  475/     175 :                     ;****************************************************************************************************************
+(1)  476/     175 :                     
+(1)  477/     175 :                     instructione:
+(1)  478/     175 : D8                          sep     r8                                                       ; load A and B into RA and RB
+(1)  479/     176 : 73                          db      readabregs & 255                                         
+(1)  480/     177 : E6                          sex     r6                                                       ; index is Vx
+(1)  481/     178 : 45                          lda     r5                                                       ; get the 2nd instruction byte
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 12 - 7/17/2016 16:23:23
+
+
+(1)  482/     179 : A3                          plo     r3                                                       ; and go there, jump indirect.
+(1)  483/     17A :                     ;   
+(1)  484/     17A :                     ;   Ex7A . Hex keypad on, wait for byte
+(1)  485/     17A :                     ;   
+(1)  486/     17A : D8                          sep     r8                                                       ; call hex keypad on at $0246
+(1)  487/     17B : 46                          db      keypadon & 255                                           
+(1)  488/     17C :                     waitkeypress:
+(1)  489/     17C : 3C 7C                       bn1     waitkeypress                                             ; wait for EF1 (byte ready)
+(1)  490/     17E :                     readkeyinput:
+(1)  491/     17E : 68                          db      68h+keypadport                                           ; read to M(X) (AS Cannot assemble INP0)
+(1)  492/     17F : D4                          sep     r4                                                       
+(1)  493/     180 :                     ;   
+(1)  494/     180 :                     ;   Ex80 . Hex keypad on, byte ready input else skip
+(1)  495/     180 :                     ;   
+(1)  496/     180 : D8                          sep     r8                                                       ; call hex keypad on at $0246
+(1)  497/     181 : 46                          db      keypadon & 255                                           
+(1)  498/     182 : 34 7E                       b1      readkeyinput                                             ; if byte ready get it.
+(1)  499/     184 :                     skipinstruction:
+(1)  500/     184 : 15                          inc     r5                                                       ; skip instruction
+(1)  501/     185 : 15                          inc     r5                                                       
+(1)  502/     186 : D4                          sep     r4                                                       
+(1)  503/     187 :                     ;   
+(1)  504/     187 :                     ;   Ex87 - EF2 Skip
+(1)  505/     187 :                     ;   
+(1)  506/     187 : 35 84                       b2      skipinstruction                                          ; skip if  EF2
+(1)  507/     189 : D4                          sep     r4                                                       
+(1)  508/     18A :                     ;   
+(1)  509/     18A :                     ;   Ex8A - EF3 Skip
+(1)  510/     18A :                     ;   
+(1)  511/     18A : 36 84                       b3      skipinstruction                                          ; skip if EF3
+(1)  512/     18C : D4                          sep     r4                                                       
+(1)  513/     18D :                     ;   
+(1)  514/     18D :                     ;   Ex8D - Ext Bus to Vx
+(1)  515/     18D :                     ;   
+(1)  516/     18D : 6E                          inp     externalbus                                              ; read port 6 input.
+(1)  517/     18E : D4                          sep     r4                                                       
+(1)  518/     18F :                     ;   
+(1)  519/     18F :                     ;   Ex8F - Vx to Ext Bus
+(1)  520/     18F :                     ;   
+(1)  521/     18F : 66                          out     externalbus                                              ; out to port 6
+(1)  522/     190 : D4                          sep     r4                                                       
+(1)  523/     191 :                     ;   
+(1)  524/     191 :                     ;   Ex91 - Write Vx to External Control Register
+(1)  525/     191 :                     ;   
+(1)  526/     191 : 64                          out     externalcontrol                                          ; external control register
+(1)  527/     192 : D4                          sep     r4                                                       
+(1)  528/     193 :                     ;   
+(1)  529/     193 :                     ;   E093 - Read tape -> M(A) concurrent using DMA Off. Need to turn TV off and Start tape before.
+(1)  530/     193 :                     ;   to check tape end read check EF2.
+(1)  531/     193 :                     ;   
+(1)  532/     193 : 9A                          ghi     ra                                                       ; put RA in R0
+(1)  533/     194 : B0                          phi     r0                                                       
+(1)  534/     195 : 8A                          glo     ra                                                       
+(1)  535/     196 : A0                          plo     r0                                                       
+(1)  536/     197 : E3                          sex     r3                                                       ; X = P = 3
+(1)  537/     198 : 61                          out     selectdevice                                             ; select tape
+(1)  538/     199 : 03                          db      devtape                                                  
+(1)  539/     19A : 62                          out     controldevice                                            ; tape read
+(1)  540/     19B : 20                          db      ctaperead                                                
+(1)  541/     19C : D4                          sep     r4                                                       
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 13 - 7/17/2016 16:23:23
+
+
+(1)  542/     19D :                     ;   
+(1)  543/     19D :                     ;   R1(0)  -> Vx
+(1)  544/     19D :                     ;   
+(1)  545/     19D : 90                          ghi     r0                                                       
+(1)  546/     19E : 56                          str     r6                                                       
+(1)  547/     19F : D4                          sep     r4                                                       
+(1)  548/     1A0 :                     ;   
+(1)  549/     1A0 :                     ;   E3A0 - Write tape from M(A) to M(06FF). Need to turn TV off and start tape before.
+(1)  550/     1A0 :                     ;   
+(1)  551/     1A0 : 86                          glo     r6                                                       ; read 3  (why E3A0)
+(1)  552/     1A1 : BE                          phi     re                                                       
+(1)  553/     1A2 :                     tapebyteoutloop:
+(1)  554/     1A2 : 93                          ghi     r3                                                       ; get R3.1 which is 1 (we are in R3)
+(1)  555/     1A3 : F6                          shr                                                              ; set DF = 1 D = 0. DF set for writing start
+(1)  556/     1A4 : AB                          plo     rb                                                       ; save in RB.0 (parity)
+(1)  557/     1A5 : F8 08                       ldi     8                                                        ; bits to do.
+(1)  558/     1A7 : AE                          plo     re                                                       ; save in RE.0
+(1)  559/     1A8 : 4A                          lda     ra                                                       ; read next byte
+(1)  560/     1A9 : BB                          phi     rb                                                       ; save in RB.0
+(1)  561/     1AA : D8                          sep     r8                                                       ; write start bit
+(1)  562/     1AB : 85                          db      writetapedelay & 255                                     
+(1)  563/     1AC :                     tapebitoutloop:
+(1)  564/     1AC : 9B                          ghi     rb                                                       ; get the byte value
+(1)  565/     1AD : F6                          shr                                                              ; put LSB in DF
+(1)  566/     1AE : BB                          phi     rb                                                       ; write it back
+(1)  567/     1AF : DC                          sep     rc                                                       ; write out DF 0/1.
+(1)  568/     1B0 : 2E                          dec     re                                                       ; decrement bit counter
+(1)  569/     1B1 : 8E                          glo     re                                                       ; if non zero go back and do next bit.
+(1)  570/     1B2 : 3A AC                       bnz     tapebitoutloop                                           
+(1)  571/     1B4 : 8B                          glo     rb                                                       ; get the parity count
+(1)  572/     1B5 : F6                          shr                                                              ; shift into DF
+(1)  573/     1B6 : DC                          sep     rc                                                       ; write that parity bit out
+(1)  574/     1B7 : 8A                          glo     ra                                                       ; check done whole page
+(1)  575/     1B8 : 3A A2                       bnz     tapebyteoutloop                                          ; if not keep going
+(1)  576/     1BA : 9A                          ghi     ra                                                       ; done to $0700 ($06FF last)
+(1)  577/     1BB : FB 07                       xri     7                                                        ; (700 is video ram)
+(1)  578/     1BD : 3A A2                       bnz     tapebyteoutloop                                          ; if not keep going
+(1)  579/     1BF : D4                          sep     r4                                                       
+(1)  580/     1C0 :                     
+(1)  581/     1C0 :                     ;****************************************************************************************************************
+(1)  582/     1C0 :                     ;                                                        
+(1)  583/     1C0 :                     ;                                            Instruction vector tables
+(1)  584/     1C0 :                     ;                                                        
+(1)  585/     1C0 :                     ;****************************************************************************************************************
+(1)  586/     1C0 :                     
+(1)  587/     1C0 :                     instructionvector:
+(1)  588/     1C0 : 00                          db      0                                                        ; 0xxx not decoded here
+(1)  589/     1C1 : 02                          db      opcode1 / 256                                            ; 1mmm Do program at mmm (subroutine call)
+(1)  590/     1C2 : 02                          db      opcode2 / 256                                            ; 2xkk Load kk into Vx
+(1)  591/     1C3 : 02                          db      opcode3 / 256                                            ; 3xkk Skip if Vx != kk
+(1)  592/     1C4 : 02                          db      opcode4 / 256                                            ; 4xkk Vx = Random Number & kk
+(1)  593/     1C5 : 02                          db      opcode5 / 256                                            ; 5xkk Vx = Vx + kk,skip if vx = 0
+(1)  594/     1C6 : 02                          db      opcode6 / 256                                            ; 6xxx Assorted
+(1)  595/     1C7 : 00                          db      opcode7 / 256                                            ; 7xnn Assorted
+(1)  596/     1C8 : 02                          db      opcode8 / 256                                            ; 8xyf Arithmetic
+(1)  597/     1C9 : 02                          db      opcode9 / 256                                            ; 9xys Display pattern
+(1)  598/     1CA : 02                          db      instructiona / 256                                       ; Ammm Load A immediate
+(1)  599/     1CB : 02                          db      instructionb / 256                                       ; Bmmm Load B immediate
+(1)  600/     1CC : 02                          db      instructionc / 256                                       ; Cxy0 Skip if vx != vy
+(1)  601/     1CD : 02                          db      instructiond / 256                                       ; Dxy0 Vx Tone, Vy Delay (Tape on spk off)
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 14 - 7/17/2016 16:23:23
+
+
+(1)  602/     1CE : 01                          db      instructione / 256                                       ; Exxx Assorted
+(1)  603/     1CF : 02                          db      instructionf / 256                                       ; Fmmm Jump to mmm
+(1)  604/     1D0 :                     
+(1)  605/     1D0 : 00                          db      0                                                        ; 0aaa is not dispatched this way.
+(1)  606/     1D1 :                     
+(1)  607/     1D1 : 0D                          db      opcode1 & 255                                            ; instruction tables (low address)
+(1)  608/     1D2 : 81                          db      opcode2 & 255                                            
+(1)  609/     1D3 : 23                          db      opcode3 & 255                                            
+(1)  610/     1D4 : CA                          db      opcode4 & 255                                            
+(1)  611/     1D5 : 1A                          db      opcode5 & 255                                            
+(1)  612/     1D6 : 58                          db      opcode6 & 255                                            
+(1)  613/     1D7 : 19                          db      opcode7 & 255                                            
+(1)  614/     1D8 : 99                          db      opcode8 & 255                                            
+(1)  615/     1D9 : DD                          db      opcode9 & 255                                            
+(1)  616/     1DA : 00                          db      instructiona & 255                                       
+(1)  617/     1DB : 09                          db      instructionb & 255                                       
+(1)  618/     1DC : 2B                          db      instructionc & 255                                       
+(1)  619/     1DD : BE                          db      instructiond & 255                                       
+(1)  620/     1DE : 75                          db      instructione & 255                                       
+(1)  621/     1DF : 15                          db      instructionf & 255                                       
+(1)  622/     1E0 :                     
+(1)  623/     1E0 :                     stack:
+(1)  624/     1E0 : 00 00 00 00                 db      0,0,0,0                                                  ; stack space
+(1)  625/     1E4 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  626/     1E8 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  627/     1EC : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  628/     1F0 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  629/     1F4 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  630/     1F8 : 00 00 00 00                 db      0,0,0,0                                                  
+(1)  631/     1FC : 00 00 00                    db      0,0,0                                                    
+(1)  632/     1FF :                     stacktop:
+(1)  633/     1FF : 00                          db      0                                                        
+(1)  634/     200 :                     
+(1)  635/     200 :                     ;****************************************************************************************************************
+(1)  636/     200 :                     ;                                                        
+(1)  637/     200 :                     ;                                              Ammm  Load A with mmm
+(1)  638/     200 :                     ;                                                        
+(1)  639/     200 :                     ;****************************************************************************************************************
+(1)  640/     200 :                     
+(1)  641/     200 :                     instructiona:
+(1)  642/     200 : F8 10                       ldi     areg & 255                                               ; point R7 to A
+(1)  643/     202 :                     loadaddrconst:
+(1)  644/     202 : A7                          plo     r7                                                       
+(1)  645/     203 : 86                          glo     r6                                                       ; get X address $10X so its $0X
+(1)  646/     204 : 57                          str     r7                                                       ; write to A high and point to low
+(1)  647/     205 : 17                          inc     r7                                                       
+(1)  648/     206 : 45                          lda     r5                                                       ; get second byte of instruction
+(1)  649/     207 : 57                          str     r7                                                       ; write to low byte
+(1)  650/     208 : D4                          sep     r4                                                       
+(1)  651/     209 :                     
+(1)  652/     209 :                     ;****************************************************************************************************************
+(1)  653/     209 :                     ;                                                        
+(1)  654/     209 :                     ;                                              Bmmm  Load B with mmm
+(1)  655/     209 :                     ;                                                        
+(1)  656/     209 :                     ;****************************************************************************************************************
+(1)  657/     209 :                     
+(1)  658/     209 :                     instructionb:
+(1)  659/     209 : F8 12                       ldi     breg & 255                                               ; point R7 to B and reuse code above
+(1)  660/     20B : 30 02                       br      loadaddrconst                                            
+(1)  661/     20D :                     
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 15 - 7/17/2016 16:23:23
+
+
+(1)  662/     20D :                     ;****************************************************************************************************************
+(1)  663/     20D :                     ;                                                        
+(1)  664/     20D :                     ;                                      1mmm Do Program (Subroutine) at mmmm
+(1)  665/     20D :                     ;                                                        
+(1)  666/     20D :                     ;****************************************************************************************************************
+(1)  667/     20D :                     
+(1)  668/     20D :                     opcode1:
+(1)  669/     20D : 15                          inc     r5                                                       ; r5 point sto next instruction
+(1)  670/     20E : 85                          glo     r5                                                       ; get return address low
+(1)  671/     20F : 22                          dec     r2                                                       ; push on stack
+(1)  672/     210 : 52                          str     r2                                                       
+(1)  673/     211 : 95                          ghi     r5                                                       ; get return address high
+(1)  674/     212 : 22                          dec     r2                                                       ; push on stack
+(1)  675/     213 : 52                          str     r2                                                       
+(1)  676/     214 : 25                          dec     r5                                                       ; point R5 to low byte and fall through.
+(1)  677/     215 :                     
+(1)  678/     215 :                     ;****************************************************************************************************************
+(1)  679/     215 :                     ;                                                        
+(1)  680/     215 :                     ;                                           Fmmm Go to program at mmmm
+(1)  681/     215 :                     ;                                                        
+(1)  682/     215 :                     ;****************************************************************************************************************
+(1)  683/     215 :                     
+(1)  684/     215 :                     instructionf:
+(1)  685/     215 : 45                          lda     r5                                                       ; get low byte
+(1)  686/     216 : A5                          plo     r5                                                       ; put in FEL PC Low
+(1)  687/     217 : 86                          glo     r6                                                       ; get X address $10X so this is $0X
+(1)  688/     218 : B5                          phi     r5                                                       ; put in FEL PC hight
+(1)  689/     219 : D4                          sep     r4                                                       
+(1)  690/     21A :                     
+(1)  691/     21A :                     ;****************************************************************************************************************
+(1)  692/     21A :                     ;                                                        
+(1)  693/     21A :                     ;                                         5xkk add kk to vx, skip if zero
+(1)  694/     21A :                     ;                                                        
+(1)  695/     21A :                     ;****************************************************************************************************************
+(1)  696/     21A :                     
+(1)  697/     21A :                     opcode5:
+(1)  698/     21A : E6                          sex     r6                                                       ; access VX
+(1)  699/     21B : 45                          lda     r5                                                       ; read 2nd byte
+(1)  700/     21C : F4                          add                                                              ; add to VX
+(1)  701/     21D : 56                          str     r6                                                       ; write back
+(1)  702/     21E : 32 28                       bz      skipinstruction2                                         ; if zero skip
+(1)  703/     220 : D4                          sep     r4                                                       
+(1)  704/     221 : 15                          inc     r5                                                       ; unused
+(1)  705/     222 : D4                          sep     r4                                                       ; unused
+(1)  706/     223 :                     
+(1)  707/     223 :                     ;****************************************************************************************************************
+(1)  708/     223 :                     ;                                                        
+(1)  709/     223 :                     ;                                       3xkk  Skip instruction if vx != kk
+(1)  710/     223 :                     ;                                                        
+(1)  711/     223 :                     ;****************************************************************************************************************
+(1)  712/     223 :                     
+(1)  713/     223 :                     opcode3:
+(1)  714/     223 : 45                          lda     r5                                                       ; get kk value
+(1)  715/     224 :                     skipifvxnotd:
+(1)  716/     224 : E6                          sex     r6                                                       ; R[X] points to Vx
+(1)  717/     225 : F3                          xor                                                              ; compare the values
+(1)  718/     226 : 32 2A                       bz      dontskip                                                 ; exit if same
+(1)  719/     228 :                     skipinstruction2:
+(1)  720/     228 : 15                          inc     r5                                                       ; skip
+(1)  721/     229 : 15                          inc     r5                                                       
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 16 - 7/17/2016 16:23:23
+
+
+(1)  722/     22A :                     dontskip:
+(1)  723/     22A : D4                          sep     r4                                                       
+(1)  724/     22B :                     
+(1)  725/     22B :                     ;****************************************************************************************************************
+(1)  726/     22B :                     ;                                                        
+(1)  727/     22B :                     ;                                             Cxy0  Skip if vx != vy
+(1)  728/     22B :                     ;                                                        
+(1)  729/     22B :                     ;****************************************************************************************************************
+(1)  730/     22B :                     
+(1)  731/     22B :                     instructionc:
+(1)  732/     22B : 15                          inc     r5                                                       ; ignore second byte
+(1)  733/     22C : 47                          lda     r7                                                       ; read Vy
+(1)  734/     22D : 30 24                       br      skipifvxnotd                                             ; so now its same as 3xkk
+(1)  735/     22F :                     
+(1)  736/     22F :                     ;****************************************************************************************************************
+(1)  737/     22F :                     ;                                                        
+(1)  738/     22F :                     ;                                            Copy Registers onto Stack
+(1)  739/     22F :                     ;                                                        
+(1)  740/     22F :                     ;****************************************************************************************************************
+(1)  741/     22F :                     
+(1)  742/     22F : F8 00                       ldi     0                                                        ; point R6 to $100
+(1)  743/     231 : A6                          plo     r6                                                       
+(1)  744/     232 : 96                          ghi     r6                                                       ; set R7 to $1E0 stack space bottom.
+(1)  745/     233 : B7                          phi     r7                                                       
+(1)  746/     234 : F8 E0                       ldi     stack & 255                                              
+(1)  747/     236 : A7                          plo     r7                                                       
+(1)  748/     237 :                     copyregloop:
+(1)  749/     237 : 46                          lda     r6                                                       ; read variable data
+(1)  750/     238 : 57                          str     r7                                                       ; copy it out.
+(1)  751/     239 : 17                          inc     r7                                                       ; next byte
+(1)  752/     23A : 87                          glo     r7                                                       
+(1)  753/     23B : FB F4                       xri     0f4h                                                     ; copied all 20 bytes of data ?
+(1)  754/     23D : 3A 37                       bnz     copyregloop                                              
+(1)  755/     23F : D4                          sep     r4                                                       
+(1)  756/     240 :                     
+(1)  757/     240 :                     ;****************************************************************************************************************
+(1)  758/     240 :                     ;                                                        
+(1)  759/     240 :                     ;                                            Turn the television off.
+(1)  760/     240 :                     ;                                                        
+(1)  761/     240 :                     ;****************************************************************************************************************
+(1)  762/     240 :                     
+(1)  763/     240 : E3                          sex     r3                                                       ; X = 3 (same as P)
+(1)  764/     241 : 61                          out     selectdevice                                             ; select TV device (2)
+(1)  765/     242 : 02                          db      devtv                                                    
+(1)  766/     243 : 62                          out     controldevice                                            ; turn it off
+(1)  767/     244 : 00                          db      ctvoff                                                   
+(1)  768/     245 : D4                          sep     r4                                                       
+(1)  769/     246 :                     
+(1)  770/     246 :                     ;****************************************************************************************************************
+(1)  771/     246 :                     ;                                                        
+(1)  772/     246 :                     ;                                     Turn hex keypad on (probably run in RC)
+(1)  773/     246 :                     ;                                                        
+(1)  774/     246 :                     ;****************************************************************************************************************
+(1)  775/     246 :                     
+(1)  776/     246 :                     keypadon:
+(1)  777/     246 : EC                          sex     rc                                                       ; X = C
+(1)  778/     247 : 61                          out     selectdevice                                             ; select Keypad device (1)
+(1)  779/     248 : 01                          db      devkeypad                                                
+(1)  780/     249 : 62                          out     controldevice                                            ; turn it on.
+(1)  781/     24A : 01                          db      ckeyon                                                   
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 17 - 7/17/2016 16:23:23
+
+
+(1)  782/     24B : E6                          sex     r6                                                       ; set X back and return.
+(1)  783/     24C : D3                          sep     r3                                                       
+(1)  784/     24D :                     
+(1)  785/     24D :                     ;****************************************************************************************************************
+(1)  786/     24D :                     ;                                                        
+(1)  787/     24D :                     ;                                                 Shift Vx left 4
+(1)  788/     24D :                     ;                                                        
+(1)  789/     24D :                     ;****************************************************************************************************************
+(1)  790/     24D :                     
+(1)  791/     24D :                     shiftvxleft4:
+(1)  792/     24D : E6                          sex     r6                                                       ; R(X) now points to Vx
+(1)  793/     24E : F0                          ldx                                                              ; get Vx
+(1)  794/     24F : F4                          add                                                              ; add it
+(1)  795/     250 : 56                          str     r6                                                       ; write back << 1
+(1)  796/     251 : F4                          add                                                              ; add it
+(1)  797/     252 : 56                          str     r6                                                       ; write back << 2
+(1)  798/     253 : F4                          add                                                              ; add it
+(1)  799/     254 : 56                          str     r6                                                       ; write back << 3
+(1)  800/     255 : F4                          add                                                              ; add it, now << 4
+(1)  801/     256 : 56                          str     r6                                                       ; write back to Vx
+(1)  802/     257 : D3                          sep     r3                                                       
+(1)  803/     258 :                     ;   
+(1)  804/     258 :                     ;   Tape Controller - code to write in low part of instruction
+(1)  805/     258 :                     ;   
+(1)  806/     258 :                     opcode6:
+(1)  807/     258 : E5                          sex     r5                                                       ; use R5 as X
+(1)  808/     259 : 63                          out     controllatch                                             ; write low byte of instruction to port 3
+(1)  809/     25A : D4                          sep     r4                                                       ; return
+(1)  810/     25B : 00                          db      0                                                        ; unused
+(1)  811/     25C :                     
+(1)  812/     25C :                     ;****************************************************************************************************************
+(1)  813/     25C :                     ;                                                        
+(1)  814/     25C :                     ;                                             Turn the television on
+(1)  815/     25C :                     ;                                                        
+(1)  816/     25C :                     ;****************************************************************************************************************
+(1)  817/     25C :                     
+(1)  818/     25C : F8 00                       ldi     0                                                        ; set display address to $700
+(1)  819/     25E : A0                          plo     r0                                                       
+(1)  820/     25F : F8 07                       ldi     screen / 256                                             
+(1)  821/     261 : B0                          phi     r0                                                       
+(1)  822/     262 : E3                          sex     r3                                                       ; X = 3 (same as P)
+(1)  823/     263 : 61                          out     selectdevice                                             ; select TV device (2)
+(1)  824/     264 : 02                          db      devtv                                                    
+(1)  825/     265 : 62                          out     controldevice                                            ; turn TV on (why 3 ?)
+(1)  826/     266 : 03                          db      ctvon                                                    
+(1)  827/     267 : D4                          sep     r4                                                       
+(1)  828/     268 :                     
+(1)  829/     268 :                     ;****************************************************************************************************************
+(1)  830/     268 :                     ;                                                        
+(1)  831/     268 :                     ;                                               Turn hex keypad off
+(1)  832/     268 :                     ;                                                        
+(1)  833/     268 :                     ;****************************************************************************************************************
+(1)  834/     268 :                     
+(1)  835/     268 : E3                          sex     r3                                                       ; X = 3 (Same as P)
+(1)  836/     269 : 61                          out     selectdevice                                             ; select keypad device (1)
+(1)  837/     26A : 01                          db      devkeypad                                                
+(1)  838/     26B : 62                          out     controldevice                                            ; and turn it off
+(1)  839/     26C : 00                          db      ckeyoff                                                  
+(1)  840/     26D : D4                          sep     r4                                                       
+(1)  841/     26E :                     
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 18 - 7/17/2016 16:23:23
+
+
+(1)  842/     26E :                     ;****************************************************************************************************************
+(1)  843/     26E :                     ;                                                        
+(1)  844/     26E :                     ;                                             Return from subroutine
+(1)  845/     26E :                     ;                                                        
+(1)  846/     26E :                     ;****************************************************************************************************************
+(1)  847/     26E :                     
+(1)  848/     26E : 42                          lda     r2                                                       ; pop high return
+(1)  849/     26F : B5                          phi     r5                                                       ; into R5
+(1)  850/     270 : 42                          lda     r2                                                       ; same with low
+(1)  851/     271 : A5                          plo     r5                                                       
+(1)  852/     272 : D4                          sep     r4                                                       ; return.
+(1)  853/     273 :                     ;   
+(1)  854/     273 :                     ;   Load A and B into RA and RB
+(1)  855/     273 :                     ;   
+(1)  856/     273 :                     readabregs:
+(1)  857/     273 : 96                          ghi     r6                                                       ; RF = $110
+(1)  858/     274 : BF                          phi     rf                                                       
+(1)  859/     275 : F8 10                       ldi     areg & 255                                               
+(1)  860/     277 : AF                          plo     rf                                                       
+(1)  861/     278 : 4F                          lda     rf                                                       ; load in A
+(1)  862/     279 : BA                          phi     ra                                                       
+(1)  863/     27A : 4F                          lda     rf                                                       
+(1)  864/     27B : AA                          plo     ra                                                       
+(1)  865/     27C : 4F                          lda     rf                                                       ; load in B
+(1)  866/     27D : BB                          phi     rb                                                       
+(1)  867/     27E : 4F                          lda     rf                                                       
+(1)  868/     27F : AB                          plo     rb                                                       
+(1)  869/     280 : D3                          sep     r3                                                       
+(1)  870/     281 :                     
+(1)  871/     281 :                     ;****************************************************************************************************************
+(1)  872/     281 :                     ;                                                        
+(1)  873/     281 :                     ;                                               2xkk write kk to vX
+(1)  874/     281 :                     ;                                                        
+(1)  875/     281 :                     ;****************************************************************************************************************
+(1)  876/     281 :                     
+(1)  877/     281 :                     opcode2:
+(1)  878/     281 : 45                          lda     r5                                                       ; read 2nd instruction byte
+(1)  879/     282 : 56                          str     r6                                                       ; save in Vx
+(1)  880/     283 : D4                          sep     r4                                                       
+(1)  881/     284 :                     ;   
+(1)  882/     284 :                     ;   Write to tape - delay
+(1)  883/     284 :                     ;   
+(1)  884/     284 :                     exitwritetape:
+(1)  885/     284 : D3                          sep     r3                                                       
+(1)  886/     285 :                     writetapedelay:
+(1)  887/     285 : F8 14                       ldi     14h                                                      ; set timer counter
+(1)  888/     287 : AF                          plo     rf                                                       
+(1)  889/     288 :                     writetapedelayloop:
+(1)  890/     288 : 2F                          dec     rf                                                       
+(1)  891/     289 : 8F                          glo     rf                                                       
+(1)  892/     28A : 3A 88                       bnz     writetapedelayloop                                       
+(1)  893/     28C : 30 B0                       br      writedfbittape                                           ; next time, it will write 0/1
+(1)  894/     28E :                     
+(1)  895/     28E :                     ;   
+(1)  896/     28E :                     ;   Do tone Vx = Tone VY = Delay
+(1)  897/     28E :                     ;   
+(1)  898/     28E :                     playtone:
+(1)  899/     28E : 46                          lda     r6                                                       ; read X (tone)
+(1)  900/     28F : BE                          phi     re                                                       ; store in tone register
+(1)  901/     290 : F8 6E                       ldi     ghirf & 255                                              ; set to identify return.
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 19 - 7/17/2016 16:23:23
+
+
+(1)  902/     292 : A6                          plo     r6                                                       
+(1)  903/     293 : 47                          lda     r7                                                       ; read delay time.
+(1)  904/     294 : BF                          phi     rf                                                       ; set RF counter.
+(1)  905/     295 : D8                          sep     r8                                                       ; call the tone routine.
+(1)  906/     296 : BA                          db      tonegeneration & 255                                     
+(1)  907/     297 : 15                          inc     r5                                                       ; fetch the 2nd byte
+(1)  908/     298 : D4                          sep     r4                                                       
+(1)  909/     299 :                     
+(1)  910/     299 :                     ;****************************************************************************************************************
+(1)  911/     299 :                     ;                                                        
+(1)  912/     299 :                     ;                    8xyn  x = x or y (1) x and y (2) x+y(4) x-y (5), V0 is carry / not borrow
+(1)  913/     299 :                     ;                                                        
+(1)  914/     299 :                     ;****************************************************************************************************************
+(1)  915/     299 :                     
+(1)  916/     299 :                     opcode8:
+(1)  917/     299 : 22                          dec     r2                                                       ; push $D3 on the stack
+(1)  918/     29A : F8 D3                       ldi     0d3h                                                     ; (SEP R3)
+(1)  919/     29C : 52                          str     r2                                                       
+(1)  920/     29D : 22                          dec     r2                                                       
+(1)  921/     29E : 45                          lda     r5                                                       ; get the low byte
+(1)  922/     29F : F9 F0                       ori     0f0h                                                     ; F1 F2 F4 F5 which are or and + -
+(1)  923/     2A1 : 52                          str     r2                                                       ; save on stack
+(1)  924/     2A2 : E6                          sex     r6                                                       ; RX points to the Rx value
+(1)  925/     2A3 : 47                          lda     r7                                                       ; get the RY value
+(1)  926/     2A4 : D2                          sep     r2                                                       ; call the code pushed on the stack
+(1)  927/     2A5 : 56                          str     r6                                                       ; save at R6 (Vx)
+(1)  928/     2A6 : F8 00                       ldi     0                                                        ; set R6 to point to $100 V0
+(1)  929/     2A8 : A6                          plo     r6                                                       
+(1)  930/     2A9 : 96                          ghi     r6                                                       ; D = 1
+(1)  931/     2AA : 33 AD                       bdf     writedf                                                  ; if DF clear then
+(1)  932/     2AC : F6                          shr                                                              ; D = 0
+(1)  933/     2AD :                     writedf:
+(1)  934/     2AD : 56                          str     r6                                                       ; write DF out to V0
+(1)  935/     2AE : D4                          sep     r4                                                       
+(1)  936/     2AF :                     
+(1)  937/     2AF :                     ;****************************************************************************************************************
+(1)  938/     2AF :                     ;                                                        
+(1)  939/     2AF :                     ;       Write DF to tape. Sets up R6 to return to tape code, and writes for 2 or 3 cycles depending on DF.
+(1)  940/     2AF :                     ;                                                        
+(1)  941/     2AF :                     ;****************************************************************************************************************
+(1)  942/     2AF :                     
+(1)  943/     2AF :                     exitwritebit:
+(1)  944/     2AF : D3                          sep     r3                                                       
+(1)  945/     2B0 :                     writedfbittape:
+(1)  946/     2B0 : F8 72                       ldi     glorf & 255                                              
+(1)  947/     2B2 : A6                          plo     r6                                                       
+(1)  948/     2B3 : 9C                          ghi     rc                                                       ; D = 2 (write cycles)
+(1)  949/     2B4 : 3B B9                       bnf     savecyclesize                                            ; if bit to write zero, skip
+(1)  950/     2B6 : 1B                          inc     rb                                                       ; inc parity value in RB.0
+(1)  951/     2B7 : FC 03                       adi     3                                                        ; D = 5
+(1)  952/     2B9 :                     savecyclesize:
+(1)  953/     2B9 : AF                          plo     rf                                                       ; put write value in RF
+(1)  954/     2BA :                     
+(1)  955/     2BA :                     ;****************************************************************************************************************
+(1)  956/     2BA :                     ;                                                        
+(1)  957/     2BA :                     ;                        Tone Generate (P = C), RE.1 = Pitch, RF.0 = Cycles to do it for.
+(1)  958/     2BA :                     ;                   R6 is set to 72 for read tape and 6E for make tone, which is how it figures
+(1)  959/     2BA :                     ;                        out what to do afterwards,this is used for tape and cassette out.
+(1)  960/     2BA :                     ;                                                        
+(1)  961/     2BA :                     ;****************************************************************************************************************
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 20 - 7/17/2016 16:23:23
+
+
+(1)  962/     2BA :                     
+(1)  963/     2BA :                     tonegeneration:
+(1)  964/     2BA : EC                          sex     rc                                                       ; X = P = C
+(1)  965/     2BB : 63                          out     controllatch                                             ; set External Function Register -> Run
+(1)  966/     2BC : 05                          db      clspeakerbit+clrunmode                                   ; speaker line
+(1)  967/     2BD : 9E                          ghi     re                                                       ; value 3, set in write tape routine for tape
+(1)  968/     2BE :                     instructiond:
+(1)  969/     2BE : FF 01                       smi     1                                                        ; short delay loop
+(1)  970/     2C0 : 3A BE                       bnz     instructiond                                             
+(1)  971/     2C2 : 63                          out     controllatch                                             ; reset speaker line.
+(1)  972/     2C3 : 01                          db      clrunmode                                                
+(1)  973/     2C4 : 2F                          dec     rf                                                       ; done it correct number of times
+(1)  974/     2C5 : D6                          sep     r6                                                       ; call F0/F1 -> D, identify caller
+(1)  975/     2C6 : 3A BA                       bnz     tonegeneration                                           ; tone, go back to tone loop
+(1)  976/     2C8 : 30 84                       br      exitwritetape                                            ; tape, go back to tape loop
+(1)  977/     2CA :                     
+(1)  978/     2CA :                     ;****************************************************************************************************************
+(1)  979/     2CA :                     ;                                                        
+(1)  980/     2CA :                     ;                                             4xkk  Vx = kk & random
+(1)  981/     2CA :                     ;                                                        
+(1)  982/     2CA :                     ;****************************************************************************************************************
+(1)  983/     2CA :                     
+(1)  984/     2CA :                     opcode4:
+(1)  985/     2CA : 19                          inc     r9                                                       ; bump and read random lower
+(1)  986/     2CB : 89                          glo     r9                                                       
+(1)  987/     2CC : A7                          plo     r7                                                       ; R7 = $01<R9.0>
+(1)  988/     2CD : E7                          sex     r7                                                       ; X points there, use as randomish data
+(1)  989/     2CE : 99                          ghi     r9                                                       ; random high
+(1)  990/     2CF : F4                          add                                                              ; R9.1 + Mem[$01<R9.0>]
+(1)  991/     2D0 : 22                          dec     r2                                                       ; push on stack
+(1)  992/     2D1 : 52                          str     r2                                                       
+(1)  993/     2D2 : F6                          shr                                                              ; add to self shifted right
+(1)  994/     2D3 : E2                          sex     r2                                                       
+(1)  995/     2D4 : F4                          add                                                              
+(1)  996/     2D5 : B9                          phi     r9                                                       ; update R9 high
+(1)  997/     2D6 : 56                          str     r6                                                       ; save at Vx
+(1)  998/     2D7 : E6                          sex     r6                                                       ; RX points to Vx
+(1)  999/     2D8 : 45                          lda     r5                                                       ; read low byte (mask)
+(1) 1000/     2D9 : F2                          and                                                              ; and with Vx
+(1) 1001/     2DA : 56                          str     r6                                                       ; update
+(1) 1002/     2DB : 12                          inc     r2                                                       ; fix up stack and exit.
+(1) 1003/     2DC : D4                          sep     r4                                                       
+(1) 1004/     2DD :                     
+(1) 1005/     2DD :                     ;****************************************************************************************************************
+(1) 1006/     2DD :                     ;                                                        
+(1) 1007/     2DD :                     ;               9xys  Draw sxs pattern (5 or 8) x = pattern address in page 3 y = tv cell address.
+(1) 1008/     2DD :                     ;                                                        
+(1) 1009/     2DD :                     ;****************************************************************************************************************
+(1) 1010/     2DD :                     opcode9:
+(1) 1011/     2DD : 45                          lda     r5                                                       ; Get next byte
+(1) 1012/     2DE : FA 0F                       ani     0fh                                                      ; look at lower 4 bits which are size
+(1) 1013/     2E0 : AF                          plo     rf                                                       ; RF.0 is the number of lines to do.
+(1) 1014/     2E1 :                     
+(1) 1015/     2E1 :                     ;****************************************************************************************************************
+(1) 1016/     2E1 :                     ;                                                        
+(1) 1017/     2E1 :                     ;                                                   RF = #lines
+(1) 1018/     2E1 :                     ;                                                        
+(1) 1019/     2E1 :                     ;****************************************************************************************************************
+(1) 1020/     2E1 :                     
+(1) 1021/     2E1 : E6                          sex     r6                                                       ; R(x) points to VX
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 21 - 7/17/2016 16:23:23
+
+
+(1) 1022/     2E2 : F0                          ldx                                                              ; read X
+(1) 1023/     2E3 : AA                          plo     ra                                                       ; save in RA.0
+(1) 1024/     2E4 : F8 03                       ldi     graphics / 256                                           ; RA is $03[Vx]
+(1) 1025/     2E6 : BA                          phi     ra                                                       
+(1) 1026/     2E7 :                     
+(1) 1027/     2E7 :                     ;****************************************************************************************************************
+(1) 1028/     2E7 :                     ;                                                        
+(1) 1029/     2E7 :                     ;                  RF = #lines. RA = address of graphic data. Calc address from tv cell address.
+(1) 1030/     2E7 :                     ;                       Bits 3,4 are the vertical cell position (0-3, 8 pixels high cell).
+(1) 1031/     2E7 :                     ;                       Bits 0,1,2 are the horizontal position. (0-7, 8 pixels wide cell).
+(1) 1032/     2E7 :                     ;                                                        
+(1) 1033/     2E7 :                     ;****************************************************************************************************************
+(1) 1034/     2E7 :                     
+(1) 1035/     2E7 : 47                          lda     r7                                                       ; read Y (Cell number)
+(1) 1036/     2E8 : AB                          plo     rb                                                       ; RB.0 = Y
+(1) 1037/     2E9 : F6                          shr                                                              ; R6 = Y >> 1 << 4 (Y * 8)
+(1) 1038/     2EA : 56                          str     r6                                                       ; using shift left function, so bits
+(1) 1039/     2EB : D8                          sep     r8                                                       ; 3 and 4 are now in bits 6,7
+(1) 1040/     2EC : 4D                          db      shiftvxleft4 & 255                                       
+(1) 1041/     2ED : 8B                          glo     rb                                                       ; get original cell number for bits 0-2
+(1) 1042/     2EE : F1                          or                                                               ; or with bits 6-7
+(1) 1043/     2EF : FA C7                       ani     0c7h                                                     ; remove so only bits 0-2 and bits 6-7
+(1) 1044/     2F1 : AB                          plo     rb                                                       
+(1) 1045/     2F2 : F8 07                       ldi     screen/256                                               ; set RB.1 = 07<addr>
+(1) 1046/     2F4 : BB                          phi     rb                                                       
+(1) 1047/     2F5 :                     
+(1) 1048/     2F5 :                     copypixeldata:
+(1) 1049/     2F5 : 4A                          lda     ra                                                       ; read first byte of data
+(1) 1050/     2F6 : 5B                          str     rb                                                       ; write to the screen
+(1) 1051/     2F7 : 8B                          glo     rb                                                       ; get low byte of screen address
+(1) 1052/     2F8 : FC 08                       adi     08                                                       ; go one row down
+(1) 1053/     2FA : AB                          plo     rb                                                       ; update screen address
+(1) 1054/     2FB : 2F                          dec     rf                                                       ; decrement line counter.
+(1) 1055/     2FC : 8F                          glo     rf                                                       ; check it
+(1) 1056/     2FD : 3A F5                       bnz     copypixeldata                                            ; do next row.
+(1) 1057/     2FF : D4                          sep     r4                                                       
+(1) 1058/     300 :                     
+(1) 1059/     300 :                     ;****************************************************************************************************************
+(1) 1060/     300 :                     ;                                                        
+(1) 1061/     300 :                     ;                  0300 font data. First 16 bytes is offset for 0-9A-F required for the monitor.
+(1) 1062/     300 :                     ;                                       Everything after that is optional.
+(1) 1063/     300 :                     ;                                                        
+(1) 1064/     300 :                     ;****************************************************************************************************************
+(1) 1065/     300 :                     
+(1) 1066/     300 :                     graphics:
+(1) 1067/     300 : 48                          db      graphic0 & 255                                           
+(1) 1068/     301 : 10                          db      graphic1 & 255                                           
+(1) 1069/     302 : 2E                          db      graphic2 & 255                                           
+(1) 1070/     303 : 2A                          db      graphic3 & 255                                           
+(1) 1071/     304 : 19                          db      graphic4 & 255                                           
+(1) 1072/     305 : 32                          db      graphic5 & 255                                           
+(1) 1073/     306 : 44                          db      graphic6 & 255                                           
+(1) 1074/     307 : 14                          db      graphic7 & 255                                           
+(1) 1075/     308 : 4C                          db      graphic8 & 255                                           
+(1) 1076/     309 : 1E                          db      graphic9 & 255                                           
+(1) 1077/     30A : 50                          db      graphica & 255                                           
+(1) 1078/     30B : 22                          db      graphicb & 255                                           
+(1) 1079/     30C : 40                          db      graphicc & 255                                           
+(1) 1080/     30D : 26                          db      graphicd & 255                                           
+(1) 1081/     30E : 37                          db      graphice & 255                                           
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 22 - 7/17/2016 16:23:23
+
+
+(1) 1082/     30F : 3B                          db      graphicf & 255                                           
+(1) 1083/     310 :                     graphic1:
+(1) 1084/     310 : 10                          db      010h                                                     ; ...X....
+(1) 1085/     311 : 30                          db      030h                                                     ; ..XX....
+(1) 1086/     312 : 10                          db      010h                                                     ; ...X....
+(1) 1087/     313 : 10                          db      010h                                                     ; ...X....
+(1) 1088/     314 :                     graphic7:
+(1) 1089/     314 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1090/     315 : 08                          db      008h                                                     ; ....X...
+(1) 1091/     316 : 10                          db      010h                                                     ; ...X....
+(1) 1092/     317 : 20                          db      020h                                                     ; ..X.....
+(1) 1093/     318 : 40                          db      040h                                                     ; .X......
+(1) 1094/     319 :                     graphic4:
+(1) 1095/     319 : 08                          db      008h                                                     ; ....X...
+(1) 1096/     31A : 18                          db      018h                                                     ; ...XX...
+(1) 1097/     31B : 28                          db      028h                                                     ; ..X.X...
+(1) 1098/     31C : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1099/     31D : 08                          db      008h                                                     ; ....X...
+(1) 1100/     31E :                     graphic9:
+(1) 1101/     31E : 38                          db      038h                                                     ; ..XXX...
+(1) 1102/     31F : 44                          db      044h                                                     ; .X...X..
+(1) 1103/     320 : 3C                          db      03ch                                                     ; ..XXXX..
+(1) 1104/     321 : 04                          db      004h                                                     ; .....X..
+(1) 1105/     322 :                     graphicb:
+(1) 1106/     322 : 78                          db      078h                                                     ; .XXXX...
+(1) 1107/     323 : 24                          db      024h                                                     ; ..X..X..
+(1) 1108/     324 : 38                          db      038h                                                     ; ..XXX...
+(1) 1109/     325 : 24                          db      024h                                                     ; ..X..X..
+(1) 1110/     326 :                     graphicd:
+(1) 1111/     326 : 78                          db      078h                                                     ; .XXXX...
+(1) 1112/     327 : 44                          db      044h                                                     ; .X...X..
+(1) 1113/     328 : 44                          db      044h                                                     ; .X...X..
+(1) 1114/     329 : 44                          db      044h                                                     ; .X...X..
+(1) 1115/     32A :                     graphic3:
+(1) 1116/     32A : 78                          db      078h                                                     ; .XXXX...
+(1) 1117/     32B : 04                          db      004h                                                     ; .....X..
+(1) 1118/     32C : 18                          db      018h                                                     ; ...XX...
+(1) 1119/     32D : 04                          db      004h                                                     ; .....X..
+(1) 1120/     32E :                     graphic2:
+(1) 1121/     32E : 78                          db      078h                                                     ; .XXXX...
+(1) 1122/     32F : 04                          db      004h                                                     ; .X......go
+(1) 1123/     330 : 38                          db      038h                                                     ; ..XXX...
+(1) 1124/     331 : 40                          db      040h                                                     ; .X......
+(1) 1125/     332 :                     graphic5:
+(1) 1126/     332 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1127/     333 : 40                          db      040h                                                     ; .X..
+(1) 1128/     334 : 78                          db      078h                                                     ; .XXXX...
+(1) 1129/     335 : 04                          db      004h                                                     ; .....X..
+(1) 1130/     336 : 78                          db      078h                                                     ; .XXXX...
+(1) 1131/     337 :                     graphice:
+(1) 1132/     337 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1133/     338 : 40                          db      040h                                                     ; .X......
+(1) 1134/     339 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1135/     33A : 40                          db      040h                                                     ; .X......
+(1) 1136/     33B :                     graphicf:
+(1) 1137/     33B : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1138/     33C : 40                          db      040h                                                     ; .X......
+(1) 1139/     33D : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1140/     33E : 40                          db      040h                                                     ; .X......
+(1) 1141/     33F : 40                          db      040h                                                     ; .X......
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 23 - 7/17/2016 16:23:23
+
+
+(1) 1142/     340 :                     graphicc:
+(1) 1143/     340 : 3C                          db      03ch                                                     ; ..XXXX..
+(1) 1144/     341 : 40                          db      040h                                                     ; .X......
+(1) 1145/     342 : 40                          db      040h                                                     ; .X......
+(1) 1146/     343 : 40                          db      040h                                                     ; .X......
+(1) 1147/     344 :                     graphic6:
+(1) 1148/     344 : 3C                          db      03ch                                                     ; ..XXXX..
+(1) 1149/     345 : 40                          db      040h                                                     ; .X......
+(1) 1150/     346 : 78                          db      078h                                                     ; .XXXX...
+(1) 1151/     347 : 44                          db      044h                                                     ; .X...X..
+(1) 1152/     348 :                     graphic0:
+(1) 1153/     348 : 38                          db      038h                                                     ; ..XXX...
+(1) 1154/     349 : 44                          db      044h                                                     ; .X...X..
+(1) 1155/     34A : 44                          db      044h                                                     ; .X...X..
+(1) 1156/     34B : 44                          db      044h                                                     ; .X...X..
+(1) 1157/     34C :                     graphic8:
+(1) 1158/     34C : 38                          db      038h                                                     ; ..XXX...
+(1) 1159/     34D : 44                          db      044h                                                     ; .X...X..
+(1) 1160/     34E : 38                          db      038h                                                     ; ..XXX...
+(1) 1161/     34F : 44                          db      044h                                                     ; .X...X..
+(1) 1162/     350 :                     graphica:
+(1) 1163/     350 : 38                          db      038h                                                     ; ..XXX...
+(1) 1164/     351 : 44                          db      044h                                                     ; .X...X..
+(1) 1165/     352 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1166/     353 :                     graphich:
+(1) 1167/     353 : 44                          db      044h                                                     ; .X...X..
+(1) 1168/     354 : 44                          db      044h                                                     ; .X...X..
+(1) 1169/     355 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1170/     356 :                     graphicu:
+(1) 1171/     356 : 44                          db      044h                                                     ; .X...X..
+(1) 1172/     357 : 44                          db      044h                                                     ; .X...X..
+(1) 1173/     358 : 44                          db      044h                                                     ; .X...X..
+(1) 1174/     359 : 44                          db      044h                                                     ; .X...X..
+(1) 1175/     35A :                     graphicqmark:
+(1) 1176/     35A : 38                          db      038h                                                     ; ..XXX...
+(1) 1177/     35B : 44                          db      044h                                                     ; .X...X..
+(1) 1178/     35C : 08                          db      008h                                                     ; ....X...
+(1) 1179/     35D :                     graphicapostrophe:
+(1) 1180/     35D : 10                          :       db 010h                                                  ; ...X....
+(1) 1181/     35E : 10                          db      010h                                                     ; ...X....
+(1) 1182/     35F :                     graphicspace:
+(1) 1183/     35F : 00                          db      000h                                                     ; ........
+(1) 1184/     360 :                     graphiculine:
+(1) 1185/     360 : 00                          db      000h                                                     ; ........
+(1) 1186/     361 : 00                          db      000h                                                     ; ........
+(1) 1187/     362 :                     graphicminus:
+(1) 1188/     362 : 00                          db      000h                                                     ; ........
+(1) 1189/     363 : 00                          db      000h                                                     ; ........
+(1) 1190/     364 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1191/     365 : 00                          db      000h                                                     ; ........
+(1) 1192/     366 :                     graphicequals:
+(1) 1193/     366 : 00                          db      000h                                                     ; ........
+(1) 1194/     367 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1195/     368 : 00                          db      000h                                                     ; ........
+(1) 1196/     369 : 7C                          db      07ch                                                     ; .XXXXX..
+(1) 1197/     36A : 00                          :       db 000h                                                  ; ........
+(1) 1198/     36B : 18                          db      018h                                                     ; ...XX...
+(1) 1199/     36C : 00                          db      000h                                                     ; ........
+(1) 1200/     36D : 18                          db      018h                                                     ; ...XX...
+(1) 1201/     36E : 00                          db      000h                                                     ; ........
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(fel.asm) - page 24 - 7/17/2016 16:23:23
+
+
+(1) 1202/     36F :                     
+(1) 1203/     36F :                     ;****************************************************************************************************************
+(1) 1204/     36F :                     ;                                                        
+(1) 1205/     36F :                     ;                                              Versions and Changes.
+(1) 1206/     36F :                     ;                                                        
+(1) 1207/     36F :                     ;                           13/07/2016 First complete and correctly attributed version.
+(1) 1208/     36F :                     ;                                                        
+(1) 1209/     36F :                     ;****************************************************************************************************************
+(1) 1210/     36F :                     
+       2/     3C0 :                         org     03C0h
+       3/     3C0 :                         include "graphics.inc"
+(1)    1/     3C0 :                     
+(1)    2/     3C0 : FF                      db 0ffh ; XXXXXXXX
+(1)    3/     3C1 : FF                      db 0ffh ; XXXXXXXX
+(1)    4/     3C2 : FF                      db 0ffh ; XXXXXXXX
+(1)    5/     3C3 : FF                      db 0ffh ; XXXXXXXX
+(1)    6/     3C4 : FF                      db 0ffh ; XXXXXXXX
+(1)    7/     3C5 : FF                      db 0ffh ; XXXXXXXX
+(1)    8/     3C6 : FF                      db 0ffh ; XXXXXXXX
+(1)    9/     3C7 : FF                      db 0ffh ; XXXXXXXX
+(1)   10/     3C8 :                     
+(1)   11/     3C8 : FF                      db 0ffh ; XXXXXXXX
+(1)   12/     3C9 : FF                      db 0ffh ; XXXXXXXX
+(1)   13/     3CA : FF                      db 0ffh ; XXXXXXXX
+(1)   14/     3CB : FF                      db 0ffh ; XXXXXXXX
+(1)   15/     3CC : FC                      db 0fch ; XXXXXX..
+(1)   16/     3CD : F8                      db 0f8h ; XXXXX...
+(1)   17/     3CE : F0                      db 0f0h ; XXXX....
+(1)   18/     3CF : F0                      db 0f0h ; XXXX....
+(1)   19/     3D0 :                     
+(1)   20/     3D0 : FF                      db 0ffh ; XXXXXXXX
+(1)   21/     3D1 : FF                      db 0ffh ; XXXXXXXX
+(1)   22/     3D2 : FF                      db 0ffh ; XXXXXXXX
+(1)   23/     3D3 : FF                      db 0ffh ; XXXXXXXX
+(1)   24/     3D4 : 3F                      db 03fh ; ..XXXXXX
+(1)   25/     3D5 : 1F                      db 01fh ; ...XXXXX
+(1)   26/     3D6 : 0F                      db 00fh ; ....XXXX
+(1)   27/     3D7 : 1F                      db 01fh ; ...XXXXX
+(1)   28/     3D8 :                     
+(1)   29/     3D8 : F0                      db 0f0h ; XXXX....
+(1)   30/     3D9 : F0                      db 0f0h ; XXXX....
+(1)   31/     3DA : F8                      db 0f8h ; XXXXX...
+(1)   32/     3DB : FC                      db 0fch ; XXXXXX..
+(1)   33/     3DC : FF                      db 0ffh ; XXXXXXXX
+(1)   34/     3DD : FF                      db 0ffh ; XXXXXXXX
+(1)   35/     3DE : FF                      db 0ffh ; XXXXXXXX
+(1)   36/     3DF : FF                      db 0ffh ; XXXXXXXX
+(1)   37/     3E0 :                     
+(1)   38/     3E0 : 0F                      db 00fh ; ....XXXX
+(1)   39/     3E1 : 0F                      db 00fh ; ....XXXX
+(1)   40/     3E2 : 1F                      db 01fh ; ...XXXXX
+(1)   41/     3E3 : 3F                      db 03fh ; ..XXXXXX
+(1)   42/     3E4 : FF                      db 0ffh ; XXXXXXXX
+(1)   43/     3E5 : FF                      db 0ffh ; XXXXXXXX
+(1)   44/     3E6 : FF                      db 0ffh ; XXXXXXXX
+(1)   45/     3E7 : FF                      db 0ffh ; XXXXXXXX
+(1)   46/     3E8 :                     
+(1)   47/     3E8 : F0                      db 0f0h ; XXXX....
+(1)   48/     3E9 : F0                      db 0f0h ; XXXX....
+(1)   49/     3EA : F8                      db 0f8h ; XXXXX...
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm(graphics.inc) - page 25 - 7/17/2016 16:23:23
+
+
+(1)   50/     3EB : FC                      db 0fch ; XXXXXX..
+(1)   51/     3EC : 3F                      db 03fh ; ..XXXXXX
+(1)   52/     3ED : 1F                      db 01fh ; ...XXXXX
+(1)   53/     3EE : 0F                      db 00fh ; ....XXXX
+(1)   54/     3EF : 0F                      db 00fh ; ....XXXX
+(1)   55/     3F0 :                     
+(1)   56/     3F0 : 0F                      db 00fh ; ....XXXX
+(1)   57/     3F1 : 0F                      db 00fh ; ....XXXX
+(1)   58/     3F2 : 1F                      db 01fh ; ...XXXXX
+(1)   59/     3F3 : 3F                      db 03fh ; ..XXXXXX
+(1)   60/     3F4 : FC                      db 0fch ; XXXXXX..
+(1)   61/     3F5 : F8                      db 0f8h ; XXXXX...
+(1)   62/     3F6 : F0                      db 0f0h ; XXXX....
+(1)   63/     3F7 : F0                      db 0f0h ; XXXX....
+(1)   64/     3F8 :                     
+(1)   65/     3F8 : 00                      db 000h ; ........
+(1)   66/     3F9 : 00                      db 000h ; ........
+(1)   67/     3FA : 00                      db 000h ; ........
+(1)   68/     3FB : 00                      db 000h ; ........
+(1)   69/     3FC : 00                      db 000h ; ........
+(1)   70/     3FD : 00                      db 000h ; ........
+(1)   71/     3FE : 00                      db 000h ; ........
+(1)   72/     3FF : 00                      db 000h ; ........
+(1)   73/     400 :                     
+(1)   74/     400 :                     
+       4/     400 :                     
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm - page 26 - 7/17/2016 16:23:23
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - |  AREG :                         110 C |
+*BIGENDIAN :                      0 - |  BORROWOCCURRED :                68 C |
+*BRANCHEXT :                      0 - |  BREG :                         112 C |
+ CALL02 :                       166 C | *CASESENSITIVE :                  0 - |
+ CKEYOFF :                        0 - |  CKEYON :                         1 - |
+ CLRUNMODE :                      1 - |  CLSLOOP :                       7D C |
+ CLSPEAKERBIT :                   4 - |  CLTAPEBIT :                      2 - |
+*CONSTPI :        3.141592653589793 - |  CONTROLDEVICE :                  2 - |
+ CONTROLLATCH :                   3 - |  COPYPIXELDATA :                2F5 C |
+ COPYREGLOOP :                  237 C |  CTAPEREAD :                     20 - |
+ CTVOFF :                         0 - |  CTVON :                          3 - |
+*DATE :                   7/17/2016 - |  DECTABLE :                     114 C |
+ DEVKEYPAD :                      1 - |  DEVTAPE :                        3 - |
+ DEVTV :                          2 - |  DONTSKIP :                     22A C |
+ EXECR3 :                       15C C |  EXIT02CALL :                   165 C |
+ EXITGHIRF :                    16D C |  EXITGLORF :                    171 C |
+ EXITINTERRUPT :                117 C | *EXITWRITEBIT :                 2AF C |
+ EXITWRITETAPE :                284 C |  EXTERNALBUS :                    6 - |
+ EXTERNALCONTROL :                4 - | *FALSE :                          0 - |
+ FELDISPLAY :                    A4 C |  FELNEXT :                       DC C |
+ FELPACK :                       E2 C |  FELSHOW :                       E8 C |
+ FELSTOP :                       E0 C |  FELWRITETAPE :                  CA C |
+*FULLPMMU :                       1 - |  GHIRF :                        16E C |
+ GLORF :                        172 C |  GRAPHIC0 :                     348 C |
+ GRAPHIC1 :                     310 C |  GRAPHIC2 :                     32E C |
+ GRAPHIC3 :                     32A C |  GRAPHIC4 :                     319 C |
+ GRAPHIC5 :                     332 C |  GRAPHIC6 :                     344 C |
+ GRAPHIC7 :                     314 C |  GRAPHIC8 :                     34C C |
+ GRAPHIC9 :                     31E C |  GRAPHICA :                     350 C |
+*GRAPHICAPOSTROPHE :            35D C |  GRAPHICB :                     322 C |
+ GRAPHICC :                     340 C |  GRAPHICD :                     326 C |
+ GRAPHICE :                     337 C | *GRAPHICEQUALS :                366 C |
+ GRAPHICF :                     33B C | *GRAPHICH :                     353 C |
+*GRAPHICMINUS :                 362 C | *GRAPHICQMARK :                 35A C |
+ GRAPHICS :                     300 C | *GRAPHICSPACE :                 35F C |
+*GRAPHICU :                     356 C | *GRAPHICULINE :                 360 C |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+ INSTRUCTIONA :                 200 C |  INSTRUCTIONB :                 209 C |
+ INSTRUCTIONC :                 22B C |  INSTRUCTIOND :                 2BE C |
+ INSTRUCTIONE :                 175 C |  INSTRUCTIONF :                 215 C |
+ INSTRUCTIONVECTOR :            1C0 C | *INSUPMODE :                      0 - |
+ INTERRUPT :                    119 C |  KEYPADON :                     246 C |
+ KEYPADPORT :                     0 - | *LISTON :                         1 - |
+ LOADADDRCONST :                202 C | *MACEXP :                         1 - |
+*MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
+ MONITOR :                       84 C | *NESTMAX :                      100 - |
+ NEXTDIGIT :                     58 C |  NEXTINSTRUCTION :              13B C |
+ NEXTTIMER :                    131 C |  OPCODE0 :                      160 C |
+ OPCODE1 :                      20D C |  OPCODE2 :                      281 C |
+ OPCODE3 :                      223 C |  OPCODE4 :                      2CA C |
+ OPCODE5 :                      21A C |  OPCODE6 :                      258 C |
+ OPCODE7 :                       19 C |  OPCODE8 :                      299 C |
+ OPCODE9 :                      2DD C | *PACKING :                        0 - |
+*PADDING :                        1 - | *PLAYTONE :                     28E C |
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm - page 27 - 7/17/2016 16:23:23
+
+
+ R0 :                             0 - |  R1 :                             1 - |
+ R2 :                             2 - |  R3 :                             3 - |
+ R4 :                             4 - |  R5 :                             5 - |
+ R6 :                             6 - |  R7 :                             7 - |
+ R8 :                             8 - |  R9 :                             9 - |
+ RA :                             A - |  RB :                             B - |
+ RC :                             C - |  RD :                             D - |
+ RE :                             E - |  READABREGS :                   273 C |
+ READKEYINPUT :                 17E C |  REGISTERS :                    100 C |
+*RELAXED :                        0 - |  RF :                             F - |
+ SAVECYCLESIZE :                2B9 C |  SCREEN :                       700 - |
+ SELECTDEVICE :                   1 - |  SETADDRREG :                    2C C |
+ SHIFTVXLEFT4 :                 24D C |  SKIPIFVXNOTD :                 224 C |
+ SKIPINSTRUCTION :              184 C |  SKIPINSTRUCTION2 :             228 C |
+ STACK :                        1E0 C |  STACKTOP :                     1FF C |
+*START :                          0 C |  SUBTRACTUNIT :                  5B C |
+ TAPEBITOUTLOOP :               1AC C |  TAPEBYTEOUTLOOP :              1A2 C |
+ TAPEDELAYLOOP :                 4B C | *TIME :                    16:23:23 - |
+ TIMERUPDATELOOP :              129 C |  TONEGENERATION :               2BA C |
+*TRUE :                           1 - | *VERSION :                     142F - |
+ WAITKEYPRESS :                 17C C |  WRITEDF :                      2AD C |
+ WRITEDFBITTAPE :               2B0 C |  WRITETAPEDELAY :               285 C |
+ WRITETAPEDELAYLOOP :           288 C |
+
+    159 symbols
+     39 unused symbols
+
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm - page 28 - 7/17/2016 16:23:23
+
+
+  defined macros:
+  ---------------
+
+FEL                                   |
+
+      1 macro
+
+ AS V1.42 Beta [Bld 102] - source file puzzle.asm - page 29 - 7/17/2016 16:23:23
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.02 seconds assembly time
+
+   1342 lines source file
+   1466 lines incl. macro expansions
+      2 passes
+      0 errors
+      0 warnings
