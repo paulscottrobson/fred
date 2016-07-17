@@ -119,6 +119,8 @@ class CodeTracker:
 				included = True
 				h.write("\n           include felinclude.inc\n")
 			h.write(l)
+
+		h.write("Graphics:\n           include basicFont.inc\n")
 		h.close()
 
 		ocode = [ None ] * 1024
