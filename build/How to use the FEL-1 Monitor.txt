@@ -1,0 +1,31 @@
+How to use the FEL-1 Monitor
+============================
+
+Run it from the command line with fredii fel.bin. Press F5 to run the debugger.
+
+Select option. These are 0 - run FEL-1 code from $400 A - list code B - change code C - load from tape.
+
+For now try "A"
+
+(the last one doesn't work yet obviously..... no tape and nothing to load into it)
+
+The TV should turn on. (Actually this is wrong, the TV Sync is generated when the TV isn't actually on,
+it just doesn't display anything)
+
+The TV should turn on. It's still blank.
+
+Type in the address you want to edit - 3 hex digits (say) 1 1 9
+
+The display should show 0119 with 22 (dec r2), this is the start of the interrupt routine.
+
+Pressing a hex key will change to the next byte.
+
+Pressing F1 resets, ESC exits.
+
+Option B change code works similarly except that you type in the hex bytes rather than
+just a key.
+
+Paul Robson
+
+17th July 2016.
+

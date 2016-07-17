@@ -15,7 +15,7 @@ LIBRARY_PATHS = -LC:\mingw\sdl\lib
 COMPILER_FLAGS = -Wall -DINCLUDE_DEBUGGING_SUPPORT -DWINDOWS
 
 #LINKER_FLAGS specifies the libraries we're linking against
-LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
+LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2 -static-libgcc -static-libstdc++
 
 #OBJ_NAME specifies the name of our exectuable
 OBJ_NAME = fredii
