@@ -1,10 +1,12 @@
 @echo off
 del fel.bin
 del fel_src.bin
+python mkfont.py
 python process.py
 \mingw\bin\asw -L fel.asm
 if errorlevel 1 goto end
 \mingw\bin\p2bin -r 0-1023 -l 0 fel.p
+del fel.p
 del fel_source.zip
 zip fel_source.zip *
 fc /b fel.bin fel_src.bin

@@ -1,3 +1,6 @@
+;
+; automatically generated font data and/or index file.
+;
     org 00300H
     db 048H
     db 010H

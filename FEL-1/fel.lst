@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 1 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 1 - 7/18/2016 9:03:24
 
 
        1/       0 :                     ;****************************************************************************************************************
@@ -61,7 +61,7 @@
 (1)   13/       0 : =4H                 r4 = 4
 (1)   14/       0 : =5H                 r5 = 5
 (1)   15/       0 : =6H                 r6 = 6
- AS V1.42 Beta [Bld 102] - source file fel.asm(felinclude.inc) - page 2 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm(felinclude.inc) - page 2 - 7/18/2016 9:03:24
 
 
 (1)   16/       0 : =7H                 r7 = 7
@@ -124,7 +124,7 @@
       64/      15 : F8 84                       ldi     monitor & 255                                            ; R5 = $0B4 "Macro PC"
       65/      17 : A5                          plo     r5                                                       
       66/      18 : D4                          sep     r4                                                       ; go to "Util" in R4
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 3 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 3 - 7/18/2016 9:03:24
 
 
       67/      19 :                     
@@ -187,7 +187,7 @@
      124/      38 :                     ;   7x38 A.0 -> Vx
      125/      38 :                     ;   
      126/      38 : 8A                          glo     ra                                                       ; RA.0 value
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 4 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 4 - 7/18/2016 9:03:24
 
 
      127/      39 : 56                          str     r6                                                       ; put in X
@@ -250,7 +250,7 @@
      184/      63 : FC 01                       adi     01                                                       ; inc counter
      185/      65 : 5A                          str     ra                                                       ; write back
      186/      66 : 30 5B                       br      subtractunit                                             ; try to deduct it again.
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 5 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 5 - 7/18/2016 9:03:24
 
 
      187/      68 :                     borrowoccurred:
@@ -313,7 +313,7 @@
      238/      8A : (MACRO)                     fel     03100h                                                   ; skip next instruction if not 00
      238/      8A : 31                          db      (03100H) / 256
      238/      8B : 00                          db      (03100H) & 255
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 6 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 6 - 7/18/2016 9:03:24
 
 
      239/      8C : (MACRO)                     fel     0f400h                                                   ; if was 00, then run program from 400
@@ -376,7 +376,7 @@
      262/      AD : 0B                          db      (0240BH) & 255
      263/      AE : (MACRO)                     fel     01000h+felshow                                           ; unpack and show V2
      263/      AE : 10                          db      (01000H+FELSHOW) / 256
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 7 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 7 - 7/18/2016 9:03:24
 
 
      263/      AF : E8                          db      (01000H+FELSHOW) & 255
@@ -439,7 +439,7 @@
      289/      CE : 71                          db      (07148H) / 256
      289/      CF : 48                          db      (07148H) & 255
      290/      D0 : (MACRO)                     fel     02140h                                                   ; set V1 = $40 (1 sec approx)
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 8 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 8 - 7/18/2016 9:03:24
 
 
      290/      D0 : 21                          db      (02140H) / 256
@@ -502,7 +502,7 @@
      316/      F0 : (MACRO)                     fel     07334h                                                   ; B = $03<low>
      316/      F0 : 73                          db      (07334H) / 256
      316/      F1 : 34                          db      (07334H) & 255
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 9 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 9 - 7/18/2016 9:03:24
 
 
      317/      F2 : (MACRO)                     fel     07321h                                                   ; Read Mem(B) -> V3, addr of gfx data
@@ -565,7 +565,7 @@
      360/     11C : 52                          str     r2                                                       ; Save on stack.
      361/     11D :                     
      362/     11D : F8 07                       ldi     screen/256                                               ; set R0 (display pointer) to $700
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 10 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 10 - 7/18/2016 9:03:24
 
 
      363/     11F : B0                          phi     r0                                                       
@@ -628,7 +628,7 @@
      420/     151 : F6                          shr                                                              
      421/     152 : F6                          shr                                                              
      422/     153 : F6                          shr                                                              ; D now contains the Y register number
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 11 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 11 - 7/18/2016 9:03:24
 
 
      423/     154 : A7                          plo     r7                                                       ; R7 now points to Register Y.
@@ -691,7 +691,7 @@
      480/     175 : D8                          sep     r8                                                       ; load A and B into RA and RB
      481/     176 : 73                          db      readabregs & 255                                         
      482/     177 : E6                          sex     r6                                                       ; index is Vx
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 12 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 12 - 7/18/2016 9:03:24
 
 
      483/     178 : 45                          lda     r5                                                       ; get the 2nd instruction byte
@@ -754,7 +754,7 @@
      540/     199 : 03                          db      devtape                                                  
      541/     19A : 62                          out     controldevice                                            ; tape read
      542/     19B : 20                          db      ctaperead                                                
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 13 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 13 - 7/18/2016 9:03:24
 
 
      543/     19C : D4                          sep     r4                                                       
@@ -817,7 +817,7 @@
      600/     1CA : 02                          db      instructiona / 256                                       ; Ammm Load A immediate
      601/     1CB : 02                          db      instructionb / 256                                       ; Bmmm Load B immediate
      602/     1CC : 02                          db      instructionc / 256                                       ; Cxy0 Skip if vx != vy
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 14 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 14 - 7/18/2016 9:03:24
 
 
      603/     1CD : 02                          db      instructiond / 256                                       ; Dxy0 Vx Tone, Vy Delay (Tape on spk off)
@@ -880,7 +880,7 @@
      660/     209 :                     instructionb:
      661/     209 : F8 12                       ldi     breg & 255                                               ; point R7 to B and reuse code above
      662/     20B : 30 02                       br      loadaddrconst                                            
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 15 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 15 - 7/18/2016 9:03:24
 
 
      663/     20D :                     
@@ -943,7 +943,7 @@
      720/     226 : 32 2A                       bz      dontskip                                                 ; exit if same
      721/     228 :                     skipinstruction2:
      722/     228 : 15                          inc     r5                                                       ; skip
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 16 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 16 - 7/18/2016 9:03:24
 
 
      723/     229 : 15                          inc     r5                                                       
@@ -1006,7 +1006,7 @@
      780/     247 : 61                          out     selectdevice                                             ; select Keypad device (1)
      781/     248 : 01                          db      devkeypad                                                
      782/     249 : 62                          out     controldevice                                            ; turn it on.
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 17 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 17 - 7/18/2016 9:03:24
 
 
      783/     24A : 01                          db      ckeyon                                                   
@@ -1069,7 +1069,7 @@
      840/     26B : 62                          out     controldevice                                            ; and turn it off
      841/     26C : 00                          db      ckeyoff                                                  
      842/     26D : D4                          sep     r4                                                       
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 18 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 18 - 7/18/2016 9:03:24
 
 
      843/     26E :                     
@@ -1132,7 +1132,7 @@
      900/     28E :                     playtone:
      901/     28E : 46                          lda     r6                                                       ; read X (tone)
      902/     28F : BE                          phi     re                                                       ; store in tone register
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 19 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 19 - 7/18/2016 9:03:24
 
 
      903/     290 : F8 6E                       ldi     ghirf & 255                                              ; set to identify return.
@@ -1195,7 +1195,7 @@
      960/     2BA :                     ;                   R6 is set to 72 for read tape and 6E for make tone, which is how it figures
      961/     2BA :                     ;                        out what to do afterwards,this is used for tape and cassette out.
      962/     2BA :                     ;                                                        
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 20 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 20 - 7/18/2016 9:03:24
 
 
      963/     2BA :                     ;****************************************************************************************************************
@@ -1258,7 +1258,7 @@
     1020/     2E1 :                     ;                                                        
     1021/     2E1 :                     ;****************************************************************************************************************
     1022/     2E1 :                     
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 21 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 21 - 7/18/2016 9:03:24
 
 
     1023/     2E1 : E6                          sex     r6                                                       ; R(x) points to VX
@@ -1307,127 +1307,130 @@
     1066/     300 :                     ;****************************************************************************************************************
     1067/     300 :                     Graphics:
     1068/     300 :                                include basicFont.inc
-(1)    1/     300 :                         org 00300H
-(1)    2/     300 : 48                      db 048H
-(1)    3/     301 : 10                      db 010H
-(1)    4/     302 : 2E                      db 02EH
-(1)    5/     303 : 2A                      db 02AH
-(1)    6/     304 : 19                      db 019H
-(1)    7/     305 : 32                      db 032H
-(1)    8/     306 : 44                      db 044H
-(1)    9/     307 : 14                      db 014H
-(1)   10/     308 : 4C                      db 04CH
-(1)   11/     309 : 1E                      db 01EH
-(1)   12/     30A : 50                      db 050H
-(1)   13/     30B : 22                      db 022H
-(1)   14/     30C : 40                      db 040H
- AS V1.42 Beta [Bld 102] - source file fel.asm(basicFont.inc) - page 22 - 7/17/2016 23:45:26
+(1)    1/     300 :                     ;
+(1)    2/     300 :                     ; automatically generated font data and/or index file.
+(1)    3/     300 :                     ;
+(1)    4/     300 :                         org 00300H
+(1)    5/     300 : 48                      db 048H
+(1)    6/     301 : 10                      db 010H
+(1)    7/     302 : 2E                      db 02EH
+(1)    8/     303 : 2A                      db 02AH
+(1)    9/     304 : 19                      db 019H
+(1)   10/     305 : 32                      db 032H
+(1)   11/     306 : 44                      db 044H
+(1)   12/     307 : 14                      db 014H
+(1)   13/     308 : 4C                      db 04CH
+(1)   14/     309 : 1E                      db 01EH
+ AS V1.42 Beta [Bld 102] - source file fel.asm(basicFont.inc) - page 22 - 7/18/2016 9:03:24
 
 
-(1)   15/     30D : 26                      db 026H
-(1)   16/     30E : 37                      db 037H
-(1)   17/     30F : 3B                      db 03BH
-(1)   18/     310 : 10                      db 010H
-(1)   19/     311 : 30                      db 030H
-(1)   20/     312 : 10                      db 010H
-(1)   21/     313 : 10                      db 010H
-(1)   22/     314 : 7C                      db 07CH
-(1)   23/     315 : 08                      db 008H
-(1)   24/     316 : 10                      db 010H
-(1)   25/     317 : 20                      db 020H
-(1)   26/     318 : 40                      db 040H
-(1)   27/     319 : 08                      db 008H
-(1)   28/     31A : 18                      db 018H
-(1)   29/     31B : 28                      db 028H
-(1)   30/     31C : 7C                      db 07CH
-(1)   31/     31D : 08                      db 008H
-(1)   32/     31E : 38                      db 038H
-(1)   33/     31F : 44                      db 044H
-(1)   34/     320 : 3C                      db 03CH
-(1)   35/     321 : 04                      db 004H
-(1)   36/     322 : 78                      db 078H
-(1)   37/     323 : 24                      db 024H
-(1)   38/     324 : 38                      db 038H
-(1)   39/     325 : 24                      db 024H
-(1)   40/     326 : 78                      db 078H
-(1)   41/     327 : 44                      db 044H
-(1)   42/     328 : 44                      db 044H
-(1)   43/     329 : 44                      db 044H
-(1)   44/     32A : 78                      db 078H
-(1)   45/     32B : 04                      db 004H
-(1)   46/     32C : 18                      db 018H
-(1)   47/     32D : 04                      db 004H
-(1)   48/     32E : 78                      db 078H
-(1)   49/     32F : 04                      db 004H
-(1)   50/     330 : 38                      db 038H
-(1)   51/     331 : 40                      db 040H
-(1)   52/     332 : 7C                      db 07CH
-(1)   53/     333 : 40                      db 040H
-(1)   54/     334 : 78                      db 078H
-(1)   55/     335 : 04                      db 004H
-(1)   56/     336 : 78                      db 078H
-(1)   57/     337 : 7C                      db 07CH
-(1)   58/     338 : 40                      db 040H
-(1)   59/     339 : 7C                      db 07CH
-(1)   60/     33A : 40                      db 040H
-(1)   61/     33B : 7C                      db 07CH
-(1)   62/     33C : 40                      db 040H
-(1)   63/     33D : 7C                      db 07CH
-(1)   64/     33E : 40                      db 040H
-(1)   65/     33F : 40                      db 040H
-(1)   66/     340 : 3C                      db 03CH
-(1)   67/     341 : 40                      db 040H
-(1)   68/     342 : 40                      db 040H
-(1)   69/     343 : 40                      db 040H
-(1)   70/     344 : 3C                      db 03CH
-(1)   71/     345 : 40                      db 040H
-(1)   72/     346 : 78                      db 078H
-(1)   73/     347 : 44                      db 044H
-(1)   74/     348 : 38                      db 038H
- AS V1.42 Beta [Bld 102] - source file fel.asm(basicFont.inc) - page 23 - 7/17/2016 23:45:26
+(1)   15/     30A : 50                      db 050H
+(1)   16/     30B : 22                      db 022H
+(1)   17/     30C : 40                      db 040H
+(1)   18/     30D : 26                      db 026H
+(1)   19/     30E : 37                      db 037H
+(1)   20/     30F : 3B                      db 03BH
+(1)   21/     310 : 10                      db 010H
+(1)   22/     311 : 30                      db 030H
+(1)   23/     312 : 10                      db 010H
+(1)   24/     313 : 10                      db 010H
+(1)   25/     314 : 7C                      db 07CH
+(1)   26/     315 : 08                      db 008H
+(1)   27/     316 : 10                      db 010H
+(1)   28/     317 : 20                      db 020H
+(1)   29/     318 : 40                      db 040H
+(1)   30/     319 : 08                      db 008H
+(1)   31/     31A : 18                      db 018H
+(1)   32/     31B : 28                      db 028H
+(1)   33/     31C : 7C                      db 07CH
+(1)   34/     31D : 08                      db 008H
+(1)   35/     31E : 38                      db 038H
+(1)   36/     31F : 44                      db 044H
+(1)   37/     320 : 3C                      db 03CH
+(1)   38/     321 : 04                      db 004H
+(1)   39/     322 : 78                      db 078H
+(1)   40/     323 : 24                      db 024H
+(1)   41/     324 : 38                      db 038H
+(1)   42/     325 : 24                      db 024H
+(1)   43/     326 : 78                      db 078H
+(1)   44/     327 : 44                      db 044H
+(1)   45/     328 : 44                      db 044H
+(1)   46/     329 : 44                      db 044H
+(1)   47/     32A : 78                      db 078H
+(1)   48/     32B : 04                      db 004H
+(1)   49/     32C : 18                      db 018H
+(1)   50/     32D : 04                      db 004H
+(1)   51/     32E : 78                      db 078H
+(1)   52/     32F : 04                      db 004H
+(1)   53/     330 : 38                      db 038H
+(1)   54/     331 : 40                      db 040H
+(1)   55/     332 : 7C                      db 07CH
+(1)   56/     333 : 40                      db 040H
+(1)   57/     334 : 78                      db 078H
+(1)   58/     335 : 04                      db 004H
+(1)   59/     336 : 78                      db 078H
+(1)   60/     337 : 7C                      db 07CH
+(1)   61/     338 : 40                      db 040H
+(1)   62/     339 : 7C                      db 07CH
+(1)   63/     33A : 40                      db 040H
+(1)   64/     33B : 7C                      db 07CH
+(1)   65/     33C : 40                      db 040H
+(1)   66/     33D : 7C                      db 07CH
+(1)   67/     33E : 40                      db 040H
+(1)   68/     33F : 40                      db 040H
+(1)   69/     340 : 3C                      db 03CH
+(1)   70/     341 : 40                      db 040H
+(1)   71/     342 : 40                      db 040H
+(1)   72/     343 : 40                      db 040H
+(1)   73/     344 : 3C                      db 03CH
+(1)   74/     345 : 40                      db 040H
+ AS V1.42 Beta [Bld 102] - source file fel.asm(basicFont.inc) - page 23 - 7/18/2016 9:03:24
 
 
-(1)   75/     349 : 44                      db 044H
-(1)   76/     34A : 44                      db 044H
-(1)   77/     34B : 44                      db 044H
-(1)   78/     34C : 38                      db 038H
-(1)   79/     34D : 44                      db 044H
-(1)   80/     34E : 38                      db 038H
-(1)   81/     34F : 44                      db 044H
-(1)   82/     350 : 38                      db 038H
-(1)   83/     351 : 44                      db 044H
-(1)   84/     352 : 7C                      db 07CH
-(1)   85/     353 : 44                      db 044H
-(1)   86/     354 : 44                      db 044H
-(1)   87/     355 : 7C                      db 07CH
-(1)   88/     356 : 44                      db 044H
-(1)   89/     357 : 44                      db 044H
-(1)   90/     358 : 44                      db 044H
-(1)   91/     359 : 44                      db 044H
-(1)   92/     35A : 38                      db 038H
-(1)   93/     35B : 44                      db 044H
-(1)   94/     35C : 08                      db 008H
-(1)   95/     35D : 10                      db 010H
-(1)   96/     35E : 10                      db 010H
-(1)   97/     35F : 00                      db 000H
-(1)   98/     360 : 00                      db 000H
-(1)   99/     361 : 00                      db 000H
-(1)  100/     362 : 00                      db 000H
-(1)  101/     363 : 00                      db 000H
-(1)  102/     364 : 7C                      db 07CH
-(1)  103/     365 : 00                      db 000H
-(1)  104/     366 : 00                      db 000H
-(1)  105/     367 : 7C                      db 07CH
-(1)  106/     368 : 00                      db 000H
-(1)  107/     369 : 7C                      db 07CH
-(1)  108/     36A : 00                      db 000H
-(1)  109/     36B : 18                      db 018H
-(1)  110/     36C : 00                      db 000H
-(1)  111/     36D : 18                      db 018H
-(1)  112/     36E : 00                      db 000H
-(1)  113/     36F :                     
+(1)   75/     346 : 78                      db 078H
+(1)   76/     347 : 44                      db 044H
+(1)   77/     348 : 38                      db 038H
+(1)   78/     349 : 44                      db 044H
+(1)   79/     34A : 44                      db 044H
+(1)   80/     34B : 44                      db 044H
+(1)   81/     34C : 38                      db 038H
+(1)   82/     34D : 44                      db 044H
+(1)   83/     34E : 38                      db 038H
+(1)   84/     34F : 44                      db 044H
+(1)   85/     350 : 38                      db 038H
+(1)   86/     351 : 44                      db 044H
+(1)   87/     352 : 7C                      db 07CH
+(1)   88/     353 : 44                      db 044H
+(1)   89/     354 : 44                      db 044H
+(1)   90/     355 : 7C                      db 07CH
+(1)   91/     356 : 44                      db 044H
+(1)   92/     357 : 44                      db 044H
+(1)   93/     358 : 44                      db 044H
+(1)   94/     359 : 44                      db 044H
+(1)   95/     35A : 38                      db 038H
+(1)   96/     35B : 44                      db 044H
+(1)   97/     35C : 08                      db 008H
+(1)   98/     35D : 10                      db 010H
+(1)   99/     35E : 10                      db 010H
+(1)  100/     35F : 00                      db 000H
+(1)  101/     360 : 00                      db 000H
+(1)  102/     361 : 00                      db 000H
+(1)  103/     362 : 00                      db 000H
+(1)  104/     363 : 00                      db 000H
+(1)  105/     364 : 7C                      db 07CH
+(1)  106/     365 : 00                      db 000H
+(1)  107/     366 : 00                      db 000H
+(1)  108/     367 : 7C                      db 07CH
+(1)  109/     368 : 00                      db 000H
+(1)  110/     369 : 7C                      db 07CH
+(1)  111/     36A : 00                      db 000H
+(1)  112/     36B : 18                      db 018H
+(1)  113/     36C : 00                      db 000H
+(1)  114/     36D : 18                      db 018H
+(1)  115/     36E : 00                      db 000H
+(1)  116/     36F :                     
     1069/     36F :                     
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 24 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 24 - 7/18/2016 9:03:24
 
 
   symbol table (* = unused):
@@ -1444,7 +1447,7 @@
  CONTROLLATCH :                   3 - |  COPYPIXELDATA :                2F5 C |
  COPYREGLOOP :                  237 C |  CTAPEREAD :                     20 - |
  CTVOFF :                         0 - |  CTVON :                          3 - |
-*DATE :                   7/17/2016 - |  DECTABLE :                     114 C |
+*DATE :                   7/18/2016 - |  DECTABLE :                     114 C |
  DEVKEYPAD :                      1 - |  DEVTAPE :                        3 - |
  DEVTV :                          2 - |  DONTSKIP :                     22A C |
  EXECR3 :                       15C C |  EXIT02CALL :                   165 C |
@@ -1490,7 +1493,7 @@
 *RELAXED :                        0 - |  RF :                             F - |
  SAVECYCLESIZE :                2B9 C |  SCREEN :                       700 - |
  SELECTDEVICE :                   1 - |  SETADDRREG :                    2C C |
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 25 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 25 - 7/18/2016 9:03:24
 
 
  SHIFTVXLEFT4 :                 24D C |  SKIPIFVXNOTD :                 224 C |
@@ -1498,7 +1501,7 @@
  STACK :                        1E0 C |  STACKTOP :                     1FF C |
 *START :                          0 C |  SUBTRACTUNIT :                  5B C |
  TAPEBITOUTLOOP :               1AC C |  TAPEBYTEOUTLOOP :              1A2 C |
- TAPEDELAYLOOP :                 4B C | *TIME :                    23:45:26 - |
+ TAPEDELAYLOOP :                 4B C | *TIME :                     9:03:24 - |
  TIMERUPDATELOOP :              129 C |  TONEGENERATION :               2BA C |
 *TRUE :                           1 - | *VERSION :                     142F - |
  WAITKEYPRESS :                 17C C |  WRITEDF :                      2AD C |
@@ -1508,7 +1511,7 @@
     135 symbols
      31 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 26 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 26 - 7/18/2016 9:03:24
 
 
   defined macros:
@@ -1518,7 +1521,7 @@ FEL                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file fel.asm - page 27 - 7/17/2016 23:45:26
+ AS V1.42 Beta [Bld 102] - source file fel.asm - page 27 - 7/18/2016 9:03:24
 
 
   codepages:
@@ -1527,10 +1530,10 @@ FEL                                   |
 STANDARD (0 changed characters)
 
 
-0.01 seconds assembly time
+0.02 seconds assembly time
 
-   1236 lines source file
-   1360 lines incl. macro expansions
+   1239 lines source file
+   1363 lines incl. macro expansions
       2 passes
       0 errors
       0 warnings

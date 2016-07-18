@@ -126,6 +126,14 @@ class CodeTracker:
 		ocode = [ None ] * 1024
 		for i in range(0x36F,1024):
 			ocode[i] = 0x00
+
+		p = 0x300
+		for s in [x for x in open("basicfont.inc").readlines() if x.find("db") >= 0]:
+			m  = re.match("^\\s*db\\s*(.*)h",s.lower())
+			assert m is not None
+			ocode[p] = int(m.group(1),16)
+			p += 1
+
 		for d in self.lines:
 			d.compileBytes(ocode)
 

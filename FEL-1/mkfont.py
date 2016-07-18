@@ -3,6 +3,7 @@
 #
 def writeAssembler(fileName,binaryData,origin,startBin,endBin):
 	h = open(fileName,"wb")
+	h.write(";\n; automatically generated font data and/or index file.\n;\n")
 	h.write("    org 0{0:04X}H\n".format(origin))
 	for offset in range(startBin,endBin+1):
 		h.write("    db 0{0:02X}H\n".format(binaryData[offset]))
@@ -14,6 +15,7 @@ current = -1
 
 page3 = [ None ] * 256
 charAddr = [ None ] * 128
+page6 = [ None ] * 64
 
 for l in src:
 	#print(l)
@@ -38,6 +40,7 @@ for l in src:
 
 for i in range(32,96):
 	assert charAddr[i] is not None,str(i)+" "+chr(i)+" missing."
+	page6[i & 0x3F] = charAddr[i]
 
 for i in range(0,256):
 	if page3[i] is None:
@@ -45,4 +48,4 @@ for i in range(0,256):
 
 writeAssembler("basicFont.inc",page3,0x300,0x00,0x6E)				# the basic font from 300-36E
 writeAssembler("extendedFont.inc",page3,0x36F,0x6F,0xFF)			# the extended font from 36E - 3FF
-
+writeAssembler("extendedIndex.inc",page6,0x6B0,0x00,0x3F)			# the extended font index from 6B0-6EF
