@@ -43,7 +43,7 @@ for i in range(32,96):
 	page6[i & 0x3F] = charAddr[i]
 
 for i in range(0,256):
-	if page3[i] is None:
+	if page3[i] is pyne:
 		page3[i] = 0xFF
 
 writeAssembler("basicFont.inc",page3,0x300,0x00,0x6E)				# the basic font from 300-36E
