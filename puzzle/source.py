@@ -33,9 +33,41 @@ code = """
 
 438 	0078 	Clear Screen
 43A 	2700 	V7 = 0 (timer)
+
 43C 	21F0 	V1 = F0
 43E 	2200	V2 = 0
 440 	1450	Call 450
+
+442 	7121 	Read Mem(B) to V1.
+444 	2201	V2 = 1
+446 	1450 	Call 450
+
+448 	21F1 	V1 = F1
+44A 	2208	V2 = 8
+44C 	1450 	Call 450
+
+44E 	F458 	Goto 458
+;
+;	Read [$0600+V1] and display pattern at V2
+;
+450 	7134 	B = 6[V1]
+452 	7121 	V1 = M[B]
+454 	912B 	8x8 Pattern address in V1, Cell in V2.
+456 	026E 	Return
+
+458 	025C 	TV On
+45A 	21F5 	V1 = F5
+45C		220E 	V2 = 0E
+45E 	1450 	Call 450
+
+460 	21F3 	V1 = F3
+462 	2215 	V2 = 15
+464 	1450 	Call 450
+
+466		7448 	Delay V4
+468 	E480	Get Key Skip if None
+46A 	1490	Key goto 1490
+
 
 """
 
