@@ -1,9 +1,8 @@
 ;
 ;
-;	TODO: looping code,R>,>R,ROT,PICK,R@, long fetch and store. 
 ;	Interrupt routine, 
 ;	In and Out (?)
-;	0> 2 4 8 16 ?DUP = PICK
+;	0> = ?DUP 2 4 8 16 PICK ROT
 ;   Start address needs redoing.
 ;
 ;
@@ -37,7 +36,67 @@ videoMemory = 0700h 								; 64 x 32 Video RAM.
 ;
 ;											Forth 1801 assembler primitives
 ;
-;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap
+;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap,R>,>R,0>,0BR.;
+; *********************************************************************************************************************
+
+; *********************************************************************************************************************
+
+FW_0BR: 											; <<0BR>> if pop = 0 then advance by <next> (7 bit signed)
+		lda 	rProgram 							; read offset into RE.0
+		plo 	re 
+
+		lda 	rDStack 							; pop value off top of stack
+		bnz 	__Return 							; if non zero, fail. 
+
+		glo 	re 									; put value onto the data stack as a temporary measure
+		dec 	rDStack
+		str 	rDStack
+		ani 	080h 								; check bit 7
+		bnz 	__0BR_Backwards 					; if -ve it is a backward jump.
+
+		glo 	rProgram 							; add offset to R4/low
+		add
+		plo 	rProgram
+		bnf 	__0BR_Exit
+		ghi 	rProgram 							; add carry into R4
+		adi 	1
+__0BR_SaveR41Exit:
+		phi 	rProgram
+__0BR_Exit:
+		inc 	rDStack 							; drop temp off stack
+		sep 	rc
+
+__0BR_Backwards:
+		glo 	rProgram 							; subtract from R4/Low
+		add 
+		plo 	rProgram
+		bdf 	__0BR_Exit 							; not borrow, exit.
+		ghi 	rProgram 							; carry borrow through.
+		smi 	1
+		br 		__0BR_SaveR41Exit
+
+
+; *********************************************************************************************************************
+
+FW_FromR:											; <<R>>> return stack to data stack
+		lda 	rRStack
+		dec 	rDStack
+		str 	rDStack
+		lda 	rRStack
+		br 		_PushD
+
+; *********************************************************************************************************************
+
+FW_ToR:												; <<>R>> data stack to return stack
+		lda 	rDStack
+		dec 	rRStack
+		str 	rRStack
+		lda 	rDStack
+		dec 	rRStack
+		str 	rRStack
+__Return:
+		sep 	rc
+
 ; *********************************************************************************************************************
 
 FW_Read:	 										; <<@>> read from variable page.
@@ -191,6 +250,15 @@ _SaveD:	str 	rDStack
 
 ; *********************************************************************************************************************
 
+FW_GreaterZero:										; <<0>>> Word, push 1 if >0 else push 0
+		lda 	rDStack 							; get value
+		bz 		FW_0 								; zero returns 0
+		ani 	80h									; check bit 7
+		bnz 	FW_0 								; -ve returns 0
+		br 		FW_1
+
+; *********************************************************************************************************************
+
 FW_Minus1:	
 		ldi 	0FFh								; <<-1>> Word, pushes -1 on stack.
 		br 		_PushD
@@ -300,10 +368,17 @@ ExecuteDefinedWord:
 		sep 	rc 									; and run "ExecuteCompiledWord"
 		br 		ExecuteDefinedWord 					; this is re-entrant.
 
+; *************************************************************************************************************************
+;
+;		The first three bytes are the address of the first word to run, and the data stack initial value.
+;
+; *************************************************************************************************************************
+
 ProgramCode:
 		dw 		Start
 		db 		0A0h
 Start:	
-		db 	FW_Literal,42,FW_Literal,33,FW_Swap
+		db 	FW_0
+		db  FW_0BR,0FDh
 		db 	FW_Stop
 

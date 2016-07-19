@@ -1,344 +1,407 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/19/2016 12:22:55
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/19/2016 15:20:10
 
 
        1/       0 :                     ;
        2/       0 :                     ;
-       3/       0 :                     ;	TODO: looping code,R>,>R,ROT,PICK,R@, long fetch and store. 
-       4/       0 :                     ;	Interrupt routine, 
-       5/       0 :                     ;	In and Out (?)
-       6/       0 :                     ;	0> 2 4 8 16 ?DUP = PICK
-       7/       0 :                     ;   Start address needs redoing.
+       3/       0 :                     ;	Interrupt routine, 
+       4/       0 :                     ;	In and Out (?)
+       5/       0 :                     ;	0> 2 4 8 16 ?DUP = PICK ROT 0BR
+       6/       0 :                     ;   Start address needs redoing.
+       7/       0 :                     ;
        8/       0 :                     ;
-       9/       0 :                     ;
-      10/       0 :                     		cpu 1802 									; actually it is a 1801.
-      11/       0 :                     
-      12/       0 : =0H                 r0 = 0 												
-      13/       0 : =1H                 rInterrupt = 1 										; interrupt address (R1)
-      14/       0 : =2H                 rRStack = 2 										; return stack (R2)
-      15/       0 : =3H                 rDStack = 3 										; data stack (R3)
-      16/       0 : =4H                 rProgram = 4 										; program code pointer (R4)
-      17/       0 : =5H                 rVariables = 5 										; points to variables (R5)
-      18/       0 :                     
-      19/       0 : =CH                 rc = 12
-      20/       0 : =DH                 rd = 13
-      21/       0 : =EH                 re = 14
-      22/       0 : =FH                 rf = 15
-      23/       0 :                     
-      24/       0 :                     lri 	macro r,n 									; macro to load register.
-      25/       0 :                     		ldi (n) & 255
-      26/       0 :                     		plo r
-      27/       0 :                     		ldi (n) / 256
-      28/       0 :                     		phi r
-      29/       0 :                     		endm
-      30/       0 :                     
-      31/       0 : =700H               videoMemory = 0700h 								; 64 x 32 Video RAM.
-      32/       0 :                     													; return stack R2 works down from this.
-      33/       0 :                     
-      34/       0 : 30 FE               		br 		Boot 								; <<;>> skip over machine code. Also defines return (;) as $00
-      35/       2 :                     
-      36/       2 :                     ; *********************************************************************************************************************
-      37/       2 :                     ;
-      38/       2 :                     ;											Forth 1801 assembler primitives
-      39/       2 :                     ;
-      40/       2 :                     ;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap
-      41/       2 :                     ; *********************************************************************************************************************
-      42/       2 :                     
-      43/       2 :                     FW_Read:	 										; <<@>> read from variable page.
-      44/       2 : F0                  		ldx 										; read address 
-      45/       3 : A5                  		plo 	rVariables 							; point RVariables to it
-      46/       4 : 45                  		lda 	rVariables 							; read rVariables
-      47/       5 : 25                  		dec 	rVariables 							; unpick if overflowed.
-      48/       6 : 30 59               		br 		_SaveD 								; and write it out.
-      49/       8 :                     
-      50/       8 :                     ; *********************************************************************************************************************
-      51/       8 :                     
-      52/       8 :                     FW_Store:											; <<!>> write to variable page.
-      53/       8 : 43                  		lda 	rDStack								; read address
-      54/       9 : A5                  		plo 	rVariables 							; rVariables points to it
-      55/       A : 43                  		lda 	rDStack 							; read data
-      56/       B : 55                  		str 	rVariables 							; write it.
-      57/       C : DC                  		sep 	rc
-      58/       D :                     
-      59/       D :                     ; *********************************************************************************************************************
-      60/       D :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/19/2016 12:22:55
+       9/       0 :                     		cpu 1802 									; actually it is a 1801.
+      10/       0 :                     
+      11/       0 : =0H                 r0 = 0 												
+      12/       0 : =1H                 rInterrupt = 1 										; interrupt address (R1)
+      13/       0 : =2H                 rRStack = 2 										; return stack (R2)
+      14/       0 : =3H                 rDStack = 3 										; data stack (R3)
+      15/       0 : =4H                 rProgram = 4 										; program code pointer (R4)
+      16/       0 : =5H                 rVariables = 5 										; points to variables (R5)
+      17/       0 :                     
+      18/       0 : =CH                 rc = 12
+      19/       0 : =DH                 rd = 13
+      20/       0 : =EH                 re = 14
+      21/       0 : =FH                 rf = 15
+      22/       0 :                     
+      23/       0 :                     lri 	macro r,n 									; macro to load register.
+      24/       0 :                     		ldi (n) & 255
+      25/       0 :                     		plo r
+      26/       0 :                     		ldi (n) / 256
+      27/       0 :                     		phi r
+      28/       0 :                     		endm
+      29/       0 :                     
+      30/       0 : =700H               videoMemory = 0700h 								; 64 x 32 Video RAM.
+      31/       0 :                     													; return stack R2 works down from this.
+      32/       0 :                     
+      33/       0 : 30 FE               		br 		Boot 								; <<;>> skip over machine code. Also defines return (;) as $00
+      34/       2 :                     
+      35/       2 :                     ; *********************************************************************************************************************
+      36/       2 :                     ;
+      37/       2 :                     ;											Forth 1801 assembler primitives
+      38/       2 :                     ;
+      39/       2 :                     ;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap
+      40/       2 :                     ; *********************************************************************************************************************
+      41/       2 :                     
+      42/       2 :                     ; *********************************************************************************************************************
+      43/       2 :                     
+      44/       2 :                     FW_0BR: 											; <<0BR>> if pop = 0 then advance by <next> (7 bit signed)
+      45/       2 : 44                  		lda 	rProgram 							; read offset into RE.0
+      46/       3 : AE                  		plo 	re 
+      47/       4 :                     
+      48/       4 : 43                  		lda 	rDStack 							; pop value off top of stack
+      49/       5 : 3A 2F               		bnz 	__Return 							; if non zero, fail. 
+      50/       7 :                     
+      51/       7 : 8E                  		glo 	re 									; put value onto the data stack as a temporary measure
+      52/       8 : 23                  		dec 	rDStack
+      53/       9 : 53                  		str 	rDStack
+      54/       A : FA 80               		ani 	080h 								; check bit 7
+      55/       C : 3A 19               		bnz 	__0BR_Backwards 					; if -ve it is a backward jump.
+      56/       E :                     
+      57/       E : 84                  		glo 	rProgram 							; add offset to R4/low
+      58/       F : F4                  		add
+      59/      10 : A4                  		plo 	rProgram
+      60/      11 : 3B 17               		bnf 	__0BR_Exit
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/19/2016 15:20:10
 
 
-      61/       D :                     FW_AddStore:										; <<+!>> add tos to memory
-      62/       D : 43                  		lda 	rDStack								; read address
-      63/       E : A5                  		plo 	rVariables 							; rVariables points to it
-      64/       F : 43                  		lda 	rDStack 							; read data
-      65/      10 : E5                  		sex 	rVariables
-      66/      11 : F4                  		add 										; add to memory
-      67/      12 : E3                  		sex 	rDStack
-      68/      13 : 55                  		str 	rVariables 							; write it.
-      69/      14 : DC                  		sep 	rc
-      70/      15 :                     
-      71/      15 :                     ; *********************************************************************************************************************
-      72/      15 :                     
-      73/      15 :                     FW_Inc:												; <<1+>> Increment
-      74/      15 : F8 01               		ldi 	1
-      75/      17 : 30 25               		br 		__AddWr
-      76/      19 :                     
-      77/      19 :                     ; *********************************************************************************************************************
-      78/      19 :                     
-      79/      19 :                     FW_Dec:												; <<1->> Increment
-      80/      19 : F8 FF               		ldi 	0FFh
-      81/      1B : 30 25               		br 		__AddWr
-      82/      1D :                     
-      83/      1D :                     ; *********************************************************************************************************************
-      84/      1D :                     
-      85/      1D :                     FW_ShiftR:											; <<2/>> Shift right
-      86/      1D : F0                  		ldx  										; read it
-      87/      1E : F6                  		shr 										; shift right
-      88/      1F : 30 59               		br 		_SaveD 								; write back.
-      89/      21 :                     
-      90/      21 :                     ; *********************************************************************************************************************
-      91/      21 :                     
-      92/      21 :                     FW_ShiftL:											; <<2*>> Shift left
-      93/      21 : F0                  		ldx 										; read tos
-      94/      22 : 30 25               		br 		__AddWr 							; add it to itself.
-      95/      24 :                     
-      96/      24 :                     ; *********************************************************************************************************************
-      97/      24 :                     
-      98/      24 :                     FW_Add:												; <<+>> add top of stack values.
-      99/      24 : 43                  		lda 	rDStack 							; read TOS
-     100/      25 : F4                  __AddWr:add
-     101/      26 : 30 59               		br 		_SaveD
-     102/      28 :                     
-     103/      28 :                     ; *********************************************************************************************************************
-     104/      28 :                     
-     105/      28 :                     FW_Sub:												; <<->> sub top of stack values.
-     106/      28 : 43                  		lda 	rDStack 							; read TOS
-     107/      29 : F5                  		sd
-     108/      2A : 30 59               		br 		_SaveD
-     109/      2C :                     
-     110/      2C :                     ; *********************************************************************************************************************
-     111/      2C :                     
-     112/      2C :                     FW_And:												; <<and>> and top of stack values.
-     113/      2C : 43                  		lda 	rDStack 							; read TOS
-     114/      2D : F2                  		and
-     115/      2E : 30 59               		br 		_SaveD
-     116/      30 :                     
-     117/      30 :                     ; *********************************************************************************************************************
-     118/      30 :                     
-     119/      30 :                     FW_Or:												; <<or>> or top of stack values.
-     120/      30 : 43                  		lda 	rDStack 							; read TOS
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/19/2016 12:22:55
+      61/      13 : 94                  		ghi 	rProgram 							; add carry into R4
+      62/      14 : FC 01               		adi 	1
+      63/      16 :                     __0BR_SaveR41Exit:
+      64/      16 : B4                  		phi 	rProgram
+      65/      17 :                     __0BR_Exit:
+      66/      17 : 13                  		inc 	rDStack 							; drop temp off stack
+      67/      18 : DC                  		sep 	rc
+      68/      19 :                     
+      69/      19 :                     __0BR_Backwards:
+      70/      19 : 84                  		glo 	rProgram 							; subtract from R4/Low
+      71/      1A : F4                  		add 
+      72/      1B : A4                  		plo 	rProgram
+      73/      1C : 33 17               		bdf 	__0BR_Exit 							; not borrow, exit.
+      74/      1E : 94                  		ghi 	rProgram 							; carry borrow through.
+      75/      1F : FF 01               		smi 	1
+      76/      21 : 30 16               		br 		__0BR_SaveR41Exit
+      77/      23 :                     
+      78/      23 :                     
+      79/      23 :                     ; *********************************************************************************************************************
+      80/      23 :                     
+      81/      23 :                     FW_FromR:											; <<R>>> return stack to data stack
+      82/      23 : 42                  		lda 	rRStack
+      83/      24 : 23                  		dec 	rDStack
+      84/      25 : 53                  		str 	rDStack
+      85/      26 : 42                  		lda 	rRStack
+      86/      27 : 30 86               		br 		_PushD
+      87/      29 :                     
+      88/      29 :                     ; *********************************************************************************************************************
+      89/      29 :                     
+      90/      29 :                     FW_ToR:												; <<>R>> data stack to return stack
+      91/      29 : 43                  		lda 	rDStack
+      92/      2A : 22                  		dec 	rRStack
+      93/      2B : 52                  		str 	rRStack
+      94/      2C : 43                  		lda 	rDStack
+      95/      2D : 22                  		dec 	rRStack
+      96/      2E : 52                  		str 	rRStack
+      97/      2F :                     __Return:
+      98/      2F : DC                  		sep 	rc
+      99/      30 :                     
+     100/      30 :                     ; *********************************************************************************************************************
+     101/      30 :                     
+     102/      30 :                     FW_Read:	 										; <<@>> read from variable page.
+     103/      30 : F0                  		ldx 										; read address 
+     104/      31 : A5                  		plo 	rVariables 							; point RVariables to it
+     105/      32 : 45                  		lda 	rVariables 							; read rVariables
+     106/      33 : 25                  		dec 	rVariables 							; unpick if overflowed.
+     107/      34 : 30 87               		br 		_SaveD 								; and write it out.
+     108/      36 :                     
+     109/      36 :                     ; *********************************************************************************************************************
+     110/      36 :                     
+     111/      36 :                     FW_Store:											; <<!>> write to variable page.
+     112/      36 : 43                  		lda 	rDStack								; read address
+     113/      37 : A5                  		plo 	rVariables 							; rVariables points to it
+     114/      38 : 43                  		lda 	rDStack 							; read data
+     115/      39 : 55                  		str 	rVariables 							; write it.
+     116/      3A : DC                  		sep 	rc
+     117/      3B :                     
+     118/      3B :                     ; *********************************************************************************************************************
+     119/      3B :                     
+     120/      3B :                     FW_AddStore:										; <<+!>> add tos to memory
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/19/2016 15:20:10
 
 
-     121/      31 : F1                  		or
-     122/      32 : 30 59               		br 		_SaveD
-     123/      34 :                     
-     124/      34 :                     ; *********************************************************************************************************************
-     125/      34 :                     
-     126/      34 :                     FW_Xor:												; <<xor>> xor top of stack values.
-     127/      34 : 43                  		lda 	rDStack 							; read TOS
-     128/      35 : F3                  		xor
-     129/      36 : 30 59               		br 		_SaveD
-     130/      38 :                     
-     131/      38 :                     ; *********************************************************************************************************************
-     132/      38 :                     
-     133/      38 :                     FW_Literal:											; <<LITERAL>>, code loads literal to TOS
-     134/      38 : 44                  		lda 	rProgram 							; read the literal in
-     135/      39 : 30 58               		br 		_PushD 								; push on stack
-     136/      3B :                     
-     137/      3B :                     ; *********************************************************************************************************************
-     138/      3B :                     
-     139/      3B :                     FW_Drop:											; <<DROP>>, drops top of stack.
-     140/      3B : 43                  		lda 	rDStack 							
-     141/      3C : DC                  		sep 	rc
-     142/      3D :                     
-     143/      3D :                     ; *********************************************************************************************************************
-     144/      3D :                     
-     145/      3D :                     FW_Dup:												; <<DUP>>, duplicate top of stack
-     146/      3D : F0                  		ldx 										; read top of stack.
-     147/      3E : 30 58               		br 		_PushD
-     148/      40 :                     
-     149/      40 :                     ; *********************************************************************************************************************
-     150/      40 :                     
-     151/      40 : 13                  FW_Over:inc 	rDStack 							; point to 2nd value
-     152/      41 : F0                  		ldx 										; read value
-     153/      42 : 23                  		dec 	rDStack 							; unpick increment
-     154/      43 : 30 58               		br 		_PushD
-     155/      45 :                     
-     156/      45 :                     ; *********************************************************************************************************************
-     157/      45 :                     
-     158/      45 :                     FW_Negate: 											; <<0->>Word, negates top of stack
-     159/      45 : 43                  		lda 	rDStack
-     160/      46 : 23                  		dec 	rDStack
-     161/      47 : FD 00               		sdi 	0
-     162/      49 : 30 59               		br 		_SaveD
-     163/      4B :                     
-     164/      4B :                     ; *********************************************************************************************************************
-     165/      4B :                     
-     166/      4B :                     FW_EqualZero:										; <<0=>> Word, sets to 1 if TOS zero 0 otherwise.
-     167/      4B : 43                  		lda 	rDStack 							; get TOS
-     168/      4C : 32 56               		bz 		FW_1 								; if zero, push 1 else push 0 (fall through)
-     169/      4E :                     
-     170/      4E :                     ; *********************************************************************************************************************
-     171/      4E :                     
-     172/      4E :                     FW_0:	
-     173/      4E : 9F                  		ghi 	rf 									; <<0>> Word, pushes 0 on stack.
-     174/      4F : 30 58               		br 		_PushD
-     175/      51 :                     
-     176/      51 :                     ; *********************************************************************************************************************
-     177/      51 :                     
-     178/      51 :                     FW_LessZero:										; <<0<>> Word, push 1 if negative else push 0
-     179/      51 : 43                  		lda 	rDStack 							; get TOS
-     180/      52 : FA 80               		ani 	080h								; look at the sign bit.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/19/2016 12:22:55
+     121/      3B : 43                  		lda 	rDStack								; read address
+     122/      3C : A5                  		plo 	rVariables 							; rVariables points to it
+     123/      3D : 43                  		lda 	rDStack 							; read data
+     124/      3E : E5                  		sex 	rVariables
+     125/      3F : F4                  		add 										; add to memory
+     126/      40 : E3                  		sex 	rDStack
+     127/      41 : 55                  		str 	rVariables 							; write it.
+     128/      42 : DC                  		sep 	rc
+     129/      43 :                     
+     130/      43 :                     ; *********************************************************************************************************************
+     131/      43 :                     
+     132/      43 :                     FW_Inc:												; <<1+>> Increment
+     133/      43 : F8 01               		ldi 	1
+     134/      45 : 30 53               		br 		__AddWr
+     135/      47 :                     
+     136/      47 :                     ; *********************************************************************************************************************
+     137/      47 :                     
+     138/      47 :                     FW_Dec:												; <<1->> Increment
+     139/      47 : F8 FF               		ldi 	0FFh
+     140/      49 : 30 53               		br 		__AddWr
+     141/      4B :                     
+     142/      4B :                     ; *********************************************************************************************************************
+     143/      4B :                     
+     144/      4B :                     FW_ShiftR:											; <<2/>> Shift right
+     145/      4B : F0                  		ldx  										; read it
+     146/      4C : F6                  		shr 										; shift right
+     147/      4D : 30 87               		br 		_SaveD 								; write back.
+     148/      4F :                     
+     149/      4F :                     ; *********************************************************************************************************************
+     150/      4F :                     
+     151/      4F :                     FW_ShiftL:											; <<2*>> Shift left
+     152/      4F : F0                  		ldx 										; read tos
+     153/      50 : 30 53               		br 		__AddWr 							; add it to itself.
+     154/      52 :                     
+     155/      52 :                     ; *********************************************************************************************************************
+     156/      52 :                     
+     157/      52 :                     FW_Add:												; <<+>> add top of stack values.
+     158/      52 : 43                  		lda 	rDStack 							; read TOS
+     159/      53 : F4                  __AddWr:add
+     160/      54 : 30 87               		br 		_SaveD
+     161/      56 :                     
+     162/      56 :                     ; *********************************************************************************************************************
+     163/      56 :                     
+     164/      56 :                     FW_Sub:												; <<->> sub top of stack values.
+     165/      56 : 43                  		lda 	rDStack 							; read TOS
+     166/      57 : F5                  		sd
+     167/      58 : 30 87               		br 		_SaveD
+     168/      5A :                     
+     169/      5A :                     ; *********************************************************************************************************************
+     170/      5A :                     
+     171/      5A :                     FW_And:												; <<and>> and top of stack values.
+     172/      5A : 43                  		lda 	rDStack 							; read TOS
+     173/      5B : F2                  		and
+     174/      5C : 30 87               		br 		_SaveD
+     175/      5E :                     
+     176/      5E :                     ; *********************************************************************************************************************
+     177/      5E :                     
+     178/      5E :                     FW_Or:												; <<or>> or top of stack values.
+     179/      5E : 43                  		lda 	rDStack 							; read TOS
+     180/      5F : F1                  		or
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/19/2016 15:20:10
 
 
-     181/      54 : 32 4E               		bz 		FW_0 								; if +ve push 0 else drop through and push 1.
-     182/      56 :                     
-     183/      56 :                     ; *********************************************************************************************************************
-     184/      56 :                     
-     185/      56 :                     FW_1:	
-     186/      56 : F8 01               		ldi 	1 									; <<1>> Word, pushes 1 on stack
-     187/      58 :                     
-     188/      58 : 23                  _PushD:	dec 	rDStack 							; push on stack.
-     189/      59 : 53                  _SaveD:	str 	rDStack
-     190/      5A : DC                  		sep 	rc
-     191/      5B :                     
-     192/      5B :                     ; *********************************************************************************************************************
-     193/      5B :                     
-     194/      5B :                     FW_Minus1:	
-     195/      5B : F8 FF               		ldi 	0FFh								; <<-1>> Word, pushes -1 on stack.
-     196/      5D : 30 58               		br 		_PushD
-     197/      5F :                     
-     198/      5F :                     ; *********************************************************************************************************************
-     199/      5F :                     
-     200/      5F :                     FW_Swap:											; <<SWAP>> swap tos values.
-     201/      5F : 43                  		lda 	rDStack 							; read TOS, save in RE.0
-     202/      60 : AE                  		plo 	re
-     203/      61 : F0                  		ldx 										; read new TOS save in RE.1
-     204/      62 : BE                  		phi 	re
-     205/      63 : 8E                  		glo 	re 									; get value that is written
-     206/      64 : 53                  		str 	rDStack
-     207/      65 : 9E                  		ghi 	re 									; get value to push
-     208/      66 : 30 58               		br 		_PushD
-     209/      68 :                     
-     210/      68 :                     ; *********************************************************************************************************************
-     211/      68 :                     
-     212/      68 : 30 68               FW_Stop:br 		FW_Stop								; <<STOP>> word
-     213/      6A :                     
-     214/      6A :                     ; *********************************************************************************************************************
-     215/      6A :                     ;
-     216/      6A :                     ;											Start up uForth interpreter
-     217/      6A :                     ;
-     218/      6A :                     ; *********************************************************************************************************************
-     219/      6A :                     
-     220/      FE :                     		org 	0FEh
-     221/      FE : 90                  Boot:	ghi 	r0 									; reset R2, the return stack, R0.1 will be zero at $00FE.
-     222/      FF : A2                  		plo 	rRStack
-     223/     100 : F8 07               		ldi 	videoMemory / 256
-     224/     102 : B2                  		phi 	rRStack											
-     225/     103 : 22                  		dec 	rRStack 							; start at byte below screen
-     226/     104 :                     
-     227/     104 : 92                  		ghi 	rRStack 							; reset high pointer R3 (data stack) and R5 (variable pointer) 
-     228/     105 : B3                  		phi 	rDStack
-     229/     106 : B5                  		phi 	rVariables
-     230/     107 :                     
-     231/     107 : (MACRO)             		lri 	rf,ProgramCode 						; reset R4, the program pointer, to the start of the code
-     231/     107 : F8 4A                               ldi (PROGRAMCODE) & 255
-     231/     109 : AF                                  plo RF
-     231/     10A : F8 01                               ldi (PROGRAMCODE) / 256
-     231/     10C : BF                                  phi RF
-     232/     10D : 4F                  		lda 	rf 									; RF now points to the address of the start, read it into R4
-     233/     10E : B4                  		phi 	rProgram
-     234/     10F : 4F                  		lda 	rf
-     235/     110 : A4                  		plo 	rProgram 						
-     236/     111 : 4F                  		lda 	rf 									; read stack bottom
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/19/2016 12:22:55
+     181/      60 : 30 87               		br 		_SaveD
+     182/      62 :                     
+     183/      62 :                     ; *********************************************************************************************************************
+     184/      62 :                     
+     185/      62 :                     FW_Xor:												; <<xor>> xor top of stack values.
+     186/      62 : 43                  		lda 	rDStack 							; read TOS
+     187/      63 : F3                  		xor
+     188/      64 : 30 87               		br 		_SaveD
+     189/      66 :                     
+     190/      66 :                     ; *********************************************************************************************************************
+     191/      66 :                     
+     192/      66 :                     FW_Literal:											; <<LITERAL>>, code loads literal to TOS
+     193/      66 : 44                  		lda 	rProgram 							; read the literal in
+     194/      67 : 30 86               		br 		_PushD 								; push on stack
+     195/      69 :                     
+     196/      69 :                     ; *********************************************************************************************************************
+     197/      69 :                     
+     198/      69 :                     FW_Drop:											; <<DROP>>, drops top of stack.
+     199/      69 : 43                  		lda 	rDStack 							
+     200/      6A : DC                  		sep 	rc
+     201/      6B :                     
+     202/      6B :                     ; *********************************************************************************************************************
+     203/      6B :                     
+     204/      6B :                     FW_Dup:												; <<DUP>>, duplicate top of stack
+     205/      6B : F0                  		ldx 										; read top of stack.
+     206/      6C : 30 86               		br 		_PushD
+     207/      6E :                     
+     208/      6E :                     ; *********************************************************************************************************************
+     209/      6E :                     
+     210/      6E : 13                  FW_Over:inc 	rDStack 							; point to 2nd value
+     211/      6F : F0                  		ldx 										; read value
+     212/      70 : 23                  		dec 	rDStack 							; unpick increment
+     213/      71 : 30 86               		br 		_PushD
+     214/      73 :                     
+     215/      73 :                     ; *********************************************************************************************************************
+     216/      73 :                     
+     217/      73 :                     FW_Negate: 											; <<0->>Word, negates top of stack
+     218/      73 : 43                  		lda 	rDStack
+     219/      74 : 23                  		dec 	rDStack
+     220/      75 : FD 00               		sdi 	0
+     221/      77 : 30 87               		br 		_SaveD
+     222/      79 :                     
+     223/      79 :                     ; *********************************************************************************************************************
+     224/      79 :                     
+     225/      79 :                     FW_EqualZero:										; <<0=>> Word, sets to 1 if TOS zero 0 otherwise.
+     226/      79 : 43                  		lda 	rDStack 							; get TOS
+     227/      7A : 32 84               		bz 		FW_1 								; if zero, push 1 else push 0 (fall through)
+     228/      7C :                     
+     229/      7C :                     ; *********************************************************************************************************************
+     230/      7C :                     
+     231/      7C :                     FW_0:	
+     232/      7C : 9F                  		ghi 	rf 									; <<0>> Word, pushes 0 on stack.
+     233/      7D : 30 86               		br 		_PushD
+     234/      7F :                     
+     235/      7F :                     ; *********************************************************************************************************************
+     236/      7F :                     
+     237/      7F :                     FW_LessZero:										; <<0<>> Word, push 1 if negative else push 0
+     238/      7F : 43                  		lda 	rDStack 							; get TOS
+     239/      80 : FA 80               		ani 	080h								; look at the sign bit.
+     240/      82 : 32 7C               		bz 		FW_0 								; if +ve push 0 else drop through and push 1.
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/19/2016 15:20:10
 
 
-     237/     112 : A3                  		plo 	rDStack
-     238/     113 :                     
-     239/     113 : (MACRO)             		lri 	rc,ExecuteCompiledWord 				; RC points to the code to execute the word at R4.
-     239/     113 : F8 21                               ldi (EXECUTECOMPILEDWORD) & 255
-     239/     115 : AC                                  plo RC
-     239/     116 : F8 01                               ldi (EXECUTECOMPILEDWORD) / 256
-     239/     118 : BC                                  phi RC
-     240/     119 : (MACRO)             		lri 	rd,ExecuteDefinedWord 				; RD points to the code to execute a new definition.
-     240/     119 : F8 3D                               ldi (EXECUTEDEFINEDWORD) & 255
-     240/     11B : AD                                  plo RD
-     240/     11C : F8 01                               ldi (EXECUTEDEFINEDWORD) / 256
-     240/     11E : BD                                  phi RD
-     241/     11F : E3                  		sex  	rDStack 							; R3 points to data stack.
-     242/     120 : DC                  		sep 	rc 									; and start.
-     243/     121 :                     
-     244/     121 :                     ; *************************************************************************************************************************
-     245/     121 :                     ;
-     246/     121 :                     ;	Execute the word at (R4). This is either a 1 byte call (00-F7) or a 2 byte call (F8-FF) nn
-     247/     121 :                     ;	Runs in RC.
-     248/     121 :                     ;
-     249/     121 :                     ; *************************************************************************************************************************
-     250/     121 :                     
-     251/     121 :                     ExecuteCompiledWord:
-     252/     121 : 44                  		lda 	rProgram 								; get the next instruction to execute.
-     253/     122 : FC 08               		adi 	8 									; will cause a carry (DF = 1) for F8-FF
-     254/     124 : 33 31               		bdf 	ECW_LongAddress 					; which means it's a long address
-     255/     126 :                     
-     256/     126 : FF 08               		smi 	8 									; fix back to original value
-     257/     128 : 32 37               		bz 		ECW_Return 							; if it was $00 that's a return.
-     258/     12A : AF                  		plo 	rf 									; put in RF.0
-     259/     12B : F8 00               		ldi 	0 									; set RF.1 to zero. RF now points to $000-$0F7.
-     260/     12D : BF                  		phi 	rf 									
-     261/     12E : DF                  		sep 	rf 									; run whatever is there.
-     262/     12F : 30 21               		br 		ExecuteCompiledWord 				; and when finished, do the next instruction.		
-     263/     131 :                     ;
-     264/     131 :                     ECW_LongAddress:									; 11 bit address
-     265/     131 : BF                  		phi 	rf 									; it will be 00-07 after the add, so this is the upper byte in RF.1
-     266/     132 : 44                  		lda 	rProgram 							; get the lower byte
-     267/     133 : AF                  		plo 	rf 									; put in RF.0
-     268/     134 : DF                  		sep 	rf 									; run whatever is there.
-     269/     135 : 30 21               		br 		ExecuteCompiledWord 				; and when finished, do the next instruction.		
-     270/     137 :                     ;
-     271/     137 :                     ECW_Return:
-     272/     137 : 42                  		lda 	rRStack 							; retrieve the saved return address and put back in R4
-     273/     138 : A4                  		plo 	rProgram
-     274/     139 : 42                  		lda 	rRStack
-     275/     13A : B4                  		phi 	rProgram
-     276/     13B : 30 21               		br 		ExecuteCompiledWord 				; and go do it.
-     277/     13D :                     
-     278/     13D :                     ; *************************************************************************************************************************
-     279/     13D :                     ;
-     280/     13D :                     ;	If the word executed via the SEP RFs is a compiled word, it will execute and be ended via SEP RC, which will execute
-     281/     13D :                     ; 	the next word. 
-     282/     13D :                     ;
-     283/     13D :                     ;	If it is a sequence of commands the first instruction will be SEP RD, which will come here (with RF pointing to the
-     284/     13D :                     ;	new code to execute)
-     285/     13D :                     ;
-     286/     13D :                     ; *************************************************************************************************************************
-     287/     13D :                     
-     288/     13D :                     ExecuteDefinedWord:
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/19/2016 12:22:55
+     241/      84 :                     
+     242/      84 :                     ; *********************************************************************************************************************
+     243/      84 :                     
+     244/      84 :                     FW_1:	
+     245/      84 : F8 01               		ldi 	1 									; <<1>> Word, pushes 1 on stack
+     246/      86 :                     
+     247/      86 : 23                  _PushD:	dec 	rDStack 							; push on stack.
+     248/      87 : 53                  _SaveD:	str 	rDStack
+     249/      88 : DC                  		sep 	rc
+     250/      89 :                     
+     251/      89 :                     ; *********************************************************************************************************************
+     252/      89 :                     
+     253/      89 :                     FW_Minus1:	
+     254/      89 : F8 FF               		ldi 	0FFh								; <<-1>> Word, pushes -1 on stack.
+     255/      8B : 30 86               		br 		_PushD
+     256/      8D :                     
+     257/      8D :                     ; *********************************************************************************************************************
+     258/      8D :                     
+     259/      8D :                     FW_Swap:											; <<SWAP>> swap tos values.
+     260/      8D : 43                  		lda 	rDStack 							; read TOS, save in RE.0
+     261/      8E : AE                  		plo 	re
+     262/      8F : F0                  		ldx 										; read new TOS save in RE.1
+     263/      90 : BE                  		phi 	re
+     264/      91 : 8E                  		glo 	re 									; get value that is written
+     265/      92 : 53                  		str 	rDStack
+     266/      93 : 9E                  		ghi 	re 									; get value to push
+     267/      94 : 30 86               		br 		_PushD
+     268/      96 :                     
+     269/      96 :                     ; *********************************************************************************************************************
+     270/      96 :                     
+     271/      96 : 30 96               FW_Stop:br 		FW_Stop								; <<STOP>> word
+     272/      98 :                     
+     273/      98 :                     ; *********************************************************************************************************************
+     274/      98 :                     ;
+     275/      98 :                     ;											Start up uForth interpreter
+     276/      98 :                     ;
+     277/      98 :                     ; *********************************************************************************************************************
+     278/      98 :                     
+     279/      FE :                     		org 	0FEh
+     280/      FE : 90                  Boot:	ghi 	r0 									; reset R2, the return stack, R0.1 will be zero at $00FE.
+     281/      FF : A2                  		plo 	rRStack
+     282/     100 : F8 07               		ldi 	videoMemory / 256
+     283/     102 : B2                  		phi 	rRStack											
+     284/     103 : 22                  		dec 	rRStack 							; start at byte below screen
+     285/     104 :                     
+     286/     104 : 92                  		ghi 	rRStack 							; reset high pointer R3 (data stack) and R5 (variable pointer) 
+     287/     105 : B3                  		phi 	rDStack
+     288/     106 : B5                  		phi 	rVariables
+     289/     107 :                     
+     290/     107 : (MACRO)             		lri 	rf,ProgramCode 						; reset R4, the program pointer, to the start of the code
+     290/     107 : F8 4A                               ldi (PROGRAMCODE) & 255
+     290/     109 : AF                                  plo RF
+     290/     10A : F8 01                               ldi (PROGRAMCODE) / 256
+     290/     10C : BF                                  phi RF
+     291/     10D : 4F                  		lda 	rf 									; RF now points to the address of the start, read it into R4
+     292/     10E : B4                  		phi 	rProgram
+     293/     10F : 4F                  		lda 	rf
+     294/     110 : A4                  		plo 	rProgram 						
+     295/     111 : 4F                  		lda 	rf 									; read stack bottom
+     296/     112 : A3                  		plo 	rDStack
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/19/2016 15:20:10
 
 
-     289/     13D : 22                  		dec 	rRStack 							; push R4, the program pointer on the return stack
-     290/     13E : 94                  		ghi 	rProgram
-     291/     13F : 52                  		str 	rRStack
-     292/     140 : 22                  		dec 	rRStack
-     293/     141 : 84                  		glo 	rProgram
-     294/     142 : 52                  		str 	rRStack
-     295/     143 :                     
-     296/     143 : 9F                  		ghi 	rf 									; it was run in R4 (the SEP RD command), so RD will contain the next
-     297/     144 : B4                  		phi 	rProgram 							; instruction, which we copy into R4
-     298/     145 : 8F                  		glo 	rf
-     299/     146 : A4                  		plo 	rProgram
-     300/     147 : DC                  		sep 	rc 									; and run "ExecuteCompiledWord"
-     301/     148 : 30 3D               		br 		ExecuteDefinedWord 					; this is re-entrant.
-     302/     14A :                     
-     303/     14A :                     ProgramCode:
-     304/     14A : 01 4D               		dw 		Start
-     305/     14C : A0                  		db 		0A0h
-     306/     14D :                     Start:	
-     307/     14D : 38 2A 38 21 5F      		db 	FW_Literal,42,FW_Literal,33,FW_Swap
-     308/     152 : 68                  		db 	FW_Stop
-     309/     153 :                     
-     310/     153 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/19/2016 12:22:55
+     297/     113 :                     
+     298/     113 : (MACRO)             		lri 	rc,ExecuteCompiledWord 				; RC points to the code to execute the word at R4.
+     298/     113 : F8 21                               ldi (EXECUTECOMPILEDWORD) & 255
+     298/     115 : AC                                  plo RC
+     298/     116 : F8 01                               ldi (EXECUTECOMPILEDWORD) / 256
+     298/     118 : BC                                  phi RC
+     299/     119 : (MACRO)             		lri 	rd,ExecuteDefinedWord 				; RD points to the code to execute a new definition.
+     299/     119 : F8 3D                               ldi (EXECUTEDEFINEDWORD) & 255
+     299/     11B : AD                                  plo RD
+     299/     11C : F8 01                               ldi (EXECUTEDEFINEDWORD) / 256
+     299/     11E : BD                                  phi RD
+     300/     11F : E3                  		sex  	rDStack 							; R3 points to data stack.
+     301/     120 : DC                  		sep 	rc 									; and start.
+     302/     121 :                     
+     303/     121 :                     ; *************************************************************************************************************************
+     304/     121 :                     ;
+     305/     121 :                     ;	Execute the word at (R4). This is either a 1 byte call (00-F7) or a 2 byte call (F8-FF) nn
+     306/     121 :                     ;	Runs in RC.
+     307/     121 :                     ;
+     308/     121 :                     ; *************************************************************************************************************************
+     309/     121 :                     
+     310/     121 :                     ExecuteCompiledWord:
+     311/     121 : 44                  		lda 	rProgram 								; get the next instruction to execute.
+     312/     122 : FC 08               		adi 	8 									; will cause a carry (DF = 1) for F8-FF
+     313/     124 : 33 31               		bdf 	ECW_LongAddress 					; which means it's a long address
+     314/     126 :                     
+     315/     126 : FF 08               		smi 	8 									; fix back to original value
+     316/     128 : 32 37               		bz 		ECW_Return 							; if it was $00 that's a return.
+     317/     12A : AF                  		plo 	rf 									; put in RF.0
+     318/     12B : F8 00               		ldi 	0 									; set RF.1 to zero. RF now points to $000-$0F7.
+     319/     12D : BF                  		phi 	rf 									
+     320/     12E : DF                  		sep 	rf 									; run whatever is there.
+     321/     12F : 30 21               		br 		ExecuteCompiledWord 				; and when finished, do the next instruction.		
+     322/     131 :                     ;
+     323/     131 :                     ECW_LongAddress:									; 11 bit address
+     324/     131 : BF                  		phi 	rf 									; it will be 00-07 after the add, so this is the upper byte in RF.1
+     325/     132 : 44                  		lda 	rProgram 							; get the lower byte
+     326/     133 : AF                  		plo 	rf 									; put in RF.0
+     327/     134 : DF                  		sep 	rf 									; run whatever is there.
+     328/     135 : 30 21               		br 		ExecuteCompiledWord 				; and when finished, do the next instruction.		
+     329/     137 :                     ;
+     330/     137 :                     ECW_Return:
+     331/     137 : 42                  		lda 	rRStack 							; retrieve the saved return address and put back in R4
+     332/     138 : A4                  		plo 	rProgram
+     333/     139 : 42                  		lda 	rRStack
+     334/     13A : B4                  		phi 	rProgram
+     335/     13B : 30 21               		br 		ExecuteCompiledWord 				; and go do it.
+     336/     13D :                     
+     337/     13D :                     ; *************************************************************************************************************************
+     338/     13D :                     ;
+     339/     13D :                     ;	If the word executed via the SEP RFs is a compiled word, it will execute and be ended via SEP RC, which will execute
+     340/     13D :                     ; 	the next word. 
+     341/     13D :                     ;
+     342/     13D :                     ;	If it is a sequence of commands the first instruction will be SEP RD, which will come here (with RF pointing to the
+     343/     13D :                     ;	new code to execute)
+     344/     13D :                     ;
+     345/     13D :                     ; *************************************************************************************************************************
+     346/     13D :                     
+     347/     13D :                     ExecuteDefinedWord:
+     348/     13D : 22                  		dec 	rRStack 							; push R4, the program pointer on the return stack
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/19/2016 15:20:10
+
+
+     349/     13E : 94                  		ghi 	rProgram
+     350/     13F : 52                  		str 	rRStack
+     351/     140 : 22                  		dec 	rRStack
+     352/     141 : 84                  		glo 	rProgram
+     353/     142 : 52                  		str 	rRStack
+     354/     143 :                     
+     355/     143 : 9F                  		ghi 	rf 									; it was run in R4 (the SEP RD command), so RD will contain the next
+     356/     144 : B4                  		phi 	rProgram 							; instruction, which we copy into R4
+     357/     145 : 8F                  		glo 	rf
+     358/     146 : A4                  		plo 	rProgram
+     359/     147 : DC                  		sep 	rc 									; and run "ExecuteCompiledWord"
+     360/     148 : 30 3D               		br 		ExecuteDefinedWord 					; this is re-entrant.
+     361/     14A :                     
+     362/     14A :                     ProgramCode:
+     363/     14A : 01 4D               		dw 		Start
+     364/     14C : A0                  		db 		0A0h
+     365/     14D :                     Start:	
+     366/     14D : 7C                  		db 	FW_0
+     367/     14E : 02 FD               		db  FW_0BR,0FDh
+     368/     150 : 96                  		db 	FW_Stop
+     369/     151 :                     
+     370/     151 :                     
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/19/2016 15:20:10
 
 
   symbol table (* = unused):
@@ -350,42 +413,45 @@
 *DATE :                   7/19/2016 - |  ECW_LONGADDRESS :              131 C |
  ECW_RETURN :                   137 C |  EXECUTECOMPILEDWORD :          121 C |
  EXECUTEDEFINEDWORD :           13D C | *FALSE :                          0 - |
-*FULLPMMU :                       1 - |  FW_0 :                          4E C |
- FW_1 :                          56 C | *FW_ADD :                        24 C |
-*FW_ADDSTORE :                    D C | *FW_AND :                        2C C |
-*FW_DEC :                        19 C | *FW_DROP :                       3B C |
-*FW_DUP :                        3D C | *FW_EQUALZERO :                  4B C |
-*FW_INC :                        15 C | *FW_LESSZERO :                   51 C |
- FW_LITERAL :                    38 C | *FW_MINUS1 :                     5B C |
-*FW_NEGATE :                     45 C | *FW_OR :                         30 C |
-*FW_OVER :                       40 C | *FW_READ :                        2 C |
-*FW_SHIFTL :                     21 C | *FW_SHIFTR :                     1D C |
- FW_STOP :                       68 C | *FW_STORE :                       8 C |
-*FW_SUB :                        28 C |  FW_SWAP :                       5F C |
-*FW_XOR :                        34 C | *HAS64 :                          1 - |
-*HASDSP :                         0 - | *HASFPU :                         0 - |
-*HASPMMU :                        0 - | *INEXTMODE :                      0 - |
-*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
-*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
-*LISTON :                         1 - | *MACEXP :                         1 - |
-*MOMCPU :                      1802 - | *MOMCPUNAME :                  1802 - |
-*NESTMAX :                      100 - | *PACKING :                        0 - |
-*PADDING :                        1 - |  PROGRAMCODE :                  14A C |
- R0 :                             0 - |  RC :                             C - |
- RD :                             D - |  RDSTACK :                        3 - |
- RE :                             E - | *RELAXED :                        0 - |
- RF :                             F - | *RINTERRUPT :                     1 - |
- RPROGRAM :                       4 - |  RRSTACK :                        2 - |
- RVARIABLES :                     5 - |  START :                        14D C |
-*TIME :                    12:22:55 - | *TRUE :                           1 - |
-*VERSION :                     142F - |  VIDEOMEMORY :                  700 - |
- _PUSHD :                        58 C |  _SAVED :                        59 C |
- __ADDWR :                       25 C |
+*FULLPMMU :                       1 - |  FW_0 :                          7C C |
+ FW_0BR :                         2 C |  FW_1 :                          84 C |
+*FW_ADD :                        52 C | *FW_ADDSTORE :                   3B C |
+*FW_AND :                        5A C | *FW_DEC :                        47 C |
+*FW_DROP :                       69 C | *FW_DUP :                        6B C |
+*FW_EQUALZERO :                  79 C | *FW_FROMR :                      23 C |
+*FW_INC :                        43 C | *FW_LESSZERO :                   7F C |
+*FW_LITERAL :                    66 C | *FW_MINUS1 :                     89 C |
+*FW_NEGATE :                     73 C | *FW_OR :                         5E C |
+*FW_OVER :                       6E C | *FW_READ :                       30 C |
+*FW_SHIFTL :                     4F C | *FW_SHIFTR :                     4B C |
+ FW_STOP :                       96 C | *FW_STORE :                      36 C |
+*FW_SUB :                        56 C | *FW_SWAP :                       8D C |
+*FW_TOR :                        29 C | *FW_XOR :                        62 C |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - | *LISTON :                         1 - |
+*MACEXP :                         1 - | *MOMCPU :                      1802 - |
+*MOMCPUNAME :                  1802 - | *NESTMAX :                      100 - |
+*PACKING :                        0 - | *PADDING :                        1 - |
+ PROGRAMCODE :                  14A C |  R0 :                             0 - |
+ RC :                             C - |  RD :                             D - |
+ RDSTACK :                        3 - |  RE :                             E - |
+*RELAXED :                        0 - |  RF :                             F - |
+*RINTERRUPT :                     1 - |  RPROGRAM :                       4 - |
+ RRSTACK :                        2 - |  RVARIABLES :                     5 - |
+ START :                        14D C | *TIME :                    15:20:10 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+ VIDEOMEMORY :                  700 - |  _PUSHD :                        86 C |
+ _SAVED :                        87 C |  __0BR_BACKWARDS :               19 C |
+ __0BR_EXIT :                    17 C |  __0BR_SAVER41EXIT :             16 C |
+ __ADDWR :                       53 C |  __RETURN :                      2F C |
 
-     73 symbols
-     48 unused symbols
+     80 symbols
+     52 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/19/2016 12:22:55
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/19/2016 15:20:10
 
 
   defined macros:
@@ -395,7 +461,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/19/2016 12:22:55
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/19/2016 15:20:10
 
 
   codepages:
@@ -404,10 +470,10 @@ LRI                                   |
 STANDARD (0 changed characters)
 
 
-0.01 seconds assembly time
+0.00 seconds assembly time
 
-    310 lines source file
-    322 lines incl. macro expansions
+    370 lines source file
+    382 lines incl. macro expansions
       2 passes
       0 errors
       0 warnings
