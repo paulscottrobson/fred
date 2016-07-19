@@ -90,7 +90,7 @@ BYTE8 CPUExecuteInstruction(void) {
 
 	cycles = cycles + 2;															// 2 cycles per instruction
 	if (cycles < maxCycles) return 0;												// Not completed a frame.
-	if (IE != 0) {																	// Fire interrupt if it is enabled.
+	if (IE != 0 && HWIIsScreenOn()) {												// Fire interrupt if it is enabled.
 		INTERRUPT();
 	}
 	R[0] = HWIEndFrame(R[0],CRYSTAL_CLOCK);											// End of Frame code, setting R0 correctly.

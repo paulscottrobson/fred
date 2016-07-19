@@ -30,7 +30,6 @@ lri 	macro r,n 									; macro to load register.
 
 videoMemory = 0700h 								; 64 x 32 Video RAM.
 													; return stack R2 works down from this.
-dataStack = 06C0h 									; data stack starts here in stack page and works down.
 
 		br 		Boot 								; <<;>> skip over machine code. Also defines return (;) as $00
 
@@ -225,17 +224,17 @@ Boot:	ghi 	r0 									; reset R2, the return stack, R0.1 will be zero at $00FE.
 		phi 	rRStack											
 		dec 	rRStack 							; start at byte below screen
 
-		ghi 	rRStack 							; reset R3, the data stack and set the upper byte of the variable pointer.
+		ghi 	rRStack 							; reset high pointer R3 (data stack) and R5 (variable pointer) 
 		phi 	rDStack
 		phi 	rVariables
-		ldi 	dataStack & 255
-		plo 	rDStack 
 
 		lri 	rf,ProgramCode 						; reset R4, the program pointer, to the start of the code
 		lda 	rf 									; RF now points to the address of the start, read it into R4
 		phi 	rProgram
 		lda 	rf
 		plo 	rProgram 						
+		lda 	rf 									; read stack bottom
+		plo 	rDStack
 
 		lri 	rc,ExecuteCompiledWord 				; RC points to the code to execute the word at R4.
 		lri 	rd,ExecuteDefinedWord 				; RD points to the code to execute a new definition.
@@ -303,7 +302,7 @@ ExecuteDefinedWord:
 
 ProgramCode:
 		dw 		Start
-
+		db 		0A0h
 Start:	
 		db 	FW_Literal,42,FW_Literal,33,FW_Swap
 		db 	FW_Stop
