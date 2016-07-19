@@ -1,11 +1,15 @@
+; *********************************************************************************************************************
+; *********************************************************************************************************************
 ;
+;		Core Runtime and Interpreter. Has a collection of 1801 code primitives, the bytecode interpreter and
+;		the FRED display driver. 
 ;
-;	Interrupt routine, 
-;	In and Out (?)
-;	0> = ?DUP 2 4 8 16 PICK ROT
-;   Start address needs redoing.
+;		Words in core are indicated by [[word]] in the comments, and are extracted from the list file.
+; 		(so memory is not wasted storing the word name)
 ;
-;
+; *********************************************************************************************************************
+; *********************************************************************************************************************
+
 		cpu 1802 									; actually it is a 1801.
 
 r0 = 0 												
@@ -15,10 +19,11 @@ rDStack = 3 										; data stack (R3)
 rProgram = 4 										; program code pointer (R4)
 rVariables = 5 										; points to variables (R5)
 
-rc = 12
-rd = 13
-re = 14
-rf = 15
+rCounter = 11 										; interrupt counter
+rc = 12 											; execute instruction at r4
+rd = 13 											; makes instruction byte code
+re = 14 											; general temporary register
+rf = 15 											; pc register when running 1801 code.
 
 lri 	macro r,n 									; macro to load register.
 		ldi (n) & 255
@@ -27,21 +32,76 @@ lri 	macro r,n 									; macro to load register.
 		phi r
 		endm
 
-videoMemory = 0700h 								; 64 x 32 Video RAM.
-													; return stack R2 works down from this.
+videoMemory = 0700h 								; 64 x 32 Video RAM. Data memory is in the page below.
+dataMemory = 0600h									; data memory page.
 
-		br 		Boot 								; <<;>> skip over machine code. Also defines return (;) as $00
+		br 		Boot 								; [[;]] skip over machine code. Also defines return (;) as $00
 
 ; *********************************************************************************************************************
 ;
-;											Forth 1801 assembler primitives
+;								Forth 1801 assembler primitives (optimisable for 1802)
 ;
-;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap,R>,>R,0>,0BR.;
+;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap,R>,>R,0>,0BR,;,?DUP,ROT,0>,=,Pick
 ; *********************************************************************************************************************
+;					Note some of these drop through, so the order is important in some cases
+; *********************************************************************************************************************
+
+FW_In:	ldi 	068h								; [[PORT>]] input from port
+		br 		FW_IO
+FW_Out:	ldi 	060h 								; [[>PORT]] output to port.
+
+FW_IO:	plo 	re 									; save in RE.0
+
+		dec 	rRStack	 							; push $DC (SEP RC) on return stack.
+		ldi 	0DCh 								
+		str 	rRStack
+
+		glo 	re 									; get instruction base (INP or OUT)
+		or 											; or with the port number
+		dec 	rRStack 							; push on rstack
+		str 	rRStack
+
+		ani 	008h 								; if IN, we need the old stack element for the result so we don't 
+		bnz 	__IO_DoIt 							; do this INC, which is throwing away the port address
+		inc 	rDStack 							; for OUT this leaves the data to be outed which post increments
+__IO_DoIt:
+		sep 	rRStack 							; run the code on the stack.
 
 ; *********************************************************************************************************************
 
-FW_0BR: 											; <<0BR>> if pop = 0 then advance by <next> (7 bit signed)
+FW_Pick:
+		glo 	rDStack								; add TOS to DStack into RE
+		add 
+		plo 	re
+		ghi 	rDStack
+		phi 	re
+		lda 	re 									; get the picked value
+		str 	rDStack 							; save at TOS
+		sep 	rc 									; and exit
+
+; *********************************************************************************************************************
+
+FW_ROT:												; [[ROT]] rotate top 3 n1 n2 n3 -> n2 n3 n1
+		lda 	rDStack 							; get n3
+		plo 	re
+		ldx 										; get n2
+		phi 	re
+		glo 	re 									; get n3
+		str 	rDStack 							; save where n2 was
+		inc 	rDStack 							; point to n1
+		ldx 										; read n1
+		plo 	re 									; save in RE.0
+		ghi 	re 									; get n2
+		str 	rDStack 							; save where n1 was
+		dec 	rDStack 							; point r3 back to start
+		dec 	rDStack
+		glo 	re 									; get n1
+		str 	rDStack
+		sep 	rc
+
+; *********************************************************************************************************************
+
+FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
 		lda 	rProgram 							; read offset into RE.0
 		plo 	re 
 
@@ -78,7 +138,7 @@ __0BR_Backwards:
 
 ; *********************************************************************************************************************
 
-FW_FromR:											; <<R>>> return stack to data stack
+FW_FromR:											; [[R>]] return stack to data stack
 		lda 	rRStack
 		dec 	rDStack
 		str 	rDStack
@@ -87,7 +147,7 @@ FW_FromR:											; <<R>>> return stack to data stack
 
 ; *********************************************************************************************************************
 
-FW_ToR:												; <<>R>> data stack to return stack
+FW_ToR:												; [[>R]] data stack to return stack
 		lda 	rDStack
 		dec 	rRStack
 		str 	rRStack
@@ -99,7 +159,7 @@ __Return:
 
 ; *********************************************************************************************************************
 
-FW_Read:	 										; <<@>> read from variable page.
+FW_Read:	 										; [[@]] read from variable page.
 		ldx 										; read address 
 		plo 	rVariables 							; point RVariables to it
 		lda 	rVariables 							; read rVariables
@@ -108,7 +168,7 @@ FW_Read:	 										; <<@>> read from variable page.
 
 ; *********************************************************************************************************************
 
-FW_Store:											; <<!>> write to variable page.
+FW_Store:											; [[!]] write to variable page.
 		lda 	rDStack								; read address
 		plo 	rVariables 							; rVariables points to it
 		lda 	rDStack 							; read data
@@ -117,7 +177,7 @@ FW_Store:											; <<!>> write to variable page.
 
 ; *********************************************************************************************************************
 
-FW_AddStore:										; <<+!>> add tos to memory
+FW_AddStore:										; [[+!]] add tos to memory
 		lda 	rDStack								; read address
 		plo 	rVariables 							; rVariables points to it
 		lda 	rDStack 							; read data
@@ -129,92 +189,98 @@ FW_AddStore:										; <<+!>> add tos to memory
 
 ; *********************************************************************************************************************
 
-FW_Inc:												; <<1+>> Increment
+FW_Inc:												; [[1+]] Increment
 		ldi 	1
 		br 		__AddWr
 
 ; *********************************************************************************************************************
 
-FW_Dec:												; <<1->> Increment
+FW_Dec:												; [[1-]] Increment
 		ldi 	0FFh
 		br 		__AddWr
 
 ; *********************************************************************************************************************
 
-FW_ShiftR:											; <<2/>> Shift right
+FW_ShiftR:											; [[2/]] Shift right
 		ldx  										; read it
 		shr 										; shift right
 		br 		_SaveD 								; write back.
 
 ; *********************************************************************************************************************
 
-FW_ShiftL:											; <<2*>> Shift left
+FW_ShiftL:											; [[2*]] Shift left
 		ldx 										; read tos
 		br 		__AddWr 							; add it to itself.
 
 ; *********************************************************************************************************************
 
-FW_Add:												; <<+>> add top of stack values.
+FW_Add:												; [[+]] add top of stack values.
 		lda 	rDStack 							; read TOS
 __AddWr:add
 		br 		_SaveD
 
 ; *********************************************************************************************************************
 
-FW_Sub:												; <<->> sub top of stack values.
+FW_Sub:												; [[-]] sub top of stack values.
 		lda 	rDStack 							; read TOS
 		sd
 		br 		_SaveD
 
 ; *********************************************************************************************************************
 
-FW_And:												; <<and>> and top of stack values.
+FW_And:												; [[and]] and top of stack values.
 		lda 	rDStack 							; read TOS
 		and
 		br 		_SaveD
 
 ; *********************************************************************************************************************
 
-FW_Or:												; <<or>> or top of stack values.
+FW_Or:												; [[or]] or top of stack values.
 		lda 	rDStack 							; read TOS
 		or
 		br 		_SaveD
 
 ; *********************************************************************************************************************
 
-FW_Xor:												; <<xor>> xor top of stack values.
+FW_Xor:												; [[xor]] xor top of stack values.
 		lda 	rDStack 							; read TOS
 		xor
 		br 		_SaveD
 
 ; *********************************************************************************************************************
 
-FW_Literal:											; <<LITERAL>>, code loads literal to TOS
+FW_Literal:											; [[LITERAL]], code loads literal to TOS
 		lda 	rProgram 							; read the literal in
 		br 		_PushD 								; push on stack
 
 ; *********************************************************************************************************************
 
-FW_Drop:											; <<DROP>>, drops top of stack.
+FW_Drop:											; [[DROP]], drops top of stack.
 		lda 	rDStack 							
 		sep 	rc
 
 ; *********************************************************************************************************************
 
-FW_Dup:												; <<DUP>>, duplicate top of stack
+FW_QDup:											; [[?DUP]] word, duplicate if non zero else drop.
+		ldx 										; look at TOS
+		bz 		__Return 							; if zero leave unchanged, else drop through to DUP.
+
+; *********************************************************************************************************************
+
+FW_Dup:												; [[DUP]], duplicate top of stack
 		ldx 										; read top of stack.
 		br 		_PushD
 
 ; *********************************************************************************************************************
 
-FW_Over:inc 	rDStack 							; point to 2nd value
+FW_Over:inc 	rDStack 							; [[OVER]] point to 2nd value
 		ldx 										; read value
 		dec 	rDStack 							; unpick increment
 		br 		_PushD
 
 ; *********************************************************************************************************************
 
-FW_Negate: 											; <<0->>Word, negates top of stack
+FW_Negate: 											; [[0-]] Word, negates top of stack
 		lda 	rDStack
 		dec 	rDStack
 		sdi 	0
@@ -222,19 +288,19 @@ FW_Negate: 											; <<0->>Word, negates top of stack
 
 ; *********************************************************************************************************************
 
-FW_EqualZero:										; <<0=>> Word, sets to 1 if TOS zero 0 otherwise.
+FW_EqualZero:										; [[0=]] Word, sets to 1 if TOS zero 0 otherwise.
 		lda 	rDStack 							; get TOS
 		bz 		FW_1 								; if zero, push 1 else push 0 (fall through)
 
 ; *********************************************************************************************************************
 
 FW_0:	
-		ghi 	rf 									; <<0>> Word, pushes 0 on stack.
+		ghi 	rf 									; [[0]] Word, pushes 0 on stack.
 		br 		_PushD
 
 ; *********************************************************************************************************************
 
-FW_LessZero:										; <<0<>> Word, push 1 if negative else push 0
+FW_LessZero:										; [[0<]] Word, push 1 if negative else push 0
 		lda 	rDStack 							; get TOS
 		ani 	080h								; look at the sign bit.
 		bz 		FW_0 								; if +ve push 0 else drop through and push 1.
@@ -242,7 +308,7 @@ FW_LessZero:										; <<0<>> Word, push 1 if negative else push 0
 ; *********************************************************************************************************************
 
 FW_1:	
-		ldi 	1 									; <<1>> Word, pushes 1 on stack
+		ldi 	1 									; [[1]] Word, pushes 1 on stack
 
 _PushD:	dec 	rDStack 							; push on stack.
 _SaveD:	str 	rDStack
@@ -250,7 +316,7 @@ _SaveD:	str 	rDStack
 
 ; *********************************************************************************************************************
 
-FW_GreaterZero:										; <<0>>> Word, push 1 if >0 else push 0
+FW_GreaterZero:										; [[0>]] Word, push 1 if >0 else push 0
 		lda 	rDStack 							; get value
 		bz 		FW_0 								; zero returns 0
 		ani 	80h									; check bit 7
@@ -260,12 +326,12 @@ FW_GreaterZero:										; <<0>>> Word, push 1 if >0 else push 0
 ; *********************************************************************************************************************
 
 FW_Minus1:	
-		ldi 	0FFh								; <<-1>> Word, pushes -1 on stack.
+		ldi 	0FFh								; [[-1]] Word, pushes -1 on stack.
 		br 		_PushD
 
 ; *********************************************************************************************************************
 
-FW_Swap:											; <<SWAP>> swap tos values.
+FW_Swap:											; [[SWAP]] swap tos values.
 		lda 	rDStack 							; read TOS, save in RE.0
 		plo 	re
 		ldx 										; read new TOS save in RE.1
@@ -277,7 +343,32 @@ FW_Swap:											; <<SWAP>> swap tos values.
 
 ; *********************************************************************************************************************
 
-FW_Stop:br 		FW_Stop								; <<STOP>> word
+FW_Equals:											; [[=]] check top two values equal
+		sep 	rd
+		db 		FW_Sub
+		db 		FW_EqualZero
+		db 		0 
+
+; *********************************************************************************************************************
+
+FW_Stop:br 		FW_Stop								; [[STOP]] word
+
+; *********************************************************************************************************************
+
+FW_Two:	ldi 	2 									; [[2]]
+		br 		_PushD
+FW_Three:	ldi 	3 								; [[3]]
+		br 		_PushD
+FW_Four:	ldi 	4 								; [[4]]
+		br 		_PushD
+FW_Eight:	ldi 8 									; [[8]]
+		br 		_PushD
+FW_Ten:	ldi 	10 									; [[10]]
+		br 		_PushD
+FW_Sixteen:	ldi 16 									; [[16]]
+		br 		_PushD
+FW_Hundred:	ldi 100 								; [[100]]
+		br 		_PushD
 
 ; *********************************************************************************************************************
 ;
@@ -285,14 +376,13 @@ FW_Stop:br 		FW_Stop								; <<STOP>> word
 ;
 ; *********************************************************************************************************************
 
-		org 	0FEh
-Boot:	ghi 	r0 									; reset R2, the return stack, R0.1 will be zero at $00FE.
+Boot:	ghi 	r0 									; reset counter
+		phi 	rCounter 							
+		plo 	rCounter
+		ldi 	dataMemory & 255 					; reset data stack
 		plo 	rRStack
-		ldi 	videoMemory / 256
+		ldi 	dataMemory / 256 					; set high address for the stacks and variable area (same page)
 		phi 	rRStack											
-		dec 	rRStack 							; start at byte below screen
-
-		ghi 	rRStack 							; reset high pointer R3 (data stack) and R5 (variable pointer) 
 		phi 	rDStack
 		phi 	rVariables
 
@@ -306,6 +396,7 @@ Boot:	ghi 	r0 									; reset R2, the return stack, R0.1 will be zero at $00FE.
 
 		lri 	rc,ExecuteCompiledWord 				; RC points to the code to execute the word at R4.
 		lri 	rd,ExecuteDefinedWord 				; RD points to the code to execute a new definition.
+		lri 	rInterrupt,Interrupt 				; R1 points to the interrupt routine.
 		sex  	rDStack 							; R3 points to data stack.
 		sep 	rc 									; and start.
 
@@ -369,6 +460,27 @@ ExecuteDefinedWord:
 		br 		ExecuteDefinedWord 					; this is re-entrant.
 
 ; *************************************************************************************************************************
+;										Interrupt Routine (FRED version)
+; *************************************************************************************************************************
+
+Return:	
+		lda 	rRStack 							; pop D
+		ret 										; pop XP
+Interrupt:
+		dec 	rRStack 							; save XP
+		sav
+		dec 	rRStack 							; save D
+		str 	rRStack
+
+		ldi 	videoMemory & 255 					; set up R0
+		plo 	r0
+		;ldi 	videoMemory / 256
+		phi 	r0
+		inc 	rCounter 							; bump the timer counter.
+		br 		Return 		
+
+
+; *************************************************************************************************************************
 ;
 ;		The first three bytes are the address of the first word to run, and the data stack initial value.
 ;
@@ -378,7 +490,8 @@ ProgramCode:
 		dw 		Start
 		db 		0A0h
 Start:	
-		db 	FW_0
-		db  FW_0BR,0FDh
+
+		db  FW_Literal,2,FW_Literal,1,FW_Out
+		db 	FW_Literal,3,FW_Literal,2,FW_Out
 		db 	FW_Stop
 
