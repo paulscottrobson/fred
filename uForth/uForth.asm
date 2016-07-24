@@ -298,9 +298,9 @@ FW_Negate: 											; [[0-]] Word, negates top of stack
 
 ; *********************************************************************************************************************
 
-FW_EqualZero:										; [[0=]] Word, sets to 1 if TOS zero 0 otherwise.
+FW_EqualZero:										; [[0=]] Word, sets to -1 if TOS zero 0 otherwise.
 		lda 	rDStack 							; get TOS
-		bz 		FW_1 								; if zero, push 1 else push 0 (fall through)
+		bz 		FW_Minus1 							; if zero, push -1 else push 0 (fall through)
 
 ; *********************************************************************************************************************
 
@@ -314,11 +314,12 @@ FW_LessZero:										; [[0<]] Word, push 1 if negative else push 0
 		lda 	rDStack 							; get TOS
 		ani 	080h								; look at the sign bit.
 		bz 		FW_0 								; if +ve push 0 else drop through and push 1.
+		br 		FW_Minus1
 
 ; *********************************************************************************************************************
 
 FW_1:	
-		ldi 	1 									; [[1]] Word, pushes 1 on stack
+		ldi 	1 									; [[1]] Word, pushes -1 on stack
 
 _PushD:	dec 	rDStack 							; push on stack.
 _SaveD:	str 	rDStack
@@ -326,12 +327,11 @@ _SaveD:	str 	rDStack
 
 ; *********************************************************************************************************************
 
-FW_GreaterZero:										; [[0>]] Word, push 1 if >0 else push 0
+FW_GreaterZero:										; [[0>]] Word, push -1 if >0 else push 0
 		lda 	rDStack 							; get value
 		bz 		FW_0 								; zero returns 0
 		ani 	80h									; check bit 7
 		bnz 	FW_0 								; -ve returns 0
-		br 		FW_1
 
 ; *********************************************************************************************************************
 
