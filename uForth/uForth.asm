@@ -12,14 +12,14 @@
 
 		cpu 1802 									; actually it is a 1801.
 
-r0 = 0 												
+r0 = 0 												; display pointer (R0)
 rInterrupt = 1 										; interrupt address (R1)
 rRStack = 2 										; return stack (R2)
 rDStack = 3 										; data stack (R3)
 rProgram = 4 										; program code pointer (R4)
 rVariables = 5 										; points to variables (R5)
 
-rCounter = 11 										; interrupt counter
+rCounter = 11 										; interrupt counter (RB, bumps every tick)
 rc = 12 											; execute instruction at r4
 rd = 13 											; makes instruction byte code
 re = 14 											; general temporary register
@@ -42,8 +42,11 @@ dataMemory = 0600h									; data memory page.
 ;								Forth 1801 assembler primitives (optimisable for 1802)
 ;
 ;	@,!,+!,1+,1-,2*,2/,+,-,and,or,xor,literal,drop,dup,over,0-,0=,0<,0,1,-1,swap,R>,>R,0>,0BR,;,?DUP,ROT,0>,=,Pick
+;	br,varpage,page!
 ; *********************************************************************************************************************
 ;					Note some of these drop through, so the order is important in some cases
+;	When changing this code check the position of the GHI R0s in Boot, the first must be in page 0 the second 
+;   in page 1.
 ; *********************************************************************************************************************
 
 FW_In:	ldi 	068h								; [[PORT>]] input from port
@@ -101,6 +104,12 @@ FW_ROT:												; [[ROT]] rotate top 3 n1 n2 n3 -> n2 n3 n1
 
 ; *********************************************************************************************************************
 
+FW_BR:												; [[BR]] Unconditional Branch
+		lda 	rProgram 							; read offset
+		br 		__Branch 							; jump into 0BR after the tos = 0 test
+
+; *********************************************************************************************************************
+
 FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
 		lda 	rProgram 							; read offset into RE.0
 		plo 	re 
@@ -109,6 +118,7 @@ FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
 		bnz 	__Return 							; if non zero, fail. 
 
 		glo 	re 									; put value onto the data stack as a temporary measure
+__Branch:
 		dec 	rDStack
 		str 	rDStack
 		ani 	080h 								; check bit 7
@@ -351,6 +361,19 @@ FW_Equals:											; [[=]] check top two values equal
 
 ; *********************************************************************************************************************
 
+FW_VariablePage:
+		ldi 	dataMemory / 256 					; [[VARPAGE]] pushes the page address of variables on the stack.
+		br 		_PushD
+
+; *********************************************************************************************************************
+
+FM_SetVariablePage:
+		lda 	rDStack 							; [[PAGE!]] sets the variable page from the default.
+		phi 	rVariables
+		sep 	rc
+
+; *********************************************************************************************************************
+
 FW_Stop:br 		FW_Stop								; [[STOP]] word
 
 ; *********************************************************************************************************************
@@ -379,24 +402,36 @@ FW_Hundred:	ldi 100 								; [[100]]
 Boot:	ghi 	r0 									; reset counter
 		phi 	rCounter 							
 		plo 	rCounter
-		ldi 	dataMemory & 255 					; reset data stack
+
+		ldi 	0FFh 								; reset return stack to end of data page
 		plo 	rRStack
 		ldi 	dataMemory / 256 					; set high address for the stacks and variable area (same page)
 		phi 	rRStack											
 		phi 	rDStack
 		phi 	rVariables
 
-		lri 	rf,ProgramCode 						; reset R4, the program pointer, to the start of the code
-		lda 	rf 									; RF now points to the address of the start, read it into R4
+		ghi 	r0 									; set up RF,RC,RD,R1 relies on all being in the same page as this.
+		phi 	rInterrupt
+		phi 	rc
+		phi 	rd
+		phi 	rf
+
+		ldi 	ProgramCode & 255 					; RF now points to the address of the start
+		plo 	rf
+		lda 	rf 									; read start address of program into R4.
 		phi 	rProgram
 		lda 	rf
 		plo 	rProgram 						
-		lda 	rf 									; read stack bottom
+		lda 	rf 									; read data stack top, and set up that stack.
 		plo 	rDStack
 
-		lri 	rc,ExecuteCompiledWord 				; RC points to the code to execute the word at R4.
-		lri 	rd,ExecuteDefinedWord 				; RD points to the code to execute a new definition.
-		lri 	rInterrupt,Interrupt 				; R1 points to the interrupt routine.
+		ldi 	ExecuteCompiledWord & 255			; RC points to the code to execute the word at R4.
+		plo 	rc
+		ldi 	ExecuteDefinedWord & 255 			; RD points to the code to execute a new definition.
+		plo 	rd
+		ldi 	Interrupt & 255						; R1 points to the interrupt routine.
+		plo 	rInterrupt
+
 		sex  	rDStack 							; R3 points to data stack.
 		sep 	rc 									; and start.
 
@@ -408,7 +443,7 @@ Boot:	ghi 	r0 									; reset counter
 ; *************************************************************************************************************************
 
 ExecuteCompiledWord:
-		lda 	rProgram 								; get the next instruction to execute.
+		lda 	rProgram 							; get the next instruction to execute.
 		adi 	8 									; will cause a carry (DF = 1) for F8-FF
 		bdf 	ECW_LongAddress 					; which means it's a long address
 
@@ -487,11 +522,16 @@ Interrupt:
 ; *************************************************************************************************************************
 
 ProgramCode:
-		dw 		Start
-		db 		0A0h
-Start:	
+		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
+		db 		0A0h 								; data stack starts here in variable page (and works down)
 
+; *************************************************************************************************************************
+;
+;											Put any long words at this point
+;
+; *************************************************************************************************************************
+
+Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db  FW_Literal,2,FW_Literal,1,FW_Out
 		db 	FW_Literal,3,FW_Literal,2,FW_Out
 		db 	FW_Stop
-
