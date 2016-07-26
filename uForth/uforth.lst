@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/26/2016 20:19:01
 
 
        1/       0 :                     ; *********************************************************************************************************************
@@ -61,7 +61,7 @@
       58/       2 : F8 68               FW_In:	ldi 	068h								; [[PORT>]] input from port
       59/       4 : 30 08               		br 		FW_IO
       60/       6 : F8 60               FW_Out:	ldi 	060h 								; [[>PORT]] output to port.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/26/2016 20:19:01
 
 
       61/       8 :                     
@@ -124,7 +124,7 @@
      118/      32 :                     
      119/      32 :                     FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
      120/      32 : 44                  		lda 	rProgram 							; read offset into RE.0
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/26/2016 20:19:01
 
 
      121/      33 : AE                  		plo 	re 
@@ -187,7 +187,7 @@
      178/      60 :                     FW_Read:	 										; [[@]] read from variable page.
      179/      60 : F0                  		ldx 										; read address 
      180/      61 : A5                  		plo 	rVariables 							; point RVariables to it
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/26/2016 20:19:01
 
 
      181/      62 : 45                  		lda 	rVariables 							; read rVariables
@@ -250,7 +250,7 @@
      238/      86 :                     ; *********************************************************************************************************************
      239/      86 :                     
      240/      86 :                     FW_Sub:												; [[-]] sub top of stack values.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/26/2016 20:19:01
 
 
      241/      86 : 43                  		lda 	rDStack 							; read TOS
@@ -313,7 +313,7 @@
      298/      A6 :                     
      299/      A6 :                     FW_Negate: 											; [[0-]] Word, negates top of stack
      300/      A6 : 43                  		lda 	rDStack
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/26/2016 20:19:01
 
 
      301/      A7 : 23                  		dec 	rDStack
@@ -376,7 +376,7 @@
      358/      D0 : 30 BB               		br 		_PushD
      359/      D2 :                     
      360/      D2 :                     ; *********************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/26/2016 20:19:01
 
 
      361/      D2 :                     
@@ -439,7 +439,7 @@
      418/     106 :                     
      419/     106 : 90                  		ghi 	r0 									; set up RF,RC,RD,R1 relies on all being in the same page as this.
      420/     107 : B1                  		phi 	rInterrupt
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/26/2016 20:19:01
 
 
      421/     108 : BC                  		phi 	rc
@@ -502,7 +502,7 @@
      478/     13B :                     ; *************************************************************************************************************************
      479/     13B :                     ;
      480/     13B :                     ;	If the word executed via the SEP RFs is a compiled word, it will execute and be ended via SEP RC, which will execute
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/26/2016 20:19:01
 
 
      481/     13B :                     ; 	the next word. 
@@ -565,7 +565,7 @@
      538/     160 : F8 01               		ldi 	FontData / 256
      539/     162 : B4                  		phi 	rProgram
      540/     163 : 13                  		inc 	rDStack 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/26/2016 20:19:01
 
 
      541/     164 :                     
@@ -628,7 +628,7 @@
      598/     193 :                     __SDShiftRight1: 									; we have to do it this way, 1801 as now Ring Shift
      599/     193 : 88                  		glo 	r8 									; this one shifts a 1 in as the MSB - the code immediately
      600/     194 : F6                  		shr 										; above shifts a 0 in as the MSB.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/26/2016 20:19:01
 
 
      601/     195 : F9 80               		ori 	080h
@@ -691,7 +691,7 @@
      658/     1ED : 01 F0               		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
      659/     1EF : A0                  		db 		0A0h 								; data stack starts here in variable page (and works down)
      660/     1F0 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/26/2016 20:19:01
 
 
      661/     1F0 :                     ; *************************************************************************************************************************
@@ -730,7 +730,7 @@
      694/     247 : DD                  		sep rd
      695/     248 : F9 57               		dw  FW_DrawDigit|0F800h
      696/     24A :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/26/2016 20:19:01
 
 
   symbol table (* = unused):
@@ -786,14 +786,14 @@
  RF :                             F - |  RINTERRUPT :                     1 - |
  RPROGRAM :                       4 - |  RRSTACK :                        2 - |
  RVARIABLES :                     5 - |  START :                        1F0 C |
-*TIME :                    18:55:48 - | *TRUE :                           1 - |
+*TIME :                    20:19:01 - | *TRUE :                           1 - |
 *VERSION :                     142F - |  VIDEOMEMORY :                  700 - |
  _PUSHD :                        BB C |  _SAVED :                        BC C |
  __0BR_BACKWARDS :               49 C |  __0BR_EXIT :                    47 C |
  __0BR_SAVER41EXIT :             46 C |  __ADDWR :                       83 C |
  __BRANCH :                      38 C |  __IO_DOIT :                     16 C |
  __RETURN :                      5F C |  __SDEXIT :                     1AB C |
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/26/2016 20:19:01
 
 
  __SDLINELOOP :                 17F C |  __SDSHIFTDONE :                197 C |
@@ -803,7 +803,7 @@
     119 symbols
      64 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/26/2016 20:19:01
 
 
   defined macros:
@@ -813,7 +813,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/26/2016 18:55:48
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/26/2016 20:19:01
 
 
   codepages:

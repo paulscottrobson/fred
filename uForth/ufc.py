@@ -35,7 +35,9 @@ class uForthCore:
 # ********************************************************************************************************************
 
 class WordStream:
-	def __init__(self,fileList):
+	def __init__(self,fileList = None):
+		if fileList is None:															# load in from forth.make
+			fileList = [x.strip() for x in open("uforth.make").readlines() if x.strip() != ""]
 		self.words = []
 		for f in fileList:																# for each file
 			src = open(f).readlines()													# read in the source
@@ -94,11 +96,11 @@ class Compiler:
 
 	def compile(self,word):
 		if word == ':':																	# word definition ?
-			self.currentDefinition = self.pointer 
 			name = self.wordStream.get()
 			self.define(name,self.pointer)
 			if name != "__main":
 				self.compileByte(0xDD,"(sep rd)")
+			self.currentDefinition = self.pointer 
 		elif word == "variable":														# variable definition ?
 			self.define(self.wordStream.get(),self.nextVariable)
 			self.nextVariable += 1
@@ -125,9 +127,9 @@ class Compiler:
 				self.compileByte(n,"data "+str(n))
 		else:																			# is it a dictionary word ?
 			assert word in self.dictionary,"Don't understand "+word 					# check the dictionary.
+			self.compileWord(word)
 			if word == ";":																# ; close any pending thens.
 				self.closeThen()
-			self.compileWord(word)
 
 	def closeThen(self):
 		if self.pendingThen is not None:
@@ -158,4 +160,5 @@ class Compiler:
 			print("{0:04x} {1:02x} {2}".format(self.pointer,byte,text))
 		self.code.append(byte)
 		self.pointer += 1
-c = Compiler(WordStream(["test.u4"]))
+c = Compiler(WordStream())
+
