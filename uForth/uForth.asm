@@ -520,6 +520,24 @@ Interrupt:
 		inc 	rCounter 							; bump the timer counter.
 		br 		Return 		
 
+; *************************************************************************************************************************
+;
+;										Draw Digit x y n autoreturns
+;
+; *************************************************************************************************************************
+
+FW_DrawDigit:
+		lda 	rDStack 							; get digit [[DIGIT]]
+		dec 	rDStack
+		add 										; x 2
+		add 										; x 3
+		str 	rDStack 									
+		add 										; x 6
+		adi 	FontData & 255
+		plo 	rProgram
+		ldi 	FontData / 256
+		phi 	rProgram
+		inc 	rDStack 
 
 ; *************************************************************************************************************************
 ;
@@ -614,6 +632,24 @@ __SDExit:
 
 ; *************************************************************************************************************************
 ;
+;														FontData
+;
+; *************************************************************************************************************************
+
+FontData:
+		db 	5,070h,088h,088h,088h,070h 				; 0
+		db 	5,020h,060h,020h,020h,0F8h 				; 1
+		db 	5,0F0h,008h,070h,080h,0F8h 				; 2
+		db 	5,070h,088h,038h,088h,070h 				; 3
+		db 	5,030h,050h,0F8h,010h,010h 				; 4
+		db 	5,0F8h,080h,0F0h,008h,0F0h 				; 5
+		db 	5,070h,080h,0F0h,088h,070h 				; 6
+		db 	5,0F8h,008h,010h,020h,040h 				; 7
+		db 	5,070h,088h,070h,088h,070h 				; 8
+		db 	5,070h,088h,078h,008h,070h 				; 9
+
+; *************************************************************************************************************************
+;
 ;		The first three bytes are the address of the first word to run, and the data stack initial value.
 ;
 ; *************************************************************************************************************************
@@ -632,37 +668,28 @@ Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db  FW_2,FW_1,FW_Out 						; screen on.
 		db 	FW_3,FW_2,FW_Out
 
-Loop1:
-		db 	FW_Literal,10,FW_Literal,9
+		db 	FW_Literal,1,FW_Literal,1,FW_Literal,0
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,11,FW_Literal,14
+		db 	FW_Literal,11,FW_Literal,1,FW_Literal,1
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,12,FW_Literal,19
+		db 	FW_Literal,21,FW_Literal,1,FW_Literal,2
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,13,FW_Literal,24
+		db 	FW_Literal,31,FW_Literal,1,FW_Literal,3
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,30,FW_Literal,9
+		db 	FW_Literal,41,FW_Literal,1,FW_Literal,4
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,31,FW_Literal,14
+		db 	FW_Literal,1,FW_Literal,11,FW_Literal,5
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,32,FW_Literal,19
+		db 	FW_Literal,11,FW_Literal,11,FW_Literal,6
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,33,FW_Literal,24
+		db 	FW_Literal,21,FW_Literal,11,FW_Literal,7
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,50,FW_Literal,9
+		db 	FW_Literal,31,FW_Literal,11,FW_Literal,8
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,51,FW_Literal,14
+		db 	FW_Literal,41,FW_Literal,11,FW_Literal,9
 		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,52,FW_Literal,19
-		dw 	FW_Drawer|0F800h
-		db 	FW_Literal,53,FW_Literal,24
-		dw 	FW_Drawer|0F800h
-
-		db 	FW_BR,-26-24-24
 		db 	FW_Stop
 
 FW_Drawer:
 		sep rd
-		dw  FW_DrawSprite|0F800h
-		db 	5
-		db 	0FFh,081h,04Fh,081h,0FFh
+		dw  FW_DrawDigit|0F800h
