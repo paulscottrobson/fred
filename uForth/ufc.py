@@ -75,24 +75,63 @@ class Compiler:
 		print("Loaded {0} bytes uForth core.".format(self.pointer))
 		while not self.wordStream.endOfStream():
 			self.compile(self.wordStream.get())
+		# TODO: Stack start
+	
+		open("a.out","wb").write("".join([chr(x) for x in self.code]))
 
-	def define(self,name,show = True):
+	def define(self,name,address,show = True):
 		assert name != "","No name provided."											# check valid name
-		self.dictionary[name] = self.pointer 											# remember pointer
+		self.dictionary[name] = address 												# remember pointer
 		if self.isListing and show:
-			print("{0:04x} ==== :{1} ====".format(self.pointer,name))
+			print("{0:04x} ==== :{1} ====".format(address,name))
+		if name == "__main":															# if __main tell uForth
+			startPtr = self.core.getWordAddress("$$startmarker")			
+			self.code[startPtr] = address / 256
+			self.code[startPtr+1] = address & 255
 
 	def compile(self,word):
-		if word == ':':																	# definition
-			currentDefinition = self.pointer 
-			self.define(self.wordStream.get())
-		elif re.match("^\\-?\\d+$",word):												# decimal constant.
+		if word == ':':																	# word definition ?
+			self.currentDefinition = self.pointer 
+			name = self.wordStream.get()
+			self.define(name,self.pointer)
+			if name != "__main":
+				self.compileByte(0xDD,"(sep rd)")
+		elif word == "variable":														# variable definition ?
+			self.define(self.wordStream.get(),self.nextVariable)
+			self.nextVariable += 1
+		elif word == "alloc":															# allocate memory ?
+			self.nextVariable += int(self.wordStream.get())
+		elif word == "if":																# if ?
+			self.pendingThen = self.pointer
+			self.compileWord("0br")
+			self.compileByte(0,"(placeholder)")
+		elif word == "then":															# then ?
+			self.closeThen()
+		elif word == "self":															# tail recursion ?
+			self.compileWord("br")
+			n = self.currentDefinition - (self.pointer+1)
+			self.compileByte(n,"("+str(n)+")")
+		elif re.match("^\\-?\\d+$",word):												# decimal constant ?
 			self.compileConstant(int(word))
-		elif re.match("^\\$[0-9a-f]+$",word):											# hexadecimal constant
+		elif re.match("^\\$[0-9a-f]+$",word):											# hexadecimal constant ?
 			self.compileConstant(int(word[1:],16))
-		else:
+		elif re.match("^\\[[0-9a-f]+\\]$",word):										# byte data ?
+			word = word[1:-1]
+			for i in range(0,len(word),2):
+				n = int(word[i:i+2],16)
+				self.compileByte(n,"data "+str(n))
+		else:																			# is it a dictionary word ?
 			assert word in self.dictionary,"Don't understand "+word 					# check the dictionary.
+			if word == ";":																# ; close any pending thens.
+				self.closeThen()
 			self.compileWord(word)
+
+	def closeThen(self):
+		if self.pendingThen is not None:
+			self.code[self.pendingThen+1] = self.pointer - (self.pendingThen+2)
+			if self.isListing:
+				print("{0:04x} {1:02x} branch patch".format(self.pendingThen+1,self.code[self.pendingThen+1]))
+		self.pendingThen = None
 
 	def compileConstant(self,constant):
 		if str(constant) in self.dictionary:
@@ -111,6 +150,7 @@ class Compiler:
 			self.compileByte(addr & 0xFF,"")
 
 	def compileByte(self,byte,text):
+		byte &= 0xFF
 		if self.isListing:
 			print("{0:04x} {1:02x} {2}".format(self.pointer,byte,text))
 		self.code.append(byte)

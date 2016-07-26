@@ -1,3 +1,2 @@
-: fred 42 1 -1 $A4 sprite ;			// comment
-
-    fred
+: show 4 4 sprite [03FF8FFF]
+: __main 2 1 >port 3 2 >Port show stop ;
