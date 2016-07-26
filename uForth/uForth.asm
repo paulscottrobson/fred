@@ -18,7 +18,12 @@ rRStack = 2 										; return stack (R2)
 rDStack = 3 										; data stack (R3)
 rProgram = 4 										; program code pointer (R4)
 rVariables = 5 										; points to variables (R5)
+
 r6 = 6												; work registers (R6-R10, can also use RE)
+r7 = 7
+r8 = 8
+r9 = 9
+ra = 10
 
 rCounter = 11 										; interrupt counter (RB, bumps every tick)
 rc = 12 											; execute instruction at r4
@@ -520,16 +525,91 @@ Interrupt:
 ;
 ;												Draw Sprite routine
 ;
+;	Note: if used on a 1802 the bit shifting can be simplified using the 1802's ring shift. A 1801 only has a shift
+;	right into DF, so in a 1801 you have two seperate bits of code for the 16 bit shift.
 ; *************************************************************************************************************************
 
 FW_DrawSprite:
-		ldi 	videoMemory & 255
-		plo 	r6
-		ldi 	videoMemory / 256
+		lda 	rDStack 							; get Y
+		dec 	rDStack 							; X = DStack = Y
+		add 										; D = Y * 2
+		str 	rDStack
+		add 										; D = Y * 4
+		str 	rDStack
+		add 										; D = Y * 8
+		plo 	r6 									; R6.0 = Y * 8
+		inc 	rDStack 							; drop Y
+
+		lda 	rDStack 							; fetch X
+		phi 	r7 									; save in R7.1 this is used for the shift count.
+		shr
+		shr
+		shr 										; divide by 8.
+		dec 	rDStack 							; save on DStack address
+		str 	rDStack
+		glo 	r6 									; add Y * 8 to it
+		add
+		plo 	r6 									
+		ldi 	videoMemory / 256 					; R6 points to video RAM write byte
 		phi 	r6
+
+		lda 	rProgram 							; get the sprite size, it is 8 x n
+		plo 	r7 									; R7.0 is the count of lines.
+		bz 		__SDExit 							; if line count is zero exit.
+		sex 	r6 									; we use X = 6 to access video memory.
+__SDLineLoop:
+
+		lda 	rProgram 							; R8 is the byte shifting graphic
+		phi 	r8
+		ldi 	0
+		plo 	r8 
+
+		ghi 	r7 									; get original X value
+		ani 	7 									; look at lower 3 bits, which is the right-shift
+		bz 		__SDXorScreen 						; if zero no shift required
+		plo 	r9 									; R9.0 is the shift counter
+__SDShiftRight:
+		ghi 	r8 									; shift R8.1 right 
+		shr
+		phi 	r8
+		bdf 	__SDShiftRight1 					; if Df set need to shift a 1 into R8.0
+		glo 	r8
+		shr
+		br 		__SDShiftDone 
+;
+__SDShiftRight1: 									; we have to do it this way, 1801 as now Ring Shift
+		glo 	r8 									; this one shifts a 1 in as the MSB - the code immediately
+		shr 										; above shifts a 0 in as the MSB.
+		ori 	080h
+
+__SDShiftDone:
+		plo 	r8 									; write low byte back
+		dec 	r9 									; do it the relevant number of times.
+		glo 	r9
+		bnz 	__SDShiftRight
+
+__SDXorScreen:
+		ghi 	r8 									; do high byte
+		xor
 		str 	r6
+		inc 	r6
+		glo 	r8 									; do low byte.
+		xor 
+		str 	r6
+
+		glo 	r6 									; next line down.
+		adi 	7
+		plo 	r6
+
+		dec 	r7 									; decrement line count.
+		glo 	r7
+		bnz 		__SDLineLoop
+
+__SDExit:
 		ldi 	ECW_Return & 255					; this forces a RETURN to be executed
 		plo 	rc
+		sex 	rDStack 							; X is back at rDStack
+		inc 	rDStack 							; fix up data stack.
 		sep 	rc
 
 ; *************************************************************************************************************************
@@ -552,9 +632,35 @@ Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db  FW_2,FW_1,FW_Out 						; screen on.
 		db 	FW_3,FW_2,FW_Out
 
+Loop1:
 		db 	FW_Literal,10,FW_Literal,9
 		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,11,FW_Literal,14
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,12,FW_Literal,19
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,13,FW_Literal,24
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,30,FW_Literal,9
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,31,FW_Literal,14
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,32,FW_Literal,19
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,33,FW_Literal,24
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,50,FW_Literal,9
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,51,FW_Literal,14
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,52,FW_Literal,19
+		dw 	FW_Drawer|0F800h
+		db 	FW_Literal,53,FW_Literal,24
+		dw 	FW_Drawer|0F800h
+
+		db 	FW_BR,-26-24-24
 		db 	FW_Stop
+
 FW_Drawer:
 		sep rd
 		dw  FW_DrawSprite|0F800h
