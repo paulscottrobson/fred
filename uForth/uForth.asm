@@ -18,6 +18,7 @@ rRStack = 2 										; return stack (R2)
 rDStack = 3 										; data stack (R3)
 rProgram = 4 										; program code pointer (R4)
 rVariables = 5 										; points to variables (R5)
+r6 = 6												; work registers (R6-R10, can also use RE)
 
 rCounter = 11 										; interrupt counter (RB, bumps every tick)
 rc = 12 											; execute instruction at r4
@@ -378,19 +379,19 @@ FW_Stop:br 		FW_Stop								; [[STOP]] word
 
 ; *********************************************************************************************************************
 
-FW_Two:	ldi 	2 									; [[2]]
+FW_2:	ldi 	2 									; [[2]]
 		br 		_PushD
-FW_Three:	ldi 	3 								; [[3]]
+FW_3:	ldi 	3 									; [[3]]
 		br 		_PushD
-FW_Four:	ldi 	4 								; [[4]]
+FW_4:	ldi 	4 									; [[4]]
 		br 		_PushD
-FW_Eight:	ldi 8 									; [[8]]
+FW_8:	ldi 8 										; [[8]]
 		br 		_PushD
-FW_Ten:	ldi 	10 									; [[10]]
+FW_10:	ldi 	10 									; [[10]]
 		br 		_PushD
-FW_Sixteen:	ldi 16 									; [[16]]
-		br 		_PushD
-FW_Hundred:	ldi 100 								; [[100]]
+FW_16:	ldi 16 										; [[16]]
+		br 		_PushD	
+FW_100:	ldi 100 									; [[100]]
 		br 		_PushD
 
 ; *********************************************************************************************************************
@@ -509,11 +510,27 @@ Interrupt:
 
 		ldi 	videoMemory & 255 					; set up R0
 		plo 	r0
-		;ldi 	videoMemory / 256
+		ldi 	videoMemory / 256
 		phi 	r0
 		inc 	rCounter 							; bump the timer counter.
 		br 		Return 		
 
+
+; *************************************************************************************************************************
+;
+;												Draw Sprite routine
+;
+; *************************************************************************************************************************
+
+FW_DrawSprite:
+		ldi 	videoMemory & 255
+		plo 	r6
+		ldi 	videoMemory / 256
+		phi 	r6
+		str 	r6
+		ldi 	ECW_Return & 255					; this forces a RETURN to be executed
+		plo 	rc
+		sep 	rc
 
 ; *************************************************************************************************************************
 ;
@@ -532,6 +549,14 @@ ProgramCode:
 ; *************************************************************************************************************************
 
 Start:												; [[$$TOPKERNEL]] it will trim these off.
-		db  FW_Literal,2,FW_Literal,1,FW_Out
-		db 	FW_Literal,3,FW_Literal,2,FW_Out
+		db  FW_2,FW_1,FW_Out 						; screen on.
+		db 	FW_3,FW_2,FW_Out
+
+		db 	FW_Literal,10,FW_Literal,9
+		dw 	FW_Drawer|0F800h
 		db 	FW_Stop
+FW_Drawer:
+		sep rd
+		dw  FW_DrawSprite|0F800h
+		db 	5
+		db 	0FFh,081h,04Fh,081h,0FFh
