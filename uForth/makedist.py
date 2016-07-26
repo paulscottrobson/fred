@@ -30,7 +30,7 @@ core.append(0xFF)
 while len(core) < 4096:															# pad out to 4k
 	core.append(0xFF)
 
-open("uforth.core","wb").write("".join([chr(x) for x in core]))					
+open("uforth.core","wb").write("".join([chr(x) for x in core]))					# write out core.			
 
 print("uforth.core generated.")
 print("Core size "+str(words["$$topkernel"])+" bytes.")
