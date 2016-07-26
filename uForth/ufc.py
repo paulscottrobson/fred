@@ -75,7 +75,10 @@ class Compiler:
 		print("Loaded {0} bytes uForth core.".format(self.pointer))
 		while not self.wordStream.endOfStream():
 			self.compile(self.wordStream.get())
-		# TODO: Stack start
+		
+		dStack = (0xFF + self.nextVariable) / 2											# split dstack / rstack
+		print(self.nextVariable+0xFF)/2
+		self.code[self.core.getWordAddress("$$startmarker")+2] = dStack	
 	
 		open("a.out","wb").write("".join([chr(x) for x in self.code]))
 

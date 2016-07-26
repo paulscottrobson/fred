@@ -1,2 +1,2 @@
-: show 4 4 sprite [03FF8FFF]
-: __main 2 1 >port 3 2 >Port show stop ;
+: show sprite [03FF8FFF]
+: __main 2 1 >port 3 2 >Port 4 4 show  8 8 show 15 15 show stop ;
