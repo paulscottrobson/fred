@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/26/2016 12:52:01
 
 
        1/       0 :                     ; *********************************************************************************************************************
@@ -7,7 +7,7 @@
        4/       0 :                     ;		Core Runtime and Interpreter. Has a collection of 1801 code primitives, the bytecode interpreter and
        5/       0 :                     ;		the FRED display driver. 
        6/       0 :                     ;
-       7/       0 :                     ;		Words in core are indicated by [[word]] in the comments, and are extracted from the list file.
+       7/       0 :                     ;		Words in core are indicated by double square brackets in the comments, and are extracted from the list file.
        8/       0 :                     ; 		(so memory is not wasted storing the word name)
        9/       0 :                     ;
       10/       0 :                     ; *********************************************************************************************************************
@@ -61,7 +61,7 @@
       58/       2 : F8 68               FW_In:	ldi 	068h								; [[PORT>]] input from port
       59/       4 : 30 08               		br 		FW_IO
       60/       6 : F8 60               FW_Out:	ldi 	060h 								; [[>PORT]] output to port.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/26/2016 12:52:01
 
 
       61/       8 :                     
@@ -124,7 +124,7 @@
      118/      32 :                     
      119/      32 :                     FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
      120/      32 : 44                  		lda 	rProgram 							; read offset into RE.0
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/26/2016 12:52:01
 
 
      121/      33 : AE                  		plo 	re 
@@ -187,7 +187,7 @@
      178/      60 :                     FW_Read:	 										; [[@]] read from variable page.
      179/      60 : F0                  		ldx 										; read address 
      180/      61 : A5                  		plo 	rVariables 							; point RVariables to it
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/26/2016 12:52:01
 
 
      181/      62 : 45                  		lda 	rVariables 							; read rVariables
@@ -250,7 +250,7 @@
      238/      86 :                     ; *********************************************************************************************************************
      239/      86 :                     
      240/      86 :                     FW_Sub:												; [[-]] sub top of stack values.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/26/2016 12:52:01
 
 
      241/      86 : 43                  		lda 	rDStack 							; read TOS
@@ -313,7 +313,7 @@
      298/      A6 :                     
      299/      A6 :                     FW_Negate: 											; [[0-]] Word, negates top of stack
      300/      A6 : 43                  		lda 	rDStack
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/26/2016 12:52:01
 
 
      301/      A7 : 23                  		dec 	rDStack
@@ -376,7 +376,7 @@
      358/      D0 : 30 BB               		br 		_PushD
      359/      D2 :                     
      360/      D2 :                     ; *********************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/26/2016 12:52:01
 
 
      361/      D2 :                     
@@ -439,7 +439,7 @@
      418/     106 :                     
      419/     106 : 90                  		ghi 	r0 									; set up RF,RC,RD,R1 relies on all being in the same page as this.
      420/     107 : B1                  		phi 	rInterrupt
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/26/2016 12:52:01
 
 
      421/     108 : BC                  		phi 	rc
@@ -502,7 +502,7 @@
      478/     13B :                     ; *************************************************************************************************************************
      479/     13B :                     ;
      480/     13B :                     ;	If the word executed via the SEP RFs is a compiled word, it will execute and be ended via SEP RC, which will execute
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/26/2016 12:52:01
 
 
      481/     13B :                     ; 	the next word. 
@@ -556,7 +556,7 @@
      529/     157 :                     ;	right into DF, so in a 1801 you have two seperate bits of code for the 16 bit shift.
      530/     157 :                     ; *************************************************************************************************************************
      531/     157 :                     
-     532/     157 :                     FW_DrawSprite:
+     532/     157 :                     FW_DrawSprite:										; [[SPRITE]] y x sprite
      533/     157 : 43                  		lda 	rDStack 							; get Y
      534/     158 : 23                  		dec 	rDStack 							; X = DStack = Y
      535/     159 : F4                  		add 										; D = Y * 2
@@ -565,7 +565,7 @@
      538/     15C : 53                  		str 	rDStack
      539/     15D : F4                  		add 										; D = Y * 8
      540/     15E : A6                  		plo 	r6 									; R6.0 = Y * 8
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/26/2016 12:52:01
 
 
      541/     15F : 13                  		inc 	rDStack 							; drop Y
@@ -628,7 +628,7 @@
      598/     195 : 56                  		str 	r6
      599/     196 :                     
      600/     196 : 86                  		glo 	r6 									; next line down.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/26/2016 12:52:01
 
 
      601/     197 : FC 07               		adi 	7
@@ -691,7 +691,7 @@
      658/     1EF : 96 35 96 18         		db 	FW_Literal,53,FW_Literal,24
      659/     1F3 : F9 F8               		dw 	FW_Drawer|0F800h
      660/     1F5 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/26/2016 12:52:01
 
 
      661/     1F5 : 2F B6               		db 	FW_BR,-26-24-24
@@ -703,7 +703,7 @@
      667/     1FB : 05                  		db 	5
      668/     1FC : FF 81 4F 81 FF      		db 	0FFh,081h,04Fh,081h,0FFh
      669/     201 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/26/2016 12:52:01
 
 
   symbol table (* = unused):
@@ -758,7 +758,7 @@
  RETURN :                       148 C |  RF :                             F - |
  RINTERRUPT :                     1 - |  RPROGRAM :                       4 - |
  RRSTACK :                        2 - |  RVARIABLES :                     5 - |
- START :                        1A7 C | *TIME :                    11:33:12 - |
+ START :                        1A7 C | *TIME :                    12:52:01 - |
 *TRUE :                           1 - | *VERSION :                     142F - |
  VIDEOMEMORY :                  700 - |  _PUSHD :                        BB C |
  _SAVED :                        BC C |  __0BR_BACKWARDS :               49 C |
@@ -766,7 +766,7 @@
  __ADDWR :                       83 C |  __BRANCH :                      38 C |
  __IO_DOIT :                     16 C |  __RETURN :                      5F C |
  __SDEXIT :                     19E C |  __SDLINELOOP :                 172 C |
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/26/2016 12:52:01
 
 
  __SDSHIFTDONE :                18A C |  __SDSHIFTRIGHT :               17D C |
@@ -775,7 +775,7 @@
     118 symbols
      63 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/26/2016 12:52:01
 
 
   defined macros:
@@ -785,7 +785,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/26/2016 11:33:12
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/26/2016 12:52:01
 
 
   codepages:
@@ -794,7 +794,7 @@ LRI                                   |
 STANDARD (0 changed characters)
 
 
-0.01 seconds assembly time
+0.00 seconds assembly time
 
     669 lines source file
       2 passes

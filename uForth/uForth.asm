@@ -4,7 +4,7 @@
 ;		Core Runtime and Interpreter. Has a collection of 1801 code primitives, the bytecode interpreter and
 ;		the FRED display driver. 
 ;
-;		Words in core are indicated by [[word]] in the comments, and are extracted from the list file.
+;		Words in core are indicated by double square brackets in the comments, and are extracted from the list file.
 ; 		(so memory is not wasted storing the word name)
 ;
 ; *********************************************************************************************************************
@@ -529,7 +529,7 @@ Interrupt:
 ;	right into DF, so in a 1801 you have two seperate bits of code for the 16 bit shift.
 ; *************************************************************************************************************************
 
-FW_DrawSprite:
+FW_DrawSprite:										; [[SPRITE]] y x sprite
 		lda 	rDStack 							; get Y
 		dec 	rDStack 							; X = DStack = Y
 		add 										; D = Y * 2
