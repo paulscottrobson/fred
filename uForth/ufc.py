@@ -1,4 +1,13 @@
-import re
+import re,sys
+
+# ********************************************************************************************************************
+#												Exception Handler
+# ********************************************************************************************************************
+
+class ForthException(Exception):
+	def __init__(self,msg):
+		print(msg)
+		sys.exit(1)
 
 # ********************************************************************************************************************
 #												Micro Forth Core Class
@@ -126,7 +135,8 @@ class Compiler:
 				n = int(word[i:i+2],16)
 				self.compileByte(n,"data "+str(n))
 		else:																			# is it a dictionary word ?
-			assert word in self.dictionary,"Don't understand "+word 					# check the dictionary.
+			if word not in self.dictionary:												# check the dictionary.
+				raise ForthException("Don't understand "+word)
 			self.compileWord(word)
 			if word == ";":																# ; close any pending thens.
 				self.closeThen()
@@ -160,5 +170,6 @@ class Compiler:
 			print("{0:04x} {1:02x} {2}".format(self.pointer,byte,text))
 		self.code.append(byte)
 		self.pointer += 1
+
 c = Compiler(WordStream())
 
