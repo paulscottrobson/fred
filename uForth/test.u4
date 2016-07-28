@@ -1,5 +1,12 @@
 : 6* dup 2* + 2* ;
 : doDigit dup 6* swap 5 swap digit 
-: show10 dup doDigit 1+ dup 10 = if drop  ; self x
+: show10 dup doDigit 1+ dup 10 = if drop  ; self
 
-: __main 2 1 >port 3 2 >Port 0 show10 stop ;
+: waitKey inkey dup 0< if drop self then ;
+
+: __main 
+
+2 1 >port 3 2 >Port 
+1 1 >port 1 2 >Port
+
+0 show10 waitkey stop ;

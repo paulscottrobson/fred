@@ -649,6 +649,22 @@ FontData:
 		db 	5,070h,088h,078h,008h,070h 				; 9
 
 ; *************************************************************************************************************************
+;		
+;										Read Keyboard. Return FF no key, else 00-1F
+;
+; *************************************************************************************************************************
+
+FW_KeyRead:											; [[INKEY]]
+		dec 	rDStack
+		bn1 	__KRPushExit
+		db 		068h
+		sep 	rc
+__KRPushExit:
+		ldi 	0FFh
+		str 	rDStack
+		sep 	rc
+
+; *************************************************************************************************************************
 ;
 ;		The first three bytes are the address of the first word to run, and the data stack initial value.
 ;
@@ -667,6 +683,8 @@ ProgramCode:
 Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db  FW_2,FW_1,FW_Out 						; screen on.
 		db 	FW_3,FW_2,FW_Out
+		db  FW_1,FW_1,FW_Out 						; keyboard on.
+		db 	FW_1,FW_2,FW_Out
 
 		db 	FW_Literal,1,FW_Literal,1,FW_Literal,0
 		dw 	FW_Drawer|0F800h
