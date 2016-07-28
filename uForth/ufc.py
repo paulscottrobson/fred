@@ -111,7 +111,7 @@ class Compiler:
 				self.compileByte(0xDD,"(sep rd)")
 			self.currentDefinition = self.pointer 
 		elif word == "variable":														# variable definition ?
-			self.define(self.wordStream.get(),self.nextVariable)
+			self.define(self.wordStream.get(),0x1000+self.nextVariable)
 			self.nextVariable += 1
 		elif word == "alloc":															# allocate memory ?
 			self.nextVariable += int(self.wordStream.get())
@@ -137,7 +137,10 @@ class Compiler:
 		else:																			# is it a dictionary word ?
 			if word not in self.dictionary:												# check the dictionary.
 				raise ForthException("Don't understand "+word)
-			self.compileWord(word)
+			if (self.dictionary[word] & 0x1000) != 0:
+				self.compileConstant(self.dictionary[word] & 0xFF)
+			else:
+				self.compileWord(word)
 			if word == ";":																# ; close any pending thens.
 				self.closeThen()
 

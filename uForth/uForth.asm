@@ -649,22 +649,6 @@ FontData:
 		db 	5,070h,088h,078h,008h,070h 				; 9
 
 ; *************************************************************************************************************************
-;		
-;										Read Keyboard. Return FF no key, else 00-1F
-;
-; *************************************************************************************************************************
-
-FW_KeyRead:											; [[INKEY]]
-		dec 	rDStack
-		bn1 	__KRPushExit
-		db 		068h
-		sep 	rc
-__KRPushExit:
-		ldi 	0FFh
-		str 	rDStack
-		sep 	rc
-
-; *************************************************************************************************************************
 ;
 ;		The first three bytes are the address of the first word to run, and the data stack initial value.
 ;
@@ -673,6 +657,44 @@ __KRPushExit:
 ProgramCode:
 		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
 		db 		0A0h 								; data stack starts here in variable page (and works down)
+
+			
+; *************************************************************************************************************************
+;		
+;										Read Keyboard. Return FF no key, else 00-1F
+;
+; *************************************************************************************************************************
+
+FW_KeyRead:											; [[INKEY]]
+		dec 	rDStack
+		bn1 	__KRPushExit
+		db 		068h 								; INP 0 not supported in 1802 assembly language
+		sep 	rc
+__KRPushExit:
+		ldi 	0FFh
+		str 	rDStack
+		sep 	rc
+
+; *************************************************************************************************************************
+;
+;												Clear the video display
+;
+; *************************************************************************************************************************
+
+		ldx 
+
+FW_ClearScreen: 									; [[CLEARSCREEN]]
+		ldi 	0
+		plo 	r6
+		ldi 	videoMemory / 256
+		phi 	r6
+__CLSLoop:
+		ldi 	0
+		str 	r6
+		inc 	r6
+		glo 	r6
+		bnz 	__CLSLoop
+		sep 	rc
 
 ; *************************************************************************************************************************
 ;
