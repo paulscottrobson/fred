@@ -31,6 +31,8 @@ rd = 13 											; makes instruction byte code
 re = 14 											; general temporary register
 rf = 15 											; pc register when running 1801 code.
 
+AudioPort = 3 										; Fred audio port.
+
 lri 	macro r,n 									; macro to load register.
 		ldi (n) & 255
 		plo r
@@ -698,6 +700,33 @@ __CLSLoop:
 
 ; *************************************************************************************************************************
 ;
+;													Sound Player 
+;
+; *************************************************************************************************************************
+
+FW_Sound: 											; [[BEEP]]
+        lda 	rDStack 							; read the length
+        plo 	r6 									; save in R6.0
+        lda 	rDStack 							; read the pitch 
+        phi 	r6 									; save in R6.1
+FW_ToneLoop:     
+		sex 	rf 									; run this in RF
+        out     AudioPort
+        db      5
+        ghi     r6 									; get the pitch.
+FM_TimeLoop
+        smi     1                                   ; short delay loop
+        bnz     FM_TimeLoop
+        out  	AudioPort                           ; reset speaker line.
+        db     	1                                                
+        dec     r6                                  ; done it correct number of times
+        glo 	r6
+        bnz 	FW_ToneLoop
+        sex 	rDStack 							; fix X Back
+        sep 	rc 									; and exit
+
+; *************************************************************************************************************************
+;
 ;											Put any long words at this point
 ;
 ; *************************************************************************************************************************
@@ -707,6 +736,9 @@ Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db 	FW_3,FW_2,FW_Out
 		db  FW_1,FW_1,FW_Out 						; keyboard on.
 		db 	FW_1,FW_2,FW_Out
+
+		db 	FW_16,FW_Minus1
+		dw 	FW_Sound |0F800h
 
 		db 	FW_Literal,1,FW_Literal,1,FW_Literal,0
 		dw 	FW_Drawer|0F800h

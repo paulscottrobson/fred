@@ -41,9 +41,11 @@ variable reels alloc 4 																// Reel values, 0x80 bit set if stopped.
 
 : win0 24 23 sprite [05AAAAAAAAFA]													// win/lose sprites
 : win1 32 23 sprite [058ACAAA988A]
+: winSound 32 255 beep ;
 
 : lose0 24 23 sprite [058E8A8A8AEE]
 : lose1 32 23 sprite [05EE88EE28EE]
+: loseSound 170 100 beep ;
 
 : drawElement 																		// draw one reel (reel# -)
 	dup reels + @ 127 and 									
@@ -65,15 +67,19 @@ variable reels alloc 4 																// Reel values, 0x80 bit set if stopped.
 
 : bumpAllReelsTillKey 																// Bump all reels until key pressed
 	0 bumpDrawReel 1 bumpDrawReel 2 bumpDrawReel
-	inkey 0< if self then reels + dup @ 128 or swap ! ;
+	inkey 0< if self then reels + dup @ 128 or swap ! 
+	20 40 beep ;
 
 : bigWin win0 win1 5 addMoney r1  1 and 0= if 5 addmoney then ;						// Add 5 or 10 depending on type
 
 : checkWin																			// Check win loss
-	isBigWin if bigwin ;
-	isSmallWin if win0 win1 2 addMoney ;
-	lose0 lose1 ;
+	isBigWin if bigwin winSound ;
+	isSmallWin if win0 win1 2 addMoney winSound ;
+	lose0 lose1 loseSound ;
 
+: checkGameOver 
+	cashTens @ dup 5 = if stop then 												// Check >= $50 or $0 stop if either.
+	cashUnits @ + 0= if stop then ;
 
 : playMainGame 																		// Main loop
 	key drop 
@@ -90,6 +96,8 @@ variable reels alloc 4 																// Reel values, 0x80 bit set if stopped.
 	displayCash 
 	checkWin 
 	displayCash
+
+	checkGameOver
 	self
 
 : __main initialise 1 cashTens ! 0 cashUnits ! 	clearscreen displayCash playMainGame ;
