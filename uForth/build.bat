@@ -5,5 +5,6 @@ if errorlevel 1 goto end
 python makedist.py
 
 copy /Y uforth.core ..\games\jackpot
+copy /Y uforth.core ..\games\deduce
 
 :end

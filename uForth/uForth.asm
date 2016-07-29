@@ -411,7 +411,7 @@ Boot:	ghi 	r0 									; reset counter
 		phi 	rCounter 							
 		plo 	rCounter
 
-		ldi 	0FFh 								; reset return stack to end of data page
+		ldi 	0FEh 								; reset return stack to end of data page, minus 1 for random seed.
 		plo 	rRStack
 		ldi 	dataMemory / 256 					; set high address for the stacks and variable area (same page)
 		phi 	rRStack											
@@ -727,6 +727,28 @@ FM_TimeLoop
 
 ; *************************************************************************************************************************
 ;
+;												Random Number generator
+;
+; *************************************************************************************************************************
+
+FW_Random:											; [[RANDOM]]
+		ldi 	0FFh								; point R5 (rVariables) to $FF the seed
+		plo 	rVariables
+		sex 	rVariables 							; X points to it
+		glo 	rCounter 							; Xor with counter
+		xor
+		shr 										; shift right.
+		bdf 	FW_NoXor
+		xri 	0B4h
+FW_NoXor:
+		sex 	rDStack
+		str 	rVariables
+		dec 	rDStack 							; push on stack
+		str 	rDStack 
+		sep 	rc
+
+; *************************************************************************************************************************
+;
 ;											Put any long words at this point
 ;
 ; *************************************************************************************************************************
@@ -736,6 +758,10 @@ Start:												; [[$$TOPKERNEL]] it will trim these off.
 		db 	FW_3,FW_2,FW_Out
 		db  FW_1,FW_1,FW_Out 						; keyboard on.
 		db 	FW_1,FW_2,FW_Out
+
+		dw 	FW_Random|0F800h
+		db  FW_Drop
+		db 	FW_Br,-5
 
 		db 	FW_16,FW_Minus1
 		dw 	FW_Sound |0F800h

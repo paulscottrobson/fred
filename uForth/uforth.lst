@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/29/2016 19:46:24
 
 
        1/       0 :                     ; *********************************************************************************************************************
@@ -61,7 +61,7 @@
       58/       2 :                     ; *********************************************************************************************************************
       59/       2 :                     
       60/       2 : F8 68               FW_In:	ldi 	068h								; [[PORT>]] input from port
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/29/2016 19:46:24
 
 
       61/       4 : 30 08               		br 		FW_IO
@@ -124,7 +124,7 @@
      118/      32 :                     
      119/      32 :                     ; *********************************************************************************************************************
      120/      32 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/29/2016 19:46:24
 
 
      121/      32 :                     FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
@@ -187,7 +187,7 @@
      178/      60 :                     ; *********************************************************************************************************************
      179/      60 :                     
      180/      60 :                     FW_Read:	 										; [[@]] read from variable page.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/29/2016 19:46:24
 
 
      181/      60 : F0                  		ldx 										; read address 
@@ -250,7 +250,7 @@
      238/      84 : 30 BC               		br 		_SaveD
      239/      86 :                     
      240/      86 :                     ; *********************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/29/2016 19:46:24
 
 
      241/      86 :                     
@@ -313,7 +313,7 @@
      298/      A6 :                     
      299/      A6 :                     ; *********************************************************************************************************************
      300/      A6 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/29/2016 19:46:24
 
 
      301/      A6 :                     FW_Negate: 											; [[0-]] Word, negates top of stack
@@ -376,7 +376,7 @@
      358/      CE : 53                  		str 	rDStack
      359/      CF : 9E                  		ghi 	re 									; get value to push
      360/      D0 : 30 BB               		br 		_PushD
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/29/2016 19:46:24
 
 
      361/      D2 :                     
@@ -432,14 +432,14 @@
      411/      FC : BB                  		phi 	rCounter 							
      412/      FD : AB                  		plo 	rCounter
      413/      FE :                     
-     414/      FE : F8 FF               		ldi 	0FFh 								; reset return stack to end of data page
+     414/      FE : F8 FE               		ldi 	0FEh 								; reset return stack to end of data page, minus 1 for random seed.
      415/     100 : A2                  		plo 	rRStack
      416/     101 : F8 06               		ldi 	dataMemory / 256 					; set high address for the stacks and variable area (same page)
      417/     103 : B2                  		phi 	rRStack											
      418/     104 : B3                  		phi 	rDStack
      419/     105 : B5                  		phi 	rVariables
      420/     106 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/29/2016 19:46:24
 
 
      421/     106 : 90                  		ghi 	r0 									; set up RF,RC,RD,R1 relies on all being in the same page as this.
@@ -502,7 +502,7 @@
      478/     139 : 30 1F               		br 		ExecuteCompiledWord 				; and go do it.
      479/     13B :                     
      480/     13B :                     ; *************************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/29/2016 19:46:24
 
 
      481/     13B :                     ;
@@ -565,7 +565,7 @@
      538/     15D : FC B1               		adi 	FontData & 255
      539/     15F : A4                  		plo 	rProgram
      540/     160 : F8 01               		ldi 	FontData / 256
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/29/2016 19:46:24
 
 
      541/     162 : B4                  		phi 	rProgram
@@ -628,7 +628,7 @@
      598/     191 : 30 97               		br 		__SDShiftDone 
      599/     193 :                     ;
      600/     193 :                     __SDShiftRight1: 									; we have to do it this way, 1801 as now Ring Shift
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/29/2016 19:46:24
 
 
      601/     193 : 88                  		glo 	r8 									; this one shifts a 1 in as the MSB - the code immediately
@@ -690,8 +690,8 @@
      657/     1ED :                     ; *************************************************************************************************************************
      658/     1ED :                     
      659/     1ED :                     ProgramCode:
-     660/     1ED : 02 1C               		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/29/2016 16:09:45
+     660/     1ED : 02 2C               		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/29/2016 19:46:24
 
 
      661/     1EF : A0                  		db 		0A0h 								; data stack starts here in variable page (and works down)
@@ -754,7 +754,7 @@
      718/     210 : FF 01                       smi     1                                   ; short delay loop
      719/     212 : 3A 10                       bnz     FM_TimeLoop
      720/     214 : 63                          out  	AudioPort                           ; reset speaker line.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/29/2016 19:46:24
 
 
      721/     215 : 01                          db     	1                                                
@@ -766,46 +766,75 @@
      727/     21C :                     
      728/     21C :                     ; *************************************************************************************************************************
      729/     21C :                     ;
-     730/     21C :                     ;											Put any long words at this point
+     730/     21C :                     ;												Random Number generator
      731/     21C :                     ;
      732/     21C :                     ; *************************************************************************************************************************
      733/     21C :                     
-     734/     21C :                     Start:												; [[$$TOPKERNEL]] it will trim these off.
-     735/     21C : DF B9 06            		db  FW_2,FW_1,FW_Out 						; screen on.
-     736/     21F : E3 DF 06            		db 	FW_3,FW_2,FW_Out
-     737/     222 : B9 B9 06            		db  FW_1,FW_1,FW_Out 						; keyboard on.
-     738/     225 : B9 DF 06            		db 	FW_1,FW_2,FW_Out
-     739/     228 :                     
-     740/     228 : F3 C5               		db 	FW_16,FW_Minus1
-     741/     22A : FA 08               		dw 	FW_Sound |0F800h
-     742/     22C :                     
-     743/     22C : 96 01 96 01 96 00   		db 	FW_Literal,1,FW_Literal,1,FW_Literal,0
-     744/     232 : FA 7D               		dw 	FW_Drawer|0F800h
-     745/     234 : 96 0B 96 01 96 01   		db 	FW_Literal,11,FW_Literal,1,FW_Literal,1
-     746/     23A : FA 7D               		dw 	FW_Drawer|0F800h
-     747/     23C : 96 15 96 01 96 02   		db 	FW_Literal,21,FW_Literal,1,FW_Literal,2
-     748/     242 : FA 7D               		dw 	FW_Drawer|0F800h
-     749/     244 : 96 1F 96 01 96 03   		db 	FW_Literal,31,FW_Literal,1,FW_Literal,3
-     750/     24A : FA 7D               		dw 	FW_Drawer|0F800h
-     751/     24C : 96 29 96 01 96 04   		db 	FW_Literal,41,FW_Literal,1,FW_Literal,4
-     752/     252 : FA 7D               		dw 	FW_Drawer|0F800h
-     753/     254 : 96 01 96 0B 96 05   		db 	FW_Literal,1,FW_Literal,11,FW_Literal,5
-     754/     25A : FA 7D               		dw 	FW_Drawer|0F800h
-     755/     25C : 96 0B 96 0B 96 06   		db 	FW_Literal,11,FW_Literal,11,FW_Literal,6
-     756/     262 : FA 7D               		dw 	FW_Drawer|0F800h
-     757/     264 : 96 15 96 0B 96 07   		db 	FW_Literal,21,FW_Literal,11,FW_Literal,7
-     758/     26A : FA 7D               		dw 	FW_Drawer|0F800h
-     759/     26C : 96 1F 96 0B 96 08   		db 	FW_Literal,31,FW_Literal,11,FW_Literal,8
-     760/     272 : FA 7D               		dw 	FW_Drawer|0F800h
-     761/     274 : 96 29 96 0B 96 09   		db 	FW_Literal,41,FW_Literal,11,FW_Literal,9
-     762/     27A : FA 7D               		dw 	FW_Drawer|0F800h
-     763/     27C : DD                  		db 	FW_Stop
-     764/     27D :                     
-     765/     27D :                     FW_Drawer:
-     766/     27D : DD                  		sep rd
-     767/     27E : F9 57               		dw  FW_DrawDigit|0F800h
-     768/     280 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/29/2016 16:09:45
+     734/     21C :                     FW_Random:											; [[RANDOM]]
+     735/     21C : F8 FF               		ldi 	0FFh								; point R5 (rVariables) to $FF the seed
+     736/     21E : A5                  		plo 	rVariables
+     737/     21F : E5                  		sex 	rVariables 							; X points to it
+     738/     220 : 8B                  		glo 	rCounter 							; Xor with counter
+     739/     221 : F3                  		xor
+     740/     222 : F6                  		shr 										; shift right.
+     741/     223 : 33 27               		bdf 	FW_NoXor
+     742/     225 : FB B4               		xri 	0B4h
+     743/     227 :                     FW_NoXor:
+     744/     227 : E3                  		sex 	rDStack
+     745/     228 : 55                  		str 	rVariables
+     746/     229 : 23                  		dec 	rDStack 							; push on stack
+     747/     22A : 53                  		str 	rDStack 
+     748/     22B : DC                  		sep 	rc
+     749/     22C :                     
+     750/     22C :                     ; *************************************************************************************************************************
+     751/     22C :                     ;
+     752/     22C :                     ;											Put any long words at this point
+     753/     22C :                     ;
+     754/     22C :                     ; *************************************************************************************************************************
+     755/     22C :                     
+     756/     22C :                     Start:												; [[$$TOPKERNEL]] it will trim these off.
+     757/     22C : DF B9 06            		db  FW_2,FW_1,FW_Out 						; screen on.
+     758/     22F : E3 DF 06            		db 	FW_3,FW_2,FW_Out
+     759/     232 : B9 B9 06            		db  FW_1,FW_1,FW_Out 						; keyboard on.
+     760/     235 : B9 DF 06            		db 	FW_1,FW_2,FW_Out
+     761/     238 :                     
+     762/     238 : FA 1C               		dw 	FW_Random|0F800h
+     763/     23A : 99                  		db  FW_Drop
+     764/     23B : 2F FB               		db 	FW_Br,-5
+     765/     23D :                     
+     766/     23D : F3 C5               		db 	FW_16,FW_Minus1
+     767/     23F : FA 08               		dw 	FW_Sound |0F800h
+     768/     241 :                     
+     769/     241 : 96 01 96 01 96 00   		db 	FW_Literal,1,FW_Literal,1,FW_Literal,0
+     770/     247 : FA 92               		dw 	FW_Drawer|0F800h
+     771/     249 : 96 0B 96 01 96 01   		db 	FW_Literal,11,FW_Literal,1,FW_Literal,1
+     772/     24F : FA 92               		dw 	FW_Drawer|0F800h
+     773/     251 : 96 15 96 01 96 02   		db 	FW_Literal,21,FW_Literal,1,FW_Literal,2
+     774/     257 : FA 92               		dw 	FW_Drawer|0F800h
+     775/     259 : 96 1F 96 01 96 03   		db 	FW_Literal,31,FW_Literal,1,FW_Literal,3
+     776/     25F : FA 92               		dw 	FW_Drawer|0F800h
+     777/     261 : 96 29 96 01 96 04   		db 	FW_Literal,41,FW_Literal,1,FW_Literal,4
+     778/     267 : FA 92               		dw 	FW_Drawer|0F800h
+     779/     269 : 96 01 96 0B 96 05   		db 	FW_Literal,1,FW_Literal,11,FW_Literal,5
+     780/     26F : FA 92               		dw 	FW_Drawer|0F800h
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/29/2016 19:46:24
+
+
+     781/     271 : 96 0B 96 0B 96 06   		db 	FW_Literal,11,FW_Literal,11,FW_Literal,6
+     782/     277 : FA 92               		dw 	FW_Drawer|0F800h
+     783/     279 : 96 15 96 0B 96 07   		db 	FW_Literal,21,FW_Literal,11,FW_Literal,7
+     784/     27F : FA 92               		dw 	FW_Drawer|0F800h
+     785/     281 : 96 1F 96 0B 96 08   		db 	FW_Literal,31,FW_Literal,11,FW_Literal,8
+     786/     287 : FA 92               		dw 	FW_Drawer|0F800h
+     787/     289 : 96 29 96 0B 96 09   		db 	FW_Literal,41,FW_Literal,11,FW_Literal,9
+     788/     28F : FA 92               		dw 	FW_Drawer|0F800h
+     789/     291 : DD                  		db 	FW_Stop
+     790/     292 :                     
+     791/     292 :                     FW_Drawer:
+     792/     292 : DD                  		sep rd
+     793/     293 : F9 57               		dw  FW_DrawDigit|0F800h
+     794/     295 :                     
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/29/2016 19:46:24
 
 
   symbol table (* = unused):
@@ -826,19 +855,20 @@
  FW_2 :                          DF C |  FW_3 :                          E3 C |
 *FW_4 :                          E7 C | *FW_8 :                          EB C |
 *FW_ADD :                        82 C | *FW_ADDSTORE :                   6B C |
-*FW_AND :                        8A C | *FW_BR :                         2F C |
+*FW_AND :                        8A C |  FW_BR :                         2F C |
 *FW_CLEARSCREEN :               1FA C | *FW_DEC :                        77 C |
- FW_DRAWDIGIT :                 157 C |  FW_DRAWER :                    27D C |
-*FW_DRAWSPRITE :                164 C | *FW_DROP :                       99 C |
+ FW_DRAWDIGIT :                 157 C |  FW_DRAWER :                    292 C |
+*FW_DRAWSPRITE :                164 C |  FW_DROP :                       99 C |
 *FW_DUP :                        9E C | *FW_EQUALS :                     D2 C |
  FW_EQUALZERO :                  AC C | *FW_FROMR :                      53 C |
 *FW_GREATERZERO :                BE C | *FW_IN :                          2 C |
 *FW_INC :                        73 C |  FW_IO :                          8 C |
 *FW_KEYREAD :                   1F0 C | *FW_LESSZERO :                   B2 C |
  FW_LITERAL :                    96 C |  FW_MINUS1 :                     C5 C |
-*FW_NEGATE :                     A6 C | *FW_OR :                         8E C |
- FW_OUT :                         6 C | *FW_OVER :                       A1 C |
-*FW_PICK :                       17 C | *FW_QDUP :                       9B C |
+*FW_NEGATE :                     A6 C |  FW_NOXOR :                     227 C |
+*FW_OR :                         8E C |  FW_OUT :                         6 C |
+*FW_OVER :                       A1 C | *FW_PICK :                       17 C |
+*FW_QDUP :                       9B C |  FW_RANDOM :                    21C C |
 *FW_READ :                       60 C | *FW_ROT :                        1F C |
 *FW_SHIFTL :                     7F C | *FW_SHIFTR :                     7B C |
  FW_SOUND :                     208 C |  FW_STOP :                       DD C |
@@ -863,14 +893,14 @@
 *RELAXED :                        0 - |  RETURN :                       148 C |
  RF :                             F - |  RINTERRUPT :                     1 - |
  RPROGRAM :                       4 - |  RRSTACK :                        2 - |
- RVARIABLES :                     5 - |  START :                        21C C |
-*TIME :                    16:09:45 - | *TRUE :                           1 - |
+ RVARIABLES :                     5 - |  START :                        22C C |
+*TIME :                    19:46:24 - | *TRUE :                           1 - |
 *VERSION :                     142F - |  VIDEOMEMORY :                  700 - |
  _PUSHD :                        BB C |  _SAVED :                        BC C |
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/29/2016 19:46:24
+
+
  __0BR_BACKWARDS :               49 C |  __0BR_EXIT :                    47 C |
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/29/2016 16:09:45
-
-
  __0BR_SAVER41EXIT :             46 C |  __ADDWR :                       83 C |
  __BRANCH :                      38 C |  __CLSLOOP :                    200 C |
  __IO_DOIT :                     16 C |  __KRPUSHEXIT :                 1F5 C |
@@ -879,10 +909,10 @@
  __SDSHIFTRIGHT :               18A C |  __SDSHIFTRIGHT1 :              193 C |
  __SDXORSCREEN :                19C C |
 
-    127 symbols
-     65 unused symbols
+    129 symbols
+     63 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/29/2016 19:46:24
 
 
   defined macros:
@@ -892,7 +922,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/29/2016 16:09:45
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 18 - 7/29/2016 19:46:24
 
 
   codepages:
@@ -903,7 +933,7 @@ STANDARD (0 changed characters)
 
 0.01 seconds assembly time
 
-    768 lines source file
+    794 lines source file
       2 passes
       0 errors
       0 warnings
