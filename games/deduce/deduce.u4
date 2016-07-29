@@ -1,0 +1,73 @@
+//
+//	Deduce, based on the original by Joe Weisbecker
+//
+//	Mastermind with 4 numbers, 15 goes to win.
+//
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key inkey dup 0< if drop self then ;												// Wait for key stroke ( - key)
+
+: !+1 swap over ! 1+ ;																// (n addr - addr+1)
+: 4! !+1 !+1 !+1 !+1 drop ;
+
+variable answer alloc 4 															// answer and guess
+variable guess alloc 4
+
+variable blackPegs  																// correct colour and place
+variable whitePegs 																	// correct colour wrong place.
+variable turns 																		// number of turns left.
+
+// This section calculates black and white scores
+
+: checkMatch answer + @ swap guess + @ = ; 											// (a b - matches)
+
+: markAnswerUnused answer + dup @ 127 and swap ! ; 									// Mark answer as markAnswerUnused
+: markAnswerUsed answer + dup @ 128 or swap ! ;										// Mark answer as used.
+
+: checkBlack 
+	dup markAnswerUnused
+	dup dup checkMatch if 1 blackPegs +! markAnswerUsed ; drop ;
+
+: __checkWhite 																		// (answer guess - answer)
+	over checkMatch 																// (answer match - )
+	if 1 whitePegs +! dup markAnswerUsed then ;
+
+: checkWhite 0 __checkWhite 1 __checkWhite 2 __checkWhite 3 __checkWhite drop ;
+
+: scoreCalculate 0 blackPegs ! 0 whitePegs ! 										// Clear Scores.
+	0 checkBlack 1 checkBlack 2 checkBlack 3 checkBlack 							// Check each guess/answer pair (black pegs)
+																					// after this all used guesses are marked.
+	0 checkWhite 1 checkWhite 2 checkWhite 3 checkWhite 							// Check each answer against wrong guesses.
+;
+
+// This section displays pegs 
+
+: drawpeg dup 2* 2* 2* 16 + swap if sprite [06FCFCFC787878] then sprite [06FC84CC484878]  // (x type - )
+
+: drawNPegs 																		// (count type - )
+	over 0= if drop drop ; 															// Exit if count is zero.
+	swap 1- swap over over 															// (count-1 type count-1 type)
+	swap 2* 2* 2* 0- 56 + swap 														// (count-1 type xPos type)
+	drawPeg 																		// draw a peg
+	self
+;
+
+: scoreShow  blackPegs @ 0 drawNPegs whitePegs @ 1 drawNPegs ;
+
+: xdigit digit 
+
+: >= - 0< 0= ;	
+
+: displayTurns turns @ dup 10 >= if 52 1 1 xdigit 10 - then 58 1 rot xdigit ;
+
+: __main 
+	initialise 15 turns ! 
+	1 4 8 9 answer 4! 
+
+	clearscreen
+	displayTurns
+	1 1 9 8 guess 4!
+	scoreCalculate scoreShow
+
+	stop ;
