@@ -8,71 +8,64 @@
 
 : key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
 
-//	Processing. Page is set to 7, e.g. the screen display, new screen is in page 5.
-
-//	700-707 	work area
-//	708-70F 	cache for first line.
-//	710 		top row for first line.
-//	718 		first actual line done.
-//
-
-: __checkAdjCell over over 															// (bitpattern address - bitpattern address+8)
-	 @ and if 1 0 +! then 
-
-	 //over over swap over @ or swap !
-
-	 8 + ;
-
-: __getCurrentCell over over
-	@ and 1 ! 8 + ;
-
-: __moveRight swap 2/ ?dup 0= if 1+ $80 then swap ;
-
-: aliveProcess 0 @ 2/ 1 = ;															// alive - lives if 2 or 3.
-
-: deadProcess 0 @ 3 = ;																// dead - live if 3 exactly.
-
-: getNewStatus 1 @ if aliveProcess ; deadProcess ;
-
-: applyNewStatus if 8 + swap over @ or swap ! ; drop drop ;
-
-: __checkCell 																		// (bp addr - bp addr)
-	over over 
-	0 0 ! 																			// clear count
-	over over 																		// copy start position for status apply.
-	__checkAdjCell __checkAdjCell __checkAdjCell 24 -  __moveRight 					// first column
-	__checkAdjCell __getCurrentCell __checkAdjCell 24 - __moveRight 				// second column
-	__checkAdjCell __checkAdjCell __checkAdjCell drop drop 							// third column and throw.
+// Screen storage is both in page 7. The left half is the current state, the right half the next state.
+// For scanning, the challenging bit it is usually stored as mask (e.g. $80) and screen address low byte
+// hence the proliferation of over over.
 
 
-	__moveRight getNewStatus 7 page! applyNewStatus dup 7 ! 5 page! 						// copy new line.
-	__moveRight 																	// next slot.
-;
+: checkCell 					// (mask address - mask address) of next cell down
+	//over over @ or over ! 
+	over over @ and if 1 0 +! then 8 + ;
 
-: __checkLines
-	__checkCell dup $F8 = if drop drop ; self
+: getCurrentCell over over @ and 0= 0= 1 ! 8 + ;
 
-: rGraphic  sprite [03080808]
+: aliveLogic 0 @ 2/ 1 = ;
+: deadLogic 0 @ 3 = ;
+: getNewStatus 1 @ if aliveLogic ; deadLogic ;
 
-: copy7to5 dup 7 page! @ over 5 page! ! 1+ dup if self then ;
-
-: __newScan 
-	16 copy7to5 drop clearscreen
-	5 page! 
-	$80 $10 																		// top left of first block of 9.
-	__checkLines
-
+: setNextOn over over 12 + @ or over 12 + ! ; // (mask address - ) 4 across 1 line down hence 12
 	
 
-;
+: moveRight swap 2/ ?dup 0= if 1+ $80 then swap ;
 
-: __main 
-	 initialise 7 page! 
-	 4 5 rgraphic
-	 14 4 rgraphic
-	 24 13 rgraphic
+: canOptimise dup @ over 8 + @ + over 16 + @ + if 0 ; 	// if this byte and two below are 0 & mask is 8 or higher optimise out
+	over $FC and ;
 
-	 __newScan
-	 __newScan
+: countCells 					// (mask address - mask address)
+	canOptimise if moveRight ;							// speed up mostly empty screen.
 
-	 stop ;
+	over over 
+	0 0 ! 0 1 ! 										// clear count (0) original (1)
+
+	checkCell checkCell checkCell 24 - moveRight 		// count cells.
+	checkCell getCurrentCell checkCell 24 - moveRight
+	checkCell checkCell checkCell drop drop
+	moveRight 											// move right to next cell.
+	getNewStatus if setNextOn then ;
+
+: cc4 countCells countCells countCells countCells dup 7 ! ;
+
+: doOneRowCells 
+	cc4 cc4 cc4 cc4 cc4 cc4 cc4 cc4 4 + ;
+
+: doCellsToEndOfScreen
+	doOneRowCells dup $F7 = if ; self
+
+
+: glider sprite [034020E0]
+
+: copy1 dup 4 + @ over ! dup 4 + 0 swap ! 1+ ;
+: copy4 copy1 copy1 copy1 copy1 4 + ;
+
+: copyRest copy4 dup $F8 = if ; self
+
+: oneScreen 	
+	$01 $0F doCellsToEndOfScreen drop drop	$10 copyRest drop ;
+
+: __main
+	initialise 7 page! 
+	clearscreen 
+	4 5 glider
+
+	oneScreen 
+	stop
