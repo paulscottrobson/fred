@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/30/2016 15:50:11
 
 
        1/       0 :                     ; *********************************************************************************************************************
@@ -61,7 +61,7 @@
       58/       2 :                     ; *********************************************************************************************************************
       59/       2 :                     
       60/       2 : F8 68               FW_In:	ldi 	068h								; [[PORT>]] input from port
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/30/2016 15:50:11
 
 
       61/       4 : 30 08               		br 		FW_IO
@@ -124,7 +124,7 @@
      118/      32 :                     
      119/      32 :                     ; *********************************************************************************************************************
      120/      32 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/30/2016 15:50:11
 
 
      121/      32 :                     FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
@@ -187,7 +187,7 @@
      178/      60 :                     ; *********************************************************************************************************************
      179/      60 :                     
      180/      60 :                     FW_Read:	 										; [[@]] read from variable page.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/30/2016 15:50:11
 
 
      181/      60 : F0                  		ldx 										; read address 
@@ -250,7 +250,7 @@
      238/      84 : 30 BC               		br 		_SaveD
      239/      86 :                     
      240/      86 :                     ; *********************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/30/2016 15:50:11
 
 
      241/      86 :                     
@@ -313,7 +313,7 @@
      298/      A6 :                     
      299/      A6 :                     ; *********************************************************************************************************************
      300/      A6 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/30/2016 15:50:11
 
 
      301/      A6 :                     FW_Negate: 											; [[0-]] Word, negates top of stack
@@ -376,7 +376,7 @@
      358/      CE : 53                  		str 	rDStack
      359/      CF : 9E                  		ghi 	re 									; get value to push
      360/      D0 : 30 BB               		br 		_PushD
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/30/2016 15:50:11
 
 
      361/      D2 :                     
@@ -391,7 +391,7 @@
      370/      D6 :                     ; *********************************************************************************************************************
      371/      D6 :                     
      372/      D6 :                     FW_VariablePage:
-     373/      D6 : F8 06               		ldi 	dataMemory / 256 					; [[VARPAGE]] pushes the page address of variables on the stack.
+     373/      D6 : F8 06               		ldi 	dataMemory / 256 					; [[PAGE@]] pushes the page address of variables on the stack.
      374/      D8 : 30 BB               		br 		_PushD
      375/      DA :                     
      376/      DA :                     ; *********************************************************************************************************************
@@ -439,7 +439,7 @@
      418/     104 : B3                  		phi 	rDStack
      419/     105 : B5                  		phi 	rVariables
      420/     106 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/30/2016 15:50:11
 
 
      421/     106 : 90                  		ghi 	r0 									; set up RF,RC,RD,R1 relies on all being in the same page as this.
@@ -502,7 +502,7 @@
      478/     139 : 30 1F               		br 		ExecuteCompiledWord 				; and go do it.
      479/     13B :                     
      480/     13B :                     ; *************************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/30/2016 15:50:11
 
 
      481/     13B :                     ;
@@ -565,7 +565,7 @@
      538/     15D : FC B1               		adi 	FontData & 255
      539/     15F : A4                  		plo 	rProgram
      540/     160 : F8 01               		ldi 	FontData / 256
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/30/2016 15:50:11
 
 
      541/     162 : B4                  		phi 	rProgram
@@ -628,7 +628,7 @@
      598/     191 : 30 97               		br 		__SDShiftDone 
      599/     193 :                     ;
      600/     193 :                     __SDShiftRight1: 									; we have to do it this way, 1801 as now Ring Shift
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/30/2016 15:50:11
 
 
      601/     193 : 88                  		glo 	r8 									; this one shifts a 1 in as the MSB - the code immediately
@@ -691,7 +691,7 @@
      658/     1ED :                     
      659/     1ED :                     ProgramCode:
      660/     1ED : 02 2C               		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/30/2016 15:50:11
 
 
      661/     1EF : A0                  		db 		0A0h 								; data stack starts here in variable page (and works down)
@@ -754,7 +754,7 @@
      718/     210 : FF 01                       smi     1                                   ; short delay loop
      719/     212 : 3A 10                       bnz     FM_TimeLoop
      720/     214 : 63                          out  	AudioPort                           ; reset speaker line.
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/30/2016 15:50:11
 
 
      721/     215 : 01                          db     	1                                                
@@ -817,7 +817,7 @@
      778/     267 : FA 92               		dw 	FW_Drawer|0F800h
      779/     269 : 96 01 96 0B 96 05   		db 	FW_Literal,1,FW_Literal,11,FW_Literal,5
      780/     26F : FA 92               		dw 	FW_Drawer|0F800h
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/30/2016 15:50:11
 
 
      781/     271 : 96 0B 96 0B 96 06   		db 	FW_Literal,11,FW_Literal,11,FW_Literal,6
@@ -834,7 +834,7 @@
      792/     292 : DD                  		sep rd
      793/     293 : F9 57               		dw  FW_DrawDigit|0F800h
      794/     295 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/30/2016 15:50:11
 
 
   symbol table (* = unused):
@@ -844,7 +844,7 @@
 *BIGENDIAN :                      0 - |  BOOT :                          FB C |
 *BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
 *CONSTPI :        3.141592653589793 - |  DATAMEMORY :                   600 - |
-*DATE :                   7/29/2016 - |  ECW_LONGADDRESS :              12F C |
+*DATE :                   7/30/2016 - |  ECW_LONGADDRESS :              12F C |
  ECW_RETURN :                   135 C |  EXECUTECOMPILEDWORD :          11F C |
  EXECUTEDEFINEDWORD :           13B C | *FALSE :                          0 - |
 *FM_SETVARIABLEPAGE :            DA C |  FM_TIMELOOP :                  210 C |
@@ -894,10 +894,10 @@
  RF :                             F - |  RINTERRUPT :                     1 - |
  RPROGRAM :                       4 - |  RRSTACK :                        2 - |
  RVARIABLES :                     5 - |  START :                        22C C |
-*TIME :                    19:46:24 - | *TRUE :                           1 - |
+*TIME :                    15:50:11 - | *TRUE :                           1 - |
 *VERSION :                     142F - |  VIDEOMEMORY :                  700 - |
  _PUSHD :                        BB C |  _SAVED :                        BC C |
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/30/2016 15:50:11
 
 
  __0BR_BACKWARDS :               49 C |  __0BR_EXIT :                    47 C |
@@ -912,7 +912,7 @@
     129 symbols
      63 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/30/2016 15:50:11
 
 
   defined macros:
@@ -922,7 +922,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 18 - 7/29/2016 19:46:24
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 18 - 7/30/2016 15:50:11
 
 
   codepages:
@@ -931,7 +931,7 @@ LRI                                   |
 STANDARD (0 changed characters)
 
 
-0.01 seconds assembly time
+0.02 seconds assembly time
 
     794 lines source file
       2 passes

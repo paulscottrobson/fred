@@ -6,5 +6,6 @@ python makedist.py
 
 copy /Y uforth.core ..\games\jackpot
 copy /Y uforth.core ..\games\deduce
+copy /Y uforth.core ..\games\life
 
 :end

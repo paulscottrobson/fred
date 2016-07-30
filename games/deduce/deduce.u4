@@ -6,7 +6,7 @@
 
 : initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
 
-: key inkey dup 0< if drop self then ;												// Wait for key stroke ( - key)
+: key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
 
 : !+1 swap over ! 1+ ;																// (n addr - addr+1)
 : 4! !+1 !+1 !+1 !+1 drop ;
@@ -53,7 +53,7 @@ variable turns 																		// number of turns left.
 	self
 ;
 
-: scoreShow  blackPegs @ drop 4 0 drawNPegs whitePegs @ drop 4 1 drawNPegs ;
+: scoreShow  blackPegs @ 0 drawNPegs whitePegs @ 1 drawNPegs ;
 
 : xdigit digit 
 
@@ -73,21 +73,37 @@ variable turns 																		// number of turns left.
 
 : displayTurns turns @ dup 10 >= if 52 1 1 xdigit 10 - then 58 1 rot xdigit ;
 
+: xDigitPos dup 2* + 2* 3 + ;
+: questionMark 10 sprite [07F8880838200020]
+
+: decKey key 15 and dup 10 >= if drop self then ;
+
+: enterDigit 
+	dup xDigitPos questionMark decKey swap dup xDigitPos questionMark 			// (key x -)
+	over over xDigitPos 11 rot xdigit 											// (key x -)
+	guess + ! 46 40 beep ;
+	
 : query sprite [087070F8F8702000F8]												// press key sprite.
+
+: lose0 24 13 sprite [058E8A8A8AEE]												// Display LOSE.
+: lose1 32 13 sprite [05EE88EE28EE]
+
+: mainloop
+
+	clearscreen displayTurns
+
+	turns @ 16 = if lose0 lose1 stop then 
+
+	0 enterDigit 1 enterDigit 2 enterDigit 3 enterDigit
+
+	scoreCalculate scoreShow 
+
+	blackPegs @ 4 = if stop then
+
+	key	1 turns +! self
 
 : __main 
 	 initialise 1 turns ! clearscreen 29 12 query 
 
-	 //key drop 
-	 createAnswer
-
-	clearscreen
-	// if lost (turns 15) display lost.
-	displayTurns
-
-	1 1 9 8 guess 4! // enter guess here.
-
-	scoreCalculate scoreShow
-
-	// if won display win, else bump turns and restart
-	stop ;
+	 key drop 
+	 createAnswer mainloop

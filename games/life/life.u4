@@ -1,0 +1,78 @@
+//
+//	Conway's Life, originallly programmed by M. Blecker
+//
+//	Written by Paul Robson July 2016
+//
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
+
+//	Processing. Page is set to 7, e.g. the screen display, new screen is in page 5.
+
+//	700-707 	work area
+//	708-70F 	cache for first line.
+//	710 		top row for first line.
+//	718 		first actual line done.
+//
+
+: __checkAdjCell over over 															// (bitpattern address - bitpattern address+8)
+	 @ and if 1 0 +! then 
+
+	 //over over swap over @ or swap !
+
+	 8 + ;
+
+: __getCurrentCell over over
+	@ and 1 ! 8 + ;
+
+: __moveRight swap 2/ ?dup 0= if 1+ $80 then swap ;
+
+: aliveProcess 0 @ 2/ 1 = ;															// alive - lives if 2 or 3.
+
+: deadProcess 0 @ 3 = ;																// dead - live if 3 exactly.
+
+: getNewStatus 1 @ if aliveProcess ; deadProcess ;
+
+: applyNewStatus if 8 + swap over @ or swap ! ; drop drop ;
+
+: __checkCell 																		// (bp addr - bp addr)
+	over over 
+	0 0 ! 																			// clear count
+	over over 																		// copy start position for status apply.
+	__checkAdjCell __checkAdjCell __checkAdjCell 24 -  __moveRight 					// first column
+	__checkAdjCell __getCurrentCell __checkAdjCell 24 - __moveRight 				// second column
+	__checkAdjCell __checkAdjCell __checkAdjCell drop drop 							// third column and throw.
+
+
+	__moveRight getNewStatus 7 page! applyNewStatus dup 7 ! 5 page! 						// copy new line.
+	__moveRight 																	// next slot.
+;
+
+: __checkLines
+	__checkCell dup $F8 = if drop drop ; self
+
+: rGraphic  sprite [03080808]
+
+: copy7to5 dup 7 page! @ over 5 page! ! 1+ dup if self then ;
+
+: __newScan 
+	16 copy7to5 drop clearscreen
+	5 page! 
+	$80 $10 																		// top left of first block of 9.
+	__checkLines
+
+	
+
+;
+
+: __main 
+	 initialise 7 page! 
+	 4 5 rgraphic
+	 14 4 rgraphic
+	 24 13 rgraphic
+
+	 __newScan
+	 __newScan
+
+	 stop ;

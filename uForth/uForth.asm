@@ -370,7 +370,7 @@ FW_Equals:											; [[=]] check top two values equal
 ; *********************************************************************************************************************
 
 FW_VariablePage:
-		ldi 	dataMemory / 256 					; [[VARPAGE]] pushes the page address of variables on the stack.
+		ldi 	dataMemory / 256 					; [[PAGE@]] pushes the page address of variables on the stack.
 		br 		_PushD
 
 ; *********************************************************************************************************************
