@@ -93,7 +93,7 @@ void DBGXRender(int *address,int runMode) {
 		rc.w = WIN_WIDTH * 8 / 10;rc.h = WIN_HEIGHT * 4/10;
 		rc.x = WIN_WIDTH/2-rc.w/2;rc.y = WIN_HEIGHT - rc.h - 64;
 	}
-	rc.w = rc.w/64*64;rc.h = rc.h/32*32;											// Make it /64 /32
+	rc.w = rc.w/width*width;rc.h = rc.h/height*height;								// Make equal size pixels.
 
 	if (!HWIIsScreenOn()) {															// Screen off, show static.
 		SDL_Rect rcp;		
@@ -106,7 +106,7 @@ void DBGXRender(int *address,int runMode) {
 		return;		
 	}
 
-	SDL_Rect rcPixel;rcPixel.h = rc.h/32;rcPixel.w = rc.w / 64;						// Pixel rectangle.
+	SDL_Rect rcPixel;rcPixel.h = rc.h/height;rcPixel.w = rc.w / width;				// Pixel rectangle.
 	SDL_Rect rcDraw;rcDraw.w = rcPixel.w/2;rcDraw.h = rcPixel.h/2;
 	GFXRectangle(&rc,0x0);															// Fill it black
 	for (int j = 0;j < height;j++) {

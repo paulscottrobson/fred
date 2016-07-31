@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/16/2016 21:49:58
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 1 - 7/31/2016 8:54:03
 
 
        1/       0 :                     
@@ -40,7 +40,7 @@
       37/      18 : 61                  	out 	1
       38/      19 : 02                  	db 		2 																; select device 2
       39/      1A : 62                  	out 	2
-      40/      1B : 03                  	db 	 	3 																; command 3 (TV on)
+      40/      1B : 01                  	db 	 	1 																; command 3 (TV on)
       41/      1C :                     
       42/      1C : 61                  	out 	1  																; select device 1
       43/      1D : 01                  	db 		1
@@ -61,7 +61,7 @@
       58/      2A : 22                  	dec 	r2
       59/      2B : 54                  	str 	r4 																; copy to R4.
       60/      2C : 14                  	inc 	r4
- AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/16/2016 21:49:58
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 2 - 7/31/2016 8:54:03
 
 
       61/      2D :                     
@@ -107,16 +107,31 @@
      101/      4B : 22                  	dec 	r2 																; save D on stack.
      102/      4C : 52                  	str 	r2
      103/      4D : F8 07               	ldi 	screen/256														; reset screen address
-     104/      4F : B0                  	phi 	r0
-     105/      50 : F8 00               	ldi 	0
-     106/      52 : A0                  	plo 	r0
-     107/      53 : 30 47               	br 		interruptExit
-     108/      55 :                     
-     109/      55 :                     
-     110/      55 :                     
-     111/      55 :                     
-     112/      55 :                     
- AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/16/2016 21:49:58
+     104/      4F : F8 00               	ldi 	0
+     105/      51 : B0                  	phi 	r0
+     106/      52 : F8 00               	ldi 	0
+     107/      54 : A0                  	plo 	r0
+     108/      55 : 30 47               	br 		interruptExit
+     109/      57 :                     
+     110/      57 :                     
+     111/      C0 :                     	org 	0C0h
+     112/      C0 : 22                  	dec 	r2 																; save XP on stack
+     113/      C1 : 78                  	sav 
+     114/      C2 : 22                  	dec 	r2 																; save D on stack.
+     115/      C3 : 52                  	str 	r2
+     116/      C4 : F8 07               	ldi 	screen/256														; reset screen address
+     117/      C6 : F8 00               	ldi 	0
+     118/      C8 : B0                  	phi 	r0
+     119/      C9 : F8 00               	ldi 	0
+     120/      CB : A0                  	plo 	r0
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 3 - 7/31/2016 8:54:03
+
+
+     121/      CC : 30 47               	br 		interruptExit
+     122/      CE :                     
+     123/      CE :                     
+     124/      CE :                     
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/31/2016 8:54:03
 
 
   symbol table (* = unused):
@@ -124,7 +139,7 @@
 
 *ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
 *BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
-*CONSTPI :        3.141592653589793 - | *DATE :                   7/16/2016 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   7/31/2016 - |
  DELAY :                         38 C | *FALSE :                          0 - |
 *FULLPMMU :                       1 - | *HAS64 :                          1 - |
 *HASDSP :                         0 - | *HASFPU :                         0 - |
@@ -142,14 +157,14 @@
 *R6 :                             6 - |  RC :                             C - |
  RE :                             E - | *RELAXED :                        0 - |
  RF :                             F - |  SCREEN :                       700 - |
- START :                          7 C | *TIME :                    21:49:58 - |
+ START :                          7 C | *TIME :                     8:54:03 - |
  TONEGENERATION :                34 C | *TRUE :                           1 - |
 *VERSION :                     142F - | *WAIT :                          27 C |
 
      46 symbols
      31 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file test.asm - page 4 - 7/16/2016 21:49:58
+ AS V1.42 Beta [Bld 102] - source file test.asm - page 5 - 7/31/2016 8:54:03
 
 
   codepages:
@@ -160,7 +175,7 @@ STANDARD (0 changed characters)
 
 0.00 seconds assembly time
 
-    112 lines source file
+    124 lines source file
       2 passes
       0 errors
       0 warnings

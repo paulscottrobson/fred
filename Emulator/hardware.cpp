@@ -112,7 +112,9 @@ void HWIWriteDevice(BYTE8 device,BYTE8 controlValue) {
 			isKeypadOn = (controlValue & 1) != 0;								// 0 off 1 on in lower bit.
 			break;
 		case 2:																	// Device 2 = TV.
-			isScreenOn = (controlValue & 3) == 3; 								// 00 off 11 on in 2 lower bits.
+			isScreenOn = (controlValue & 3) != 0; 								// 00 off 11 on in 2 lower bits.
+			columns = (controlValue & 2) ? 64 : 32;								// Bit 1 is 64 across
+			rows = (controlValue & 1) ? 32 : 16; 								// Bit 0 is 32 down.
 			break;
 	}
 }

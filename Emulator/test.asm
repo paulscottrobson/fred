@@ -37,7 +37,7 @@ start:
 	out 	1
 	db 		2 																; select device 2
 	out 	2
-	db 	 	3 																; command 3 (TV on)
+	db 	 	1 																; command 3 (TV on)
 
 	out 	1  																; select device 1
 	db 		1
@@ -101,11 +101,23 @@ interruptRoutine:
 	dec 	r2 																; save D on stack.
 	str 	r2
 	ldi 	screen/256														; reset screen address
+	ldi 	0
 	phi 	r0
 	ldi 	0
 	plo 	r0
 	br 		interruptExit
 
 
+	org 	0C0h
+	dec 	r2 																; save XP on stack
+	sav 
+	dec 	r2 																; save D on stack.
+	str 	r2
+	ldi 	screen/256														; reset screen address
+	ldi 	0
+	phi 	r0
+	ldi 	0
+	plo 	r0
+	br 		interruptExit
 
 
