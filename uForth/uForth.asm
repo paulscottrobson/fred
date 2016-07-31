@@ -156,19 +156,13 @@ __0BR_Backwards:
 
 ; *********************************************************************************************************************
 
-FW_FromR:											; [[R>]] return stack to data stack
-		lda 	rRStack
-		dec 	rDStack
-		str 	rDStack
+FW_FromR:											; [[R>]] return stack to data stack (1 byte only)
 		lda 	rRStack
 		br 		_PushD
 
 ; *********************************************************************************************************************
 
-FW_ToR:												; [[>R]] data stack to return stack
-		lda 	rDStack
-		dec 	rRStack
-		str 	rRStack
+FW_ToR:												; [[>R]] data stack to return stack (1 byte only)
 		lda 	rDStack
 		dec 	rRStack
 		str 	rRStack
@@ -650,6 +644,26 @@ FontData:
 		db 	5,070h,088h,070h,088h,070h 				; 8
 		db 	5,070h,088h,078h,008h,070h 				; 9
 
+			
+; *************************************************************************************************************************
+;
+;												Clear the video display
+;
+; *************************************************************************************************************************
+
+FW_ClearScreen: 									; [[CLEARSCREEN]]
+		ldi 	0
+		plo 	r6
+		ldi 	videoMemory / 256
+		phi 	r6
+__CLSLoop:
+		ldi 	0
+		str 	r6
+		inc 	r6
+		glo 	r6
+		bnz 	__CLSLoop
+		sep 	rc
+
 ; *************************************************************************************************************************
 ;
 ;		The first three bytes are the address of the first word to run, and the data stack initial value.
@@ -660,7 +674,6 @@ ProgramCode:
 		dw 		Start 								; [[$$STARTMARKER]] address of program start, not actually a word that can be called.
 		db 		0A0h 								; data stack starts here in variable page (and works down)
 
-			
 ; *************************************************************************************************************************
 ;		
 ;										Read Keyboard. Return FF no key, else 00-1F
@@ -675,27 +688,6 @@ FW_KeyRead:											; [[INKEY]]
 __KRPushExit:
 		ldi 	0FFh
 		str 	rDStack
-		sep 	rc
-
-; *************************************************************************************************************************
-;
-;												Clear the video display
-;
-; *************************************************************************************************************************
-
-		ldx 
-
-FW_ClearScreen: 									; [[CLEARSCREEN]]
-		ldi 	0
-		plo 	r6
-		ldi 	videoMemory / 256
-		phi 	r6
-__CLSLoop:
-		ldi 	0
-		str 	r6
-		inc 	r6
-		glo 	r6
-		bnz 	__CLSLoop
 		sep 	rc
 
 ; *************************************************************************************************************************
