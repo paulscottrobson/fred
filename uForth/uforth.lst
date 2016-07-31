@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 1 - 7/31/2016 21:04:16
 
 
        1/       0 :                     ; *********************************************************************************************************************
@@ -61,7 +61,7 @@
       58/       2 :                     ; *********************************************************************************************************************
       59/       2 :                     
       60/       2 : F8 68               FW_In:	ldi 	068h								; [[PORT>]] input from port
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 2 - 7/31/2016 21:04:16
 
 
       61/       4 : 30 08               		br 		FW_IO
@@ -124,7 +124,7 @@
      118/      32 :                     
      119/      32 :                     ; *********************************************************************************************************************
      120/      32 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 3 - 7/31/2016 21:04:16
 
 
      121/      32 :                     FW_0BR: 											; [[0BR]] if pop = 0 then advance by <next> (7 bit signed)
@@ -187,7 +187,7 @@
      178/      5D : 25                  		dec 	rVariables 							; unpick if overflowed.
      179/      5E : 30 B6               		br 		_SaveD 								; and write it out.
      180/      60 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 4 - 7/31/2016 21:04:16
 
 
      181/      60 :                     ; *********************************************************************************************************************
@@ -250,7 +250,7 @@
      238/      81 : F5                  		sd
      239/      82 : 30 B6               		br 		_SaveD
      240/      84 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 5 - 7/31/2016 21:04:16
 
 
      241/      84 :                     ; *********************************************************************************************************************
@@ -313,7 +313,7 @@
      298/      A2 : FD 00               		sdi 	0
      299/      A4 : 30 B6               		br 		_SaveD
      300/      A6 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 6 - 7/31/2016 21:04:16
 
 
      301/      A6 :                     ; *********************************************************************************************************************
@@ -376,7 +376,7 @@
      358/      CC :                     FW_Equals:											; [[=]] check top two values equal
      359/      CC : DD                  		sep 	rd
      360/      CD : 80                  		db 		FW_Sub
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 7 - 7/31/2016 21:04:16
 
 
      361/      CE : A6                  		db 		FW_EqualZero
@@ -439,7 +439,7 @@
      418/     103 : BD                  		phi 	rd
      419/     104 : BF                  		phi 	rf
      420/     105 :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 8 - 7/31/2016 21:04:16
 
 
      421/     105 : F8 F5               		ldi 	ProgramCode & 255 					; RF now points to the address of the start
@@ -502,7 +502,7 @@
      478/     135 :                     ;
      479/     135 :                     ;	If it is a sequence of commands the first instruction will be SEP RD, which will come here (with RF pointing to the
      480/     135 :                     ;	new code to execute)
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 9 - 7/31/2016 21:04:16
 
 
      481/     135 :                     ;
@@ -565,7 +565,7 @@
      538/     15E :                     ; *************************************************************************************************************************
      539/     15E :                     ;
      540/     15E :                     ;												Draw Sprite routine
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 10 - 7/31/2016 21:04:16
 
 
      541/     15E :                     ;
@@ -628,7 +628,7 @@
      598/     191 :                     
      599/     191 :                     __SDShiftDone:
      600/     191 : A8                  		plo 	r8 									; write low byte back
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 11 - 7/31/2016 21:04:16
 
 
      601/     192 : 29                  		dec 	r9 									; do it the relevant number of times.
@@ -691,7 +691,7 @@
      658/     1EC : B6                  		phi 	r6
      659/     1ED :                     __CLSLoop:
      660/     1ED : F8 00               		ldi 	0
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 12 - 7/31/2016 21:04:16
 
 
      661/     1EF : 56                  		str 	r6
@@ -754,7 +754,7 @@
      718/     214 : DC                          sep 	rc 									; and exit
      719/     215 :                     
      720/     215 :                     ; *************************************************************************************************************************
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 13 - 7/31/2016 21:04:16
 
 
      721/     215 :                     ;
@@ -817,7 +817,7 @@
      778/     280 : FA 8B               		dw 	FW_Drawer|0F800h
      779/     282 : 90 29 90 0B 90 09   		db 	FW_Literal,41,FW_Literal,11,FW_Literal,9
      780/     288 : FA 8B               		dw 	FW_Drawer|0F800h
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 14 - 7/31/2016 21:04:16
 
 
      781/     28A : D7                  		db 	FW_Stop
@@ -826,7 +826,7 @@
      784/     28B : DD                  		sep rd
      785/     28C : F9 51               		dw  FW_DrawDigit|0F800h
      786/     28E :                     
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 15 - 7/31/2016 21:04:16
 
 
   symbol table (* = unused):
@@ -886,10 +886,10 @@
  RF :                             F - |  RINTERRUPT :                     1 - |
  RPROGRAM :                       4 - |  RRSTACK :                        2 - |
  RVARIABLES :                     5 - |  START :                        225 C |
-*TIME :                    11:46:26 - | *TRUE :                           1 - |
+*TIME :                    21:04:16 - | *TRUE :                           1 - |
 *VERSION :                     142F - |  VIDEOMEMORY :                  700 - |
  _PUSHD :                        B5 C |  _SAVED :                        B6 C |
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 16 - 7/31/2016 21:04:16
 
 
  __0BR_BACKWARDS :               49 C |  __0BR_EXIT :                    47 C |
@@ -904,7 +904,7 @@
     129 symbols
      63 unused symbols
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 17 - 7/31/2016 21:04:16
 
 
   defined macros:
@@ -914,7 +914,7 @@ LRI                                   |
 
       1 macro
 
- AS V1.42 Beta [Bld 102] - source file uforth.asm - page 18 - 7/31/2016 11:46:26
+ AS V1.42 Beta [Bld 102] - source file uforth.asm - page 18 - 7/31/2016 21:04:16
 
 
   codepages:
