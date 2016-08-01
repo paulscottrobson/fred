@@ -8,5 +8,6 @@ copy /Y uforth.core ..\games\jackpot
 copy /Y uforth.core ..\games\deduce
 copy /Y uforth.core ..\games\life
 copy /Y uforth.core ..\games\spacewar
+copy /Y uforth.core ..\games\match
 
 :end

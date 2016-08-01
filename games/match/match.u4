@@ -1,0 +1,63 @@
+//
+//	Match game (Pelmanism) original version by A. Marcantonio
+//
+//	Written by Paul Robson July 2016
+// Formar 789F456E123D0ABC
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
+
+: 8* 2* 2* 2* ;
+
+: posToXY dup 3 and 8* 16 + swap 2/ 2/ 8* ;
+
+: cardBack posToXY sprite [07FEFEFEFEFEFEFEFE]
+
+: picture  >r posToXY 1+ swap 1+ swap r> 	 										// (pos graphic -)
+	?dup 0= if sprite [052020F82020] then 1-										// 0 +
+	?dup 0= if sprite [052070F87020] then 1-										// 1 diamond
+	?dup 0= if sprite [05F8888888F8] then 1-										// 2 square
+	?dup 0= if sprite [052070F82020] then 1- 										// 3 arrow
+	?dup 0= if sprite [05F800F800F8] then 1-										// 4 three bars
+	?dup 0= if sprite [058850205088] then 1-										// 5 cross
+	?dup 0= if sprite [05F8702070F8] then 1- 										// 6 hourglass
+	?dup 0= if sprite [05F8A8F8A8F8] then 1-										// 7 hashbox
+	?dup 0= if sprite [052060202070] then 1-										// 8 1 graphic
+	drop sprite [05F888380020]														// all others display ?
+
+variable board alloc 16 															// 16 bytes for the board bit 7 back 0-2 graphic
+variable p1 variable p2 															// Player scores
+variable turn 																		// current turn 0 or 1 => p1 p2
+
+: p1Header 0 0 sprite [057151714141]
+: p2Header 55 0 sprite [057751774447]
+: arrow 2 turn @ if drop 57 then  14 sprite [062070F8707070]
+
+: board@ board + @ ;
+: board! board + ! ;
+: swapBoard over over board@ swap board@ rot board! swap board! ;					// (sq1 sq2 -)
+
+: __swapRandom ?dup 0= if ; random 15 and random 15 and swapBoard 1- self
+: __fillBoard dup 16 = if drop ; dup dup 2/ 128 or swap board! 1+ self
+
+: resetGame 0 p1 ! 0 p2 ! random 1 and turn ! 0 __fillBoard 16 __swapRandom ;
+
+: __drawSquare dup 16 = if drop ; dup cardBack dup dup board@ picture 1+ self 
+: __xdigit digit 
+
+
+: redrawBoard clearScreen p1Header p2Header 
+		2 6 p1 @ __xdigit
+		57 6 p2 @ __xdigit
+		arrow
+		0 __drawSquare ;
+
+: takeTurn
+	redrawBoard
+	stop ;
+
+: __main 
+	initialise 
+	resetGame 
+	takeTurn
