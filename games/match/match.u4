@@ -2,7 +2,7 @@
 //	Match game (Pelmanism) original version by A. Marcantonio
 //
 //	Written by Paul Robson July 2016
-// Formar 789F456E123D0ABC
+//
 
 : initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
 
@@ -29,6 +29,7 @@
 variable board alloc 16 															// 16 bytes for the board bit 7 back 0-2 graphic
 variable p1 variable p2 															// Player scores
 variable turn 																		// current turn 0 or 1 => p1 p2
+variable keyLut alloc 16
 
 : p1Header 0 0 sprite [057151714141]
 : p2Header 55 0 sprite [057751774447]
@@ -46,6 +47,15 @@ variable turn 																		// current turn 0 or 1 => p1 p2
 : __drawSquare dup 16 = if drop ; dup cardBack dup dup board@ picture 1+ self 
 : __xdigit digit 
 
+: 1out over over keyLut + ! 1+ swap 1+ swap ;
+: 3out 1out 1out 1out ;
+
+: turnOverCard dup -1 picture dup board@ 127 and picture ; 
+
+: createLut 0 	7 3out drop 15 1out drop  											// create in keyLut a key -> pos mapper.
+				4 3out drop 14 1out drop
+				1 3out drop 13 1out drop
+				0 1out drop 10 3out drop drop ;
 
 : redrawBoard clearScreen p1Header p2Header 
 		2 6 p1 @ __xdigit
@@ -53,11 +63,25 @@ variable turn 																		// current turn 0 or 1 => p1 p2
 		arrow
 		0 __drawSquare ;
 
-: takeTurn
-	redrawBoard
-	stop ;
+: turnCard key 15 and 
+	keylut + @ 		// comment line out to use 0123 4567 89AB CDEF with uses 789F 456E 123D 0ABC layout (System 00)
+	dup board@ 0< 0= if 200 10 beep drop self then dup turnOverCard ; 		
+
+: setFaceUp dup board@ 127 and swap board! ;
+
+: takeTurn							// (- succeeded)
+	redrawBoard turnCard turnCard 
+	over over = if drop drop 0 ;		// fail if same one selected twice.
+	over board@ over board@ - if drop drop 150 150 beep 0 ;
+	setFaceUp setFaceUp
+	p1 turn @ if drop p2 then 1 swap +! 50 30 beep
+	1 ;
+
+: playGame takeTurn 0= if turn @ 1 xor turn ! then 
+	p1 @ p2 @ + 8 = if stop then self
 
 : __main 
-	initialise 
-	resetGame 
-	takeTurn
+	initialise createLut resetGame 
+	playGame
+	clearScreen
+	stop 
