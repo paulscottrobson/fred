@@ -1,0 +1,103 @@
+//
+//	Jackpot, based on the Fred game described by Joyce Weisbecker.
+//
+//	Written by Paul Robson July 2016
+//
+//	First go at a UForth program.
+//
+
+: reelCount 5 ;																		// number of reels cycled through
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key inkey dup 0< if drop self then ;												// Wait for key stroke ( - key)
+
+variable cashTens  																	// Cash earnt (split into tens/units)
+variable cashUnits
+
+variable reels alloc 4 																// Reel values, 0x80 bit set if stopped.
+
+: resetReels 	0 reels ! 0 reels 1+ ! 0 reels 2 + ! ;								// Clear reels
+: r1 reels @ ; : r2 reels 1+ @ ; : r3 reels 2 + @ ; 								// Reading reels.
+: # = 0= ;
+
+: isBigWin r1 r2 = r1 r3 = and ; 													// $5 or $10 win
+: isSmallWin r1 r2 # r1 r3 # r2 r3 # and and ; 										// $2 win.
+
+: dollarSprite 23 4 sprite [0720F8A0F828F820] 										// dollar 
+: tenShow	29 5 cashTens @ digit
+: unitShow	35 5 cashUnits @ digit
+: displayCash dollarSprite tenShow unitShow ;										// show money
+
+: decmoney -1 cashUnits +! cashUnits @ 0< if 9 cashUnits ! -1 cashTens +! then ;	// sub 1 from money
+
+: addmoney cashUnits +! cashUnits @ 9 - 0> if -10 cashUnits +! 1 cashTens +! then ;	// add 1-9 to money
+
+: draw0  7 digit 																	// 7 (lucky)
+: draw1  sprite [052070F8A820] 														// Spade
+: draw2  sprite [052070F87020] 														// Diamond
+: draw3  sprite [0550F8F87020]														// Heart
+: draw4  sprite [05F088F088F0]														// B (ar)
+
+: win0 24 23 sprite [05AAAAAAAAFA]													// win/lose sprites
+: win1 32 23 sprite [058ACAAA988A]
+: winSound 32 255 beep ;
+
+: lose0 24 23 sprite [058E8A8A8AEE]
+: lose1 32 23 sprite [05EE88EE28EE]
+: loseSound 170 100 beep ;
+
+: drawElement 																		// draw one reel (reel# -)
+	dup reels + @ 127 and 									
+	swap 2* 2* 2* 21 + swap 
+	14 swap dup 0= if drop draw0 ;
+	1- dup 0= if drop draw1 ;
+	1- dup 0= if drop draw2 ;
+	1- dup 0= if drop draw3 ;
+	drop draw4 ;	
+
+: drawAllReels 0 drawElement 1 drawElement 2 drawElement ;							// Draw all reels
+
+: bumpReel reels + 																	// Bump one reel
+			dup @ 0< if drop ; then			// don't drop if bit 7 set.
+			-1 over +!
+			dup @ 0< if reelCount 1- swap ! ;  drop ;
+
+: bumpDrawReel dup dup drawElement bumpReel drawElement ;							// Bump one reel update graphic
+
+: bumpAllReelsTillKey 																// Bump all reels until key pressed
+	0 bumpDrawReel 1 bumpDrawReel 2 bumpDrawReel
+	inkey 0< if self then reels + dup @ 128 or swap ! 
+	20 40 beep ;
+
+: bigWin win0 win1 5 addMoney r1  1 and 0= if 5 addmoney then ;						// Add 5 or 10 depending on type
+
+: checkWin																			// Check win loss
+	isBigWin if bigwin winSound ;
+	isSmallWin if win0 win1 2 addMoney winSound ;
+	lose0 lose1 loseSound ;
+
+: checkGameOver 
+	cashTens @ dup 5 = if stop then 												// Check >= $50 or $0 stop if either.
+	cashUnits @ + 0= if stop then ;
+
+: playMainGame 																		// Main loop
+	key drop 
+
+	decmoney  
+	resetReels
+
+	clearscreen displaycash drawAllReels
+
+	0 bumpAllReelsTillKey
+	1 bumpAllReelsTillKey
+	2 bumpAllReelsTillKey
+
+	displayCash 
+	checkWin 
+	displayCash
+
+	checkGameOver
+	self
+
+: __main initialise 1 cashTens ! 0 cashUnits ! 	clearscreen displayCash playMainGame ;

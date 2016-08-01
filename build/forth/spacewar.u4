@@ -1,0 +1,112 @@
+//
+//	Spacewar Game based on the original by C.T. Wu.
+//
+//	Written by Paul Robson July 2016
+//
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
+
+variable player alloc 7
+variable computer alloc 7
+
+: side ; 																			// side : 0 left 1 right
+: y 1+ ;																			// vertical position
+: hits 2 + ;																		// number of hits the ship has had.
+: xBullet 3 + ;																		// X Bullet position (-1 = none)
+: yBullet 4 + ; 																	// Y Bullet position
+: yDirection 5 + ;																	// Y direction (player)
+: getX side @ dup if 56 + then 4 + ;
+
+: reset over side ! 																// (addr side -)
+	16 over y !
+	0 over hits ! 
+	-1 over xBullet ! 
+	1 swap yDirection !
+	;
+
+: draw 																				// (addr - )
+	dup getx 3 - swap dup y @ 2 - swap side @ if sprite [051830F83018] ; sprite [05C060F860C0]
+
+: xdigit digit
+: > - 0> ;
+
+: drawScore dup hits @ >r
+	dup if 24 + then 11 + 2 over over 
+	0 r> dup >r 9 > if r> 10 - >r drop 1 then xdigit 
+	swap 6 + swap r> xdigit ;
+
+: fixY 31 over y @ and swap y ! ;
+
+: moveUp dup dup dup draw -1 swap y +! fixY draw ;
+: moveDown dup dup dup draw 1 swap y +! fixY draw ;
+
+: launchBullet dup
+	dup y @ swap yBullet ! 
+	dup getX swap xBullet ! ;
+
+: drawBullet dup xBullet @ swap yBullet @ sprite [0180]
+
+: isBulletActive xBullet @ $C0 and 0= ;
+
+: fireBullet dup isBulletActive 0= if dup launchBullet drawBullet ; drop ;
+
+: __moveBullet dup dup drawBullet 
+
+	dup side @ 2* 1- 0- 2* 2* swap xBullet +!
+
+	dup isBulletActive if drawBullet ; drop ;
+
+: moveBullet dup isBulletActive if __moveBullet ; drop ;
+
+: movePlayer
+	inkey 
+	dup 1 = if player moveUp then
+	dup 3 = if player moveDown then 
+	dup 2 = if player fireBullet then
+	drop ;
+
+: abs dup 0< if 0- then ;
+
+: flash dup draw random 15 and 16 + 10 beep ;
+
+: checkShot 								// ( shooter target - )
+	swap dup isBulletActive 0= if drop drop 0 ; swap
+	over over getX swap xBullet @ - abs 
+	3 > if drop drop 0 ;
+	over over y @  swap yBullet @  - abs 2 > if drop drop 0 ;
+	swap dup 1 swap hits +! -1 swap xBullet ! 
+	flash flash flash flash flash flash flash flash -1 swap xBullet !
+	1 ;
+
+: moveComputer
+	computer isBulletActive 0= if computer fireBullet then 
+	computer yDirection @ dup
+	0> if computer moveDown then
+	0< if computer moveUp then
+	random 7 and 0= if random 2 and 1- computer yDirection ! then
+	;
+
+: mainLoop 
+	player moveBullet 
+	computer moveBullet
+	movePlayer	
+	moveComputer
+	player computer checkShot if ;
+	computer player checkShot if ;
+	self
+
+: oneRound
+	 clearscreen 
+	 player draw computer draw 
+	 player drawScore computer drawScore
+	 mainLoop ;
+
+: game oneRound player hits @ 16 = if ; computer hits @ 16 = if ; self
+
+: __main 
+	initialise	 
+	player 0 reset computer 1 reset game
+	clearscreen player drawScore computer drawScore
+	stop

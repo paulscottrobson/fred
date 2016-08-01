@@ -1,0 +1,83 @@
+//
+//	Conway's Life, originallly programmed by M. Blecker
+//
+//	Written by Paul Robson July 2016
+//
+
+: initialise 2 1 >port 1 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+// Uses 32x32 mode. Top half of page 7 is the 'new' screen.
+// For scanning, the challenging bit it is usually stored as mask (e.g. $80) and screen address low byte
+// hence the proliferation of over over.
+
+: checkCell 					// (mask address - mask address) of next cell down
+	//over over @ or over ! 
+	over over @ and if 1 0 +! then 4 + ;
+
+: getCurrentCell over over @ and 0= 0= 1 ! 4 + ;
+
+: aliveLogic 0 @ 2/ 1 = ;
+: deadLogic 0 @ 3 = ;
+: getNewStatus 1 @ if aliveLogic ; deadLogic ;
+
+: setNextOn over over 132 + @ or over 132 + ! ; // (mask address - ) next page one line down hence 132
+	
+: moveRight swap 2/ ?dup 0= if 1+ $80 then swap ;
+: moveLeft swap 2* ?dup 0= if 1- $01 then swap ;
+: moveUp 4 - ;
+: moveDown 4 + ;
+
+: canOptimise dup @ if 0 ; dup 4 + @ if 0 ; dup 8 + @ if 0 ; 	// if this byte and two below are 0 & mask is 8 or higher optimise out
+	over $FC and ;
+
+: countCells 					// (mask address - mask address)
+	canOptimise if moveRight ;							// speed up mostly empty screen.
+
+	over over 
+	0 0 ! 0 1 ! 										// clear count (0) original (1)
+
+	checkCell checkCell checkCell 12 - moveRight 		// count cells.
+	checkCell getCurrentCell checkCell 12 - moveRight
+	checkCell checkCell checkCell drop drop
+	moveRight 											// move right to next cell.
+	getNewStatus if setNextOn then ;
+
+: doCellsToEndOfScreen
+	countCells dup 3 ! dup $78 = if ; self
+
+: copy1 dup 128 + @ over ! dup 128 + 0 swap ! 1+ ;		// copy 2nd half of page 7 to first half, clear second half.
+: copyRest copy1 dup $78 = if ; self
+
+: oneScreen
+	$01 $07 doCellsToEndOfScreen drop drop	
+	$08 copyRest drop 0 3 !
+	;
+
+: flipBit over over swap over @ xor swap ! ; 			// (bit addr - bit addr)
+: setBit over over swap over @ or swap ! ;
+
+: delay 1- ?dup if self then ;
+
+: key flipBit 40 delay flipBit 80 delay inkey dup 0< if drop self then ;	// Wait for key stroke flashing as we go ( - key) 
+
+: editor key 
+	dup 1 = if drop moveLeft -1 then
+	dup 2 = if drop moveUp -1 then
+	dup 3 = if drop moveRight -1 then
+	dup 4 = if drop setBit -1 then
+	dup 5 = if drop moveDown -1 then
+	dup 6 = if drop setBit FlipBit -1 then
+	dup 0 = if oneScreen then 
+	drop self
+
+: __main
+	initialise 
+	clearscreen 
+	7 page! 
+	2 12 !
+	1 16 !
+	7 20 !
+
+	$40 33 editor
+
+	stop

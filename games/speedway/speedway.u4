@@ -1,0 +1,84 @@
+//
+//	Spot Speedway based on the original by A. Robbi.
+//
+//	Written by Paul Robson July 2016
+//
+
+variable pos 0 variable mask 0 variable direction 0 variable velocity 0
+variable clock alloc 4
+
+: kUp 6 ; 															
+: kDown $B ;
+: kLeft 8 ;
+: kRight $D ;
+: kAccel $A ;
+: kBrake $C ;
+: key random drop inkey dup 255 = if drop self ; ;
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: vBar sprite [088080808080808080]
+: vBar4 sprite [0480808080]
+: rock sprite [0340E040]
+
+: wall dup dup dup 0 vBar 8 vBar 16 vBar 24 vBar ;
+
+: obstacle 
+	random 31 and random 7 and + 12 + 
+	random 31 and rock ?dup 0= if ; 1- self
+
+: drawSpot page@ pos @ mask @ 7 page! over @ xor swap ! page! ;
+
+: moveLeft mask @ 2* dup 0= if drop $01 -1 pos +! then mask ! ;
+: moveRight mask @ 2/ dup 0= if drop $80 1 pos +! then mask ! ;
+	
+: move direction @ 
+	dup kUp = if -8 pos +! then 
+	dup kDown = if 8 pos +! then 
+	dup kLeft = if moveLeft then
+	kRight = if moveRight then	
+;
+
+: speedUp 1 velocity +! velocity @ 8 = if 7 velocity ! then ;
+
+: slowDown -1 velocity +! velocity @ 0= if 1 velocity ! then ;
+
+: isDirectionKey dup kUp = swap dup kDown = swap dup kLeft = swap kRight = or or or ;
+
+: delay ?dup if 1- self then ;
+
+: noise random 127 and 64 + 4 beep ?dup if 1 - self then ;
+
+: checkCrash page@ mask @ pos @ 7 page! @ and swap page! if 32 noise 1 ; 0 ;
+
+: clearClock 0 clock ! 0 clock 1+ ! 0 clock 2 + ! 0 clock 3 + ! ;
+
+: carryOut dup @ 10 - 0< if drop ; then -10 over +! 1+ 1 over +! self ;
+
+: addClock clock +! clock carryOut ;
+
+: mainLoop
+	drawSpot move checkCrash if ; then drawSpot 
+	8 velocity @ - 2* 2* 2* 2* 2* 1- delay 
+	velocity @ addClock
+	inkey dup isDirectionKey if dup direction ! then
+	dup kAccel = if speedUp then kBrake = if slowDown then
+	self
+
+: drawLayout 										// (base - )
+	clearScreen 
+	0 wall 4 wall 60 wall 63 wall 4 12 vBar 60 random 31 and 2 - vBar4 obstacle
+	144 pos ! $20 mask ! kRight direction ! 7 velocity ! drawSpot
+	;
+
+: wait2 inkey 2 = if ; then self
+
+: showScore 
+	// todo: display tiner.
+;
+
+: __main
+	initialise
+	16 drawLayout clearClock
+	mainLoop 
+	clearScreen showScore wait2 self

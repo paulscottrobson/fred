@@ -10,5 +10,6 @@ copy /Y uforth.core ..\games\life
 copy /Y uforth.core ..\games\spacewar
 copy /Y uforth.core ..\games\match
 copy /Y uforth.core ..\games\acey
+copy /Y uforth.core ..\games\speedway
 
 :end

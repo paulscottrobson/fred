@@ -1,0 +1,61 @@
+//
+//	Acey-Ducey based on the original by Joseph Weisbecker
+//
+//	Written by Paul Robson July 2016
+//
+
+variable cash 0 variable low 0 variable high 0
+
+: initialise 2 1 >port 3 2 >Port 1 1 >port 1 2 >Port ;								// Turn screen and keyboard on ( - )
+
+: key random drop inkey dup 0< if drop self then ;									// Wait for key stroke ( - key)
+
+: > - 0> ;
+: < - 0< ;
+
+: xdigit digit ;
+: __div10 																			// (h u - h u)
+	dup 9 > if 10 - swap 1+ swap __div10 then ;
+
+
+: showCash 0 cash @ __div10 58 swap 2 swap xdigit 52 swap 2 swap xdigit 46 1 sprite [0720F8A0F828F820] ;
+
+: cardY 13 ;
+: frame1 cardY 2 - sprite [09FF80808080808080FF]
+: frame2 cardY 2 - sprite [09808080808080808080]
+: xShift dup 2* + 2* 2* 8 + ;
+
+: card 	    swap xShift swap  	// (cardX card -)
+			over 2 - dup frame1 8 + frame2
+			dup 0 = if drop cardY sprite [05F888380020]  then						// 0 - ?
+			dup 1 = if drop cardY sprite [052050F88888] then						// 1 - A
+			dup 10 = if drop cardY sprite [05B8A8A8A8B8] then						// 10 - 10
+			dup 11 = if drop cardY sprite [05F808088870] then						// 11 - J
+			dup 12 = if drop cardY sprite [05F888A890E8] then						// 12 - Q
+			dup 13 = if drop cardY sprite [058890E09088] then						// 13 - K
+			cardY swap xdigit ;
+
+: pickCard random 15 and 1+ dup 13 > if drop self then ;
+: pickPair pickCard pickCard over over - dup 0= if drop drop self then 0< if swap then low ! high ! ;
+: delay ?dup if 1- self then ;
+: error 255 20 beep ;
+: flashKey 1 0 card 100 delay 1 0 card 100 delay random drop inkey dup 0< if drop self then 15 and 
+		?dup 0= if error self then dup cash @ > if error drop self then ;
+
+: sfx_win 40 180 beep ;
+: sfx_lose 200 48 beep ;
+
+: checkBet 						 			// (bet card -)
+	dup low @ > swap high @ < and 1 or 
+	if sfx_win 2* cash +! ; sfx_lose drop ;
+
+
+: newBet
+ 	clearScreen showCash pickPair 0 low @ card 2 high @ card flashkey
+ 	showCash dup 0- cash +! pickCard 1 over card checkBet 
+ 	cash @ 99 > if 99 cash ! then showCash
+ 	cash @ dup 0 = if stop then 99 = if stop then
+ 	key self
+
+: __main 
+	initialise 25 cash ! newBet 
