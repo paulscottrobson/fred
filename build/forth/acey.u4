@@ -46,7 +46,7 @@ variable cash 0 variable low 0 variable high 0
 : sfx_lose 200 48 beep ;
 
 : checkBet 						 			// (bet card -)
-	dup low @ > swap high @ < and 1 or 
+	dup low @ > swap high @ < and 
 	if sfx_win 2* cash +! ; sfx_lose drop ;
 
 

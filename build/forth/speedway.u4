@@ -73,10 +73,14 @@ variable clock alloc 4
 
 : wait2 inkey 2 = if ; then self
 
+: sdigit dup 3 xor dup 2* + 2* 20 + swap 13 swap clock + @ digit 
+
+: showScore 
+	0 sdigit 1 sdigit 2 sdigit 3 sdigit ;
+;
+
 : __main
 	initialise
 	16 drawLayout clearClock
 	mainLoop 
-	clearScreen wait2 self
-
-// todo: timer
+	clearScreen showScore wait2 self
