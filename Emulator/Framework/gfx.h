@@ -13,7 +13,7 @@
 #define _GFX_H
 
 #include <SDL.h>
-#include <SDL_Audio.h>
+#include <SDL_audio.h>
 
 #define GFXKEY_BASE 		(1)
 

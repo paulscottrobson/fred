@@ -15,8 +15,8 @@
 
 #ifdef WINDOWS
 #include <stdio.h>
-#include "gfx.h"																// Want the keyboard access.
 #endif
+#include "gfx.h"																// Want the keyboard access.
 
 static BYTE8 rows,columns;														// Screen size.
 static WORD16 renderingAddress; 												// Screen rendering address
@@ -49,7 +49,6 @@ void HWIReset(void) {
 //											Process keys passed from debugger
 // *******************************************************************************************************************************
 
-#ifdef WINDOWS
 BYTE8 HWIProcessKey(BYTE8 key,BYTE8 isRunMode) {
 	if (isRunMode) {
 		BYTE8 hex = 0xFF;
@@ -61,7 +60,6 @@ BYTE8 HWIProcessKey(BYTE8 key,BYTE8 isRunMode) {
 	}
 	return key;
 }
-#endif
 
 // *******************************************************************************************************************************
 //												Called at End of Frame
